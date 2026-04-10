@@ -1015,11 +1015,11 @@ function SolarCore({
           <mesh ref={sunRef} position={SUN_POSITION}>
             <sphereGeometry args={[sunRadius, 64, 64]} />
             <meshStandardMaterial
-              color="#ffffff"
-              map={sunTexture}
+              color="#2b1606"
+              emissiveMap={sunTexture}
               emissive="#ff9b47"
-              emissiveIntensity={2.35}
-              roughness={0.1}
+              emissiveIntensity={2.9}
+              roughness={0.08}
               metalness={0.02}
             />
           </mesh>
@@ -1097,7 +1097,7 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
       <ambientLight intensity={0.22} />
       <pointLight
         position={[0, 0, 0]}
-        intensity={135}
+        intensity={220}
         color="#ffb84d"
       />
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
