@@ -491,29 +491,37 @@ function TrojanFields() {
 
 function ISSOrbit() {
   const groupRef = useRef<THREE.Group>(null)
+  const earth = useMemo(() => PLANETS.find((planet) => planet.planet === 'Earth') ?? null, [])
+  const earthSize = earth ? getPlanetVisualSize(earth) : EARTH_VISUAL_DIAMETER / 2
+  const issOrbitRadius = earthSize * 1.07
+  const issCoreLength = Math.max(earthSize * 0.095, 0.00018)
+  const issCoreHeight = issCoreLength * 0.34
+  const issPanelLength = issCoreLength * 1.55
+  const issPanelHeight = issCoreLength * 0.18
+  const issPanelWidth = issCoreLength * 0.86
 
   useFrame((state) => {
-    const earth = PLANETS.find((planet) => planet.planet === 'Earth')
     if (!groupRef.current || !earth) return
     const earthPosition = getOrbitalPosition(earth, getSimulationDays(earth.siderealDays, state.clock.getElapsedTime()))
     const t = state.clock.getElapsedTime()
     groupRef.current.position.copy(earthPosition)
-    groupRef.current.rotation.y = t * 1.8
-    groupRef.current.rotation.x = 0.44
+    groupRef.current.rotation.y = t * 3.6
+    groupRef.current.rotation.x = 0.9
+    groupRef.current.rotation.z = 0.22
   })
 
   return (
     <group ref={groupRef}>
-      <mesh position={[0.24, 0.02, 0]}>
-        <boxGeometry args={[0.08, 0.035, 0.035]} />
+      <mesh position={[issOrbitRadius, 0.00014, 0]}>
+        <boxGeometry args={[issCoreLength, issCoreHeight, issCoreHeight]} />
         <meshStandardMaterial color="#d4dde8" emissive="#2d3948" metalness={0.66} roughness={0.3} />
       </mesh>
-      <mesh position={[0.12, 0.02, 0]}>
-        <boxGeometry args={[0.1, 0.012, 0.072]} />
+      <mesh position={[issOrbitRadius - issCoreLength * 0.88, 0.00014, 0]}>
+        <boxGeometry args={[issPanelLength, issPanelHeight, issPanelWidth]} />
         <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
       </mesh>
-      <mesh position={[0.36, 0.02, 0]}>
-        <boxGeometry args={[0.1, 0.012, 0.072]} />
+      <mesh position={[issOrbitRadius + issCoreLength * 0.88, 0.00014, 0]}>
+        <boxGeometry args={[issPanelLength, issPanelHeight, issPanelWidth]} />
         <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
       </mesh>
     </group>
@@ -573,7 +581,7 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       const planet = PLANETS[selectedIndex]
       const planetSize = getPlanetVisualSize(planet)
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
-      const fovRadians = (camera.fov * Math.PI) / 180
+      const fovRadians = (((camera as THREE.PerspectiveCamera).fov ?? 34) * Math.PI) / 180
       const focusDistance = planetSize / (focusCoverage * Math.tan(fovRadians / 2))
       const offset = position
         .clone()
@@ -610,32 +618,44 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
 function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   const groupRef = useRef<THREE.Group>(null)
   const planetSize = getPlanetVisualSize(planet)
+  const isGasGiant = planet.planet === 'Jupiter' || planet.planet === 'Saturn'
+  const isIceGiant = planet.planet === 'Uranus' || planet.planet === 'Neptune'
   const moons = useMemo(
     () =>
       Array.from({ length: planet.moonCount }, (_, index) => {
-        const band = Math.floor(index / Math.max(1, Math.ceil(planet.moonCount / 10)))
-        const radius =
-          planetSize * 1.25 +
-          band * planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.2 : 0.12) +
-          (index % 10) * planetSize * 0.024
+        const moonsPerBand = isGasGiant ? 18 : isIceGiant ? 10 : planet.planet === 'Mars' ? 2 : 4
+        const band = Math.floor(index / moonsPerBand)
+        const slot = index % moonsPerBand
+        const baseRadiusMultiplier = planet.planet === 'Earth' ? 3.3 : planet.planet === 'Mars' ? 1.85 : isGasGiant ? 1.68 : isIceGiant ? 1.82 : 1.6
+        const bandStepMultiplier = isGasGiant ? 0.078 : isIceGiant ? 0.11 : 0.22
+        const slotStepMultiplier = isGasGiant ? 0.004 : isIceGiant ? 0.01 : 0.045
+        const radius = planetSize * (baseRadiusMultiplier + band * bandStepMultiplier + slot * slotStepMultiplier)
+        const angularVelocity = (isGasGiant ? 1.9 : isIceGiant ? 1.5 : planet.planet === 'Earth' ? 1.15 : 1.45) / Math.max(radius / planetSize, 1.2)
+        const moonSizeScale = isGasGiant ? 0.0032 : isIceGiant ? 0.0044 : planet.planet === 'Earth' ? 0.0135 : 0.009
+
         return {
           phase: (index / Math.max(1, planet.moonCount)) * Math.PI * 2,
           radius,
-          inclination: ((index % 9) - 4) * 0.018,
-          yOffset: ((index % 5) - 2) * planetSize * 0.012,
-          size: Math.max(planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.007 : 0.02), 0.0025),
+          angularVelocity,
+          inclination: ((index % 9) - 4) * planetSize * (isGasGiant ? 0.015 : isIceGiant ? 0.018 : 0.022),
+          yOffset: ((index % 5) - 2) * planetSize * (isGasGiant ? 0.004 : 0.006),
+          size: Math.max(planetSize * moonSizeScale, isGasGiant ? 0.00008 : isIceGiant ? 0.0001 : 0.00014),
         }
       }),
-    [planet, planetSize],
+    [isGasGiant, isIceGiant, planet, planetSize],
   )
 
   useFrame((state) => {
     if (!groupRef.current) return
-    const orbitAngle = ((state.clock.getElapsedTime() % SCREEN_ORBIT_SECONDS) / SCREEN_ORBIT_SECONDS) * Math.PI * 2
     groupRef.current.children.forEach((child, index) => {
       const moon = moons[index]
+      const orbitAngle = ((state.clock.getElapsedTime() % SCREEN_ORBIT_SECONDS) / SCREEN_ORBIT_SECONDS) * Math.PI * 2 * moon.angularVelocity
       const angle = orbitAngle + moon.phase
-      child.position.set(Math.cos(angle) * moon.radius, moon.yOffset + Math.sin(angle * 0.7) * moon.inclination, Math.sin(angle) * moon.radius)
+      child.position.set(
+        Math.cos(angle) * moon.radius,
+        moon.yOffset + Math.sin(angle * 0.65) * moon.inclination,
+        Math.sin(angle) * moon.radius,
+      )
     })
   })
 
@@ -781,7 +801,7 @@ function SolarCore({
   selectedIndex,
   onSelectPlanet,
 }: {
-  activeIndex: number
+  activeIndex: number | null
   selectedIndex: number | null
   onSelectPlanet: (index: number) => void
 }) {
