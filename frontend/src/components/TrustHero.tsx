@@ -33,6 +33,7 @@ export function TrustHero({
 }: TrustHeroProps) {
   const [shouldReduceMotion, setShouldReduceMotion] = useState(false)
   const [sceneUnavailable, setSceneUnavailable] = useState(false)
+  const [sceneSelectedIndex, setSceneSelectedIndex] = useState<number | null>(activeIndex)
   const activeNode = nodes[activeIndex]
 
   useEffect(() => {
@@ -42,6 +43,12 @@ export function TrustHero({
     media.addEventListener('change', update)
     return () => media.removeEventListener('change', update)
   }, [])
+
+  useEffect(() => {
+    if (autoTour) {
+      setSceneSelectedIndex(activeIndex)
+    }
+  }, [activeIndex, autoTour])
 
   return (
     <section className="hero-shell hero-shell--guided">
@@ -60,9 +67,12 @@ export function TrustHero({
             ) : (
               <HeroScene
                 activeIndex={activeIndex}
-                selectedIndex={activeIndex}
-                onSelectPlanet={onActiveIndexChange}
-                onClearSelection={() => onActiveIndexChange(activeIndex)}
+                selectedIndex={sceneSelectedIndex}
+                onSelectPlanet={(index) => {
+                  setSceneSelectedIndex(index)
+                  onActiveIndexChange(index)
+                }}
+                onClearSelection={() => setSceneSelectedIndex(null)}
                 onRendererLost={() => setSceneUnavailable(true)}
               />
             )}
@@ -126,7 +136,10 @@ export function TrustHero({
               key={node.id}
               type="button"
               className={`hero-node hero-node--orbital ${activeIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
-              onClick={() => onActiveIndexChange(index)}
+              onClick={() => {
+                setSceneSelectedIndex(index)
+                onActiveIndexChange(index)
+              }}
             >
               <span className="hero-node-dot" />
               <div>

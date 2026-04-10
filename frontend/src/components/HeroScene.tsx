@@ -745,17 +745,27 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       const planetSize = getPlanetVisualSize(planet)
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
       const fovRadians = (((camera as THREE.PerspectiveCamera).fov ?? 34) * Math.PI) / 180
+      const focusDistanceMultiplier =
+        planet.planet === 'Pluto' ? 0.46 : planet.planet === 'Neptune' ? 0.82 : planet.planet === 'Uranus' ? 0.88 : 1
       const focusDistance = Math.max(
-        planetSize / (focusCoverage * Math.tan(fovRadians / 2)),
-        planetSize * 6.8,
-        0.08,
+        (planetSize / (focusCoverage * Math.tan(fovRadians / 2))) * focusDistanceMultiplier,
+        planetSize * (planet.planet === 'Pluto' ? 4.1 : 5.8),
+        planet.planet === 'Pluto' ? 0.045 : 0.07,
       )
       const antiSunDirection = position
         .clone()
         .sub(SUN_POSITION)
         .normalize()
       const focusDirection = antiSunDirection.multiplyScalar(0.78).add(defaultViewDirection.clone().multiplyScalar(0.22)).normalize()
-      const offset = focusDirection.multiplyScalar(focusDistance).add(new THREE.Vector3(0, planetSize * 0.06, 0))
+      const worldUp = new THREE.Vector3(0, 1, 0)
+      const rightDirection = new THREE.Vector3().crossVectors(worldUp, focusDirection).normalize()
+      const horizontalShift =
+        planet.planet === 'Neptune' ? -planetSize * 1.35 : planet.planet === 'Pluto' ? -planetSize * 0.45 : 0
+      const verticalShift = planet.planet === 'Pluto' ? -planetSize * 0.12 : planetSize * 0.06
+      const offset = focusDirection
+        .multiplyScalar(focusDistance)
+        .add(rightDirection.multiplyScalar(horizontalShift))
+        .add(new THREE.Vector3(0, verticalShift, 0))
 
       targetLookAt.current.copy(position)
       targetPosition.current.copy(position.clone().add(offset))

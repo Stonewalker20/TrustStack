@@ -164,11 +164,12 @@ a {
   top: 224px;
   bottom: 108px;
   z-index: 4;
-  width: min(520px, calc(100vw - 48px));
+  width: min(460px, calc(100vw - 48px));
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 20px;
+  max-height: calc(100vh - 332px);
+  padding: 18px 18px 16px;
   border-radius: 28px;
   border: 1px solid rgba(125, 211, 252, 0.16);
   background: linear-gradient(180deg, rgba(6, 12, 22, 0.94), rgba(7, 14, 25, 0.86));
@@ -184,7 +185,7 @@ a {
   justify-content: space-between;
   gap: 16px;
   align-items: start;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .hero-stage-panel-head h2 {
@@ -206,9 +207,10 @@ a {
 .hero-journey-card {
   position: absolute;
   left: 24px;
-  top: 38%;
+  top: 238px;
   z-index: 4;
-  width: min(420px, calc(100vw - 48px));
+  width: min(360px, calc(100vw - 48px));
+  padding: 20px 18px;
 }
 
 .hero-journey-card h3 {
@@ -970,6 +972,7 @@ a {
     right: 20px;
     top: 244px;
     width: auto;
+    max-height: calc(100vh - 348px);
   }
 
   .framework-track {
@@ -1024,6 +1027,7 @@ a {
     bottom: 120px;
     left: 10px;
     right: 10px;
+    max-height: calc(100vh - 342px);
   }
 
   .metric-grid,
