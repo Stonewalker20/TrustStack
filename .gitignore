@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local development artifacts
+runs/
+dashboard/node_modules/
+dashboard/dist/
+.DS_Store
