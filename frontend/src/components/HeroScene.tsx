@@ -413,8 +413,8 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
         .clone()
         .sub(SUN_POSITION)
         .normalize()
-        .multiplyScalar(Math.max(planet.size * 5.2, 1.9))
-        .add(new THREE.Vector3(0, planet.size * 0.55 + 0.18, 0))
+        .multiplyScalar(Math.max(planet.size * 3.6, 1.25))
+        .add(new THREE.Vector3(0, planet.size * 0.28, 0))
 
       targetLookAt.current.copy(position)
       targetPosition.current.copy(position.clone().add(offset))
@@ -491,12 +491,14 @@ function PlanetBody({
   index,
   activeIndex,
   selectedIndex,
+  showOrbit,
   onSelectPlanet,
 }: {
   planet: SubsystemPlanet
   index: number
   activeIndex: number | null
   selectedIndex: number | null
+  showOrbit: boolean
   onSelectPlanet: (index: number) => void
 }) {
   const groupRef = useRef<THREE.Group>(null)
@@ -536,7 +538,7 @@ function PlanetBody({
 
   return (
     <>
-      <OrbitPath planet={planet} active={active || selected} />
+      {showOrbit ? <OrbitPath planet={planet} active={active || selected} /> : null}
       <group ref={groupRef} onPointerDown={handleClick}>
         <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
           <sphereGeometry args={[planet.size * 1.01, 48, 48]} />
@@ -601,11 +603,6 @@ function PlanetBody({
           </mesh>
         ) : null}
         <MoonSystem planet={planet} />
-        <Html distanceFactor={10} position={[-planet.size * 1.15, planet.size * 1.22, 0]} transform>
-          <div className={`scene-label ${active || selected ? 'scene-label--active' : ''}`}>
-            {planet.subsystem} · {planet.planet}
-          </div>
-        </Html>
       </group>
     </>
   )
@@ -633,14 +630,18 @@ function SolarCore({
 
   return (
     <group>
-      <mesh ref={sunRef} position={SUN_POSITION}>
-        <sphereGeometry args={[1.38, 64, 64]} />
-        <meshStandardMaterial color="#ffd07e" emissive="#ff8f3a" emissiveIntensity={2.4} roughness={0.16} metalness={0.02} />
-      </mesh>
-      <mesh position={SUN_POSITION} scale={0.52}>
-        <sphereGeometry args={[1.38, 48, 48]} />
-        <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
-      </mesh>
+      {selectedIndex === null ? (
+        <>
+          <mesh ref={sunRef} position={SUN_POSITION}>
+            <sphereGeometry args={[1.38, 64, 64]} />
+            <meshStandardMaterial color="#ffd07e" emissive="#ff8f3a" emissiveIntensity={2.4} roughness={0.16} metalness={0.02} />
+          </mesh>
+          <mesh position={SUN_POSITION} scale={0.52}>
+            <sphereGeometry args={[1.38, 48, 48]} />
+            <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
+          </mesh>
+        </>
+      ) : null}
       <ISSOrbit />
       {PLANETS.map((planet, index) => (
         <PlanetBody
@@ -649,6 +650,7 @@ function SolarCore({
           index={index}
           activeIndex={activeIndex}
           selectedIndex={selectedIndex}
+          showOrbit={selectedIndex === null}
           onSelectPlanet={onSelectPlanet}
         />
       ))}
