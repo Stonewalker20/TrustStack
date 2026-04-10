@@ -34,11 +34,13 @@ export function TrustHero({
   const [sceneSelectedIndex, setSceneSelectedIndex] = useState<number | null>(null)
   const [dismissedGuideIds, setDismissedGuideIds] = useState<string[]>([])
   const activeNode = nodes[activeIndex]
-  const showGuidePopup = guideEnabled && !sceneUnavailable && !shouldReduceMotion && !dismissedGuideIds.includes(activeNode.id)
+  const isPlutoView = activeNode?.planet === 'Pluto'
+  const showGuidePopup =
+    guideEnabled && !isPlutoView && !sceneUnavailable && !shouldReduceMotion && !dismissedGuideIds.includes(activeNode.id)
   const overviewMode = sceneSelectedIndex === null
 
   const setFocusedPlanet = (index: number) => {
-    setSceneSelectedIndex(nodes[index]?.planet === 'Pluto' ? null : index)
+    setSceneSelectedIndex(index)
     onActiveIndexChange(index)
   }
 
@@ -119,7 +121,7 @@ export function TrustHero({
           </p>
         </header>
 
-        <div className="hero-journey-card">
+        <div className={`hero-journey-card ${isPlutoView ? 'hero-journey-card--hidden' : ''}`}>
           <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
           <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
           <p className="muted muted--large">{activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}</p>
@@ -129,7 +131,7 @@ export function TrustHero({
           </div>
         </div>
 
-        <div className="hero-stage-cluster">
+        <div className={`hero-stage-cluster ${isPlutoView ? 'hero-stage-cluster--pluto' : ''}`}>
           {showGuidePopup ? (
             <aside className="hero-guide-popup panel panel--glass" role="dialog" aria-live="polite" aria-label="Guided tour message">
               <button type="button" className="hero-guide-close" aria-label="Dismiss guided tour message" onClick={handleDismissGuide}>
@@ -141,7 +143,7 @@ export function TrustHero({
             </aside>
           ) : null}
 
-          <div className="hero-stage-panel">
+          <div className={`hero-stage-panel ${isPlutoView ? 'hero-stage-panel--pluto' : ''}`}>
             <div className="hero-stage-panel-head">
               <div>
                 <div className="eyebrow">{activeNode?.subsystem ?? 'TrustStack'}</div>

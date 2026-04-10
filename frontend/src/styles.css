@@ -169,6 +169,14 @@ a {
   gap: 12px;
 }
 
+.hero-stage-cluster--pluto {
+  left: 24px;
+  right: 24px;
+  top: 118px;
+  bottom: 104px;
+  display: block;
+}
+
 .hero-stage-panel {
   width: min(708px, calc(100vw - 396px));
   display: flex;
@@ -182,6 +190,11 @@ a {
   box-shadow: none;
   backdrop-filter: none;
   overflow: hidden;
+}
+
+.hero-stage-panel--pluto {
+  width: 100%;
+  max-height: calc(100vh - 222px);
 }
 
 .hero-stage-panel-head {
@@ -223,6 +236,11 @@ a {
   box-shadow: none;
   backdrop-filter: none;
   pointer-events: none;
+}
+
+.hero-journey-card--hidden {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .hero-journey-card h3 {
@@ -711,6 +729,29 @@ a {
   gap: 12px;
 }
 
+.hero-stage-panel--pluto .control-center {
+  gap: 10px;
+}
+
+.hero-stage-panel--pluto .control-center-grid {
+  grid-template-columns: 1.05fr 1.1fr 0.85fr;
+  gap: 10px;
+}
+
+.hero-stage-panel--pluto .overview-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hero-stage-panel--pluto .overview-card {
+  padding: 10px;
+}
+
+.hero-stage-panel--pluto .overview-card p {
+  font-size: 0.78rem;
+  line-height: 1.34;
+}
+
 .control-column {
   display: grid;
   gap: 10px;
@@ -1192,6 +1233,11 @@ a {
     gap: 12px;
   }
 
+  .hero-stage-cluster--pluto {
+    top: 128px;
+    bottom: auto;
+  }
+
   .hero-guide-popup {
     left: 20px;
     width: min(320px, calc(100vw - 40px));
@@ -1258,6 +1304,10 @@ a {
     right: 10px;
     top: 222px;
     bottom: auto;
+  }
+
+  .hero-stage-cluster--pluto {
+    top: 114px;
   }
 
   .hero-guide-popup {
