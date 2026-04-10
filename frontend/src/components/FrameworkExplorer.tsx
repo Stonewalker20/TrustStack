@@ -1,7 +1,139 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import type { QueryResponse } from '../types'
+
 type Signal = { label: string; value: number }
 type FrameworkExplorerProps = { signals: Signal[]; latestResult: QueryResponse | null }
-const STAGES = [{ title: 'Model Under Test', kicker: 'Input boundary', summary: 'Capture the prompt, normalize the payload, and tag the model/version under evaluation.', bullets: ['prompt metadata', 'model version', 'latency trace'] }, { title: 'Benchmark Suite', kicker: 'Coverage layer', summary: 'Run grounded tasks, edge cases, and negative controls against a stable evaluation set.', bullets: ['task pack', 'reference labels', 'coverage depth'] }, { title: 'Adversarial Prompt Bank', kicker: 'Red-team layer', summary: 'Inject ambiguous and unsafe prompt patterns to test jailbreak resistance and overclaim behavior.', bullets: ['prompt mutations', 'attack themes', 'boundary failures'] }, { title: 'Policy Engine', kicker: 'Control layer', summary: 'Apply rule checks for evidence sufficiency, safety policies, privacy concerns, and escalation criteria.', bullets: ['policy rules', 'escalation gates', 'fail-fast triggers'] }, { title: 'Scoring Engine', kicker: 'Trust layer', summary: 'Fuse retrieval, evidence, honesty, and contradiction signals into a final confidence score.', bullets: ['confidence model', 'risk flags', 'trust summary'] }, { title: 'Final Risk Report', kicker: 'Decision layer', summary: 'Convert raw traces into an executive view: what passed, what failed, and what requires human review.', bullets: ['recommendation', 'evidence drilldown', 'report export'] }]
-export function FrameworkExplorer({ signals, latestResult }: FrameworkExplorerProps) { const [selected, setSelected] = useState(0); return (<section className="framework-shell"><div className="section-heading"><div><div className="eyebrow">Interactive System Map</div><h2>Walk through the trust pipeline instead of flipping between tabs.</h2></div><p>Each stage behaves like an evaluation chamber. Hover or click to inspect what it tests, what it emits, and how its state affects the final trust verdict.</p></div><div className="framework-layout"><div className="framework-track">{STAGES.map((stage, index) => <motion.button type="button" layout key={stage.title} className={`framework-node ${selected === index ? 'framework-node--active' : ''}`} onClick={() => setSelected(index)} whileHover={{ y: -4 }}><div className="framework-node-topline"><span>{stage.kicker}</span><strong>{String(index + 1).padStart(2, '0')}</strong></div><h3>{stage.title}</h3><p>{stage.summary}</p></motion.button>)}</div><AnimatePresence mode="wait"><motion.div key={selected} className="framework-detail panel panel--glass" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.28 }}><div className="framework-detail-head"><div><div className="eyebrow">{STAGES[selected].kicker}</div><h3>{STAGES[selected].title}</h3></div><div className="badge badge--bright">{latestResult ? `Live confidence ${latestResult.confidence_score}` : 'Demo state'}</div></div><p className="muted muted--large">{STAGES[selected].summary}</p><div className="framework-grid"><div className="signal-panel"><h4>Trust dimensions</h4>{signals.map((signal) => <div className="signal-row" key={signal.label}><span>{signal.label}</span><div className="signal-bar"><motion.div className="signal-bar-fill" initial={{ width: 0 }} animate={{ width: `${signal.value}%` }} transition={{ duration: 0.5, delay: 0.04 }} /></div><strong>{signal.value}</strong></div>)}</div><div className="framework-evidence"><h4>What appears here</h4><div className="pill-grid">{STAGES[selected].bullets.map((bullet) => <span className="data-pill" key={bullet}>{bullet}</span>)}</div><div className="framework-note">{latestResult ? latestResult.trust_summary : 'Run a query in the console below to populate this area with live trust data.'}</div></div></div></motion.div></AnimatePresence></div></section>) }
+
+const STAGES = [
+  {
+    title: 'Model Under Test',
+    kicker: 'Input boundary',
+    summary: 'Capture the prompt, normalize the payload, and tag the model/version under evaluation.',
+    bullets: ['prompt metadata', 'model version', 'latency trace'],
+  },
+  {
+    title: 'Benchmark Suite',
+    kicker: 'Coverage layer',
+    summary: 'Run grounded tasks, edge cases, and negative controls against a stable evaluation set.',
+    bullets: ['task pack', 'reference labels', 'coverage depth'],
+  },
+  {
+    title: 'Adversarial Prompt Bank',
+    kicker: 'Red-team layer',
+    summary: 'Inject ambiguous and unsafe prompt patterns to test jailbreak resistance and overclaim behavior.',
+    bullets: ['prompt mutations', 'attack themes', 'boundary failures'],
+  },
+  {
+    title: 'Policy Engine',
+    kicker: 'Control layer',
+    summary: 'Apply rule checks for evidence sufficiency, safety policies, privacy concerns, and escalation criteria.',
+    bullets: ['policy rules', 'escalation gates', 'fail-fast triggers'],
+  },
+  {
+    title: 'Scoring Engine',
+    kicker: 'Trust layer',
+    summary: 'Fuse retrieval, evidence, honesty, and contradiction signals into a final confidence score.',
+    bullets: ['confidence model', 'risk flags', 'trust summary'],
+  },
+  {
+    title: 'Final Risk Report',
+    kicker: 'Decision layer',
+    summary: 'Convert raw traces into an executive view: what passed, what failed, and what requires human review.',
+    bullets: ['recommendation', 'evidence drilldown', 'report export'],
+  },
+]
+
+export function FrameworkExplorer({ signals, latestResult }: FrameworkExplorerProps) {
+  const [selected, setSelected] = useState(0)
+
+  return (
+    <section className="framework-shell">
+      <div className="section-heading">
+        <div>
+          <div className="eyebrow">Interactive System Map</div>
+          <h2>Walk through the trust pipeline instead of flipping between tabs.</h2>
+        </div>
+        <p>
+          Each stage behaves like an evaluation chamber. Hover or click to inspect what it tests, what it emits, and
+          how its state affects the final trust verdict.
+        </p>
+      </div>
+
+      <div className="framework-layout">
+        <div className="framework-track">
+          {STAGES.map((stage, index) => (
+            <motion.button
+              type="button"
+              layout
+              key={stage.title}
+              className={`framework-node ${selected === index ? 'framework-node--active' : ''}`}
+              onClick={() => setSelected(index)}
+              whileHover={{ y: -4 }}
+            >
+              <div className="framework-node-topline">
+                <span>{stage.kicker}</span>
+                <strong>{String(index + 1).padStart(2, '0')}</strong>
+              </div>
+              <h3>{stage.title}</h3>
+              <p>{stage.summary}</p>
+            </motion.button>
+          ))}
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selected}
+            className="framework-detail panel panel--glass"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -14 }}
+            transition={{ duration: 0.28 }}
+          >
+            <div className="framework-detail-head">
+              <div>
+                <div className="eyebrow">{STAGES[selected].kicker}</div>
+                <h3>{STAGES[selected].title}</h3>
+              </div>
+              <div className="badge badge--bright">
+                {latestResult ? `Live confidence ${latestResult.confidence_score}` : 'Demo state'}
+              </div>
+            </div>
+            <p className="muted muted--large">{STAGES[selected].summary}</p>
+            <div className="framework-grid">
+              <div className="signal-panel">
+                <h4>Trust dimensions</h4>
+                {signals.map((signal) => (
+                  <div className="signal-row" key={signal.label}>
+                    <span>{signal.label}</span>
+                    <div className="signal-bar">
+                      <motion.div
+                        className="signal-bar-fill"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${signal.value}%` }}
+                        transition={{ duration: 0.5, delay: 0.04 }}
+                      />
+                    </div>
+                    <strong>{signal.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="framework-evidence">
+                <h4>What appears here</h4>
+                <div className="pill-grid">
+                  {STAGES[selected].bullets.map((bullet) => (
+                    <span className="data-pill" key={bullet}>
+                      {bullet}
+                    </span>
+                  ))}
+                </div>
+                <div className="framework-note">
+                  {latestResult ? latestResult.trust_summary : 'Run a query in the console below to populate this area with live trust data.'}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  )
+}

@@ -27,11 +27,14 @@
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 body {
   margin: 0;
   min-width: 320px;
+  height: 100%;
+  overflow: hidden;
 }
 
 button,
@@ -50,22 +53,16 @@ a {
 
 #root {
   min-height: 100vh;
+  height: 100%;
 }
 
 .app-root {
   overflow-x: clip;
 }
 
-.scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 40;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--cyan), var(--violet));
-  transform-origin: 0%;
-  box-shadow: 0 0 18px rgba(96, 165, 250, 0.6);
+.app-root--fixed {
+  height: 100vh;
+  overflow: hidden;
 }
 
 .hero-shell,
@@ -82,6 +79,11 @@ a {
   min-height: 100vh;
   display: block;
   padding: 0;
+}
+
+.hero-shell--guided {
+  height: 100vh;
+  overflow: hidden;
 }
 
 .hero-backdrop {
@@ -103,6 +105,11 @@ a {
   margin: 0 auto;
   display: grid;
   padding: 24px;
+}
+
+.hero-grid--guided {
+  height: 100vh;
+  min-height: 100vh;
 }
 
 .hero-header {
@@ -132,6 +139,100 @@ a {
   margin: 0 auto;
   color: var(--text-soft);
   line-height: 1.6;
+}
+
+.hero-header--guided {
+  top: 20px;
+  width: min(720px, calc(100vw - 48px));
+}
+
+.hero-tour-bar {
+  position: absolute;
+  left: 50%;
+  top: 164px;
+  z-index: 4;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hero-stage-panel {
+  position: absolute;
+  right: 24px;
+  top: 224px;
+  bottom: 108px;
+  z-index: 4;
+  width: min(520px, calc(100vw - 48px));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  background: linear-gradient(180deg, rgba(6, 12, 22, 0.94), rgba(7, 14, 25, 0.86));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 80px rgba(2, 8, 18, 0.34);
+  backdrop-filter: blur(22px);
+  overflow: auto;
+}
+
+.hero-stage-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.hero-stage-panel-head h2 {
+  margin: 8px 0 0;
+  font-size: clamp(1.4rem, 2vw, 2rem);
+}
+
+.hero-stage-panel-body {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.stage-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.hero-journey-card {
+  position: absolute;
+  left: 24px;
+  top: 38%;
+  z-index: 4;
+  width: min(420px, calc(100vw - 48px));
+}
+
+.hero-journey-card h3 {
+  margin: 12px 0 10px;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+}
+
+.hero-author-card {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  background: rgba(6, 12, 21, 0.72);
+}
+
+.hero-author-card h4 {
+  margin: 8px 0 8px;
+  font-size: 1rem;
+}
+
+.hero-author-card p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.55;
 }
 
 .hero-visual-frame,
@@ -363,7 +464,15 @@ a {
 }
 
 .framework-shell {
-  padding: 40px 0 24px;
+  width: 100%;
+  padding: 0;
+}
+
+.framework-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
 }
 
 .framework-layout {
@@ -802,6 +911,10 @@ a {
   padding: 36px 0 60px;
 }
 
+.methodology-panel {
+  width: 100%;
+}
+
 .method-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -834,9 +947,29 @@ a {
     top: 20px;
   }
 
+  .hero-journey-card {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: min(100%, 520px);
+    margin: 20px auto 0;
+  }
+
   .hero-node-ring {
     inset-inline: 20px;
     bottom: 24px;
+  }
+
+  .hero-tour-bar {
+    top: 178px;
+    width: calc(100vw - 40px);
+  }
+
+  .hero-stage-panel {
+    left: 20px;
+    right: 20px;
+    top: 244px;
+    width: auto;
   }
 
   .framework-track {
@@ -868,6 +1001,11 @@ a {
     width: min(100% - 12px, 520px);
   }
 
+  .hero-journey-card {
+    width: min(100%, 520px);
+    margin: 182px auto 0;
+  }
+
   .hero-header h1 {
     font-size: clamp(1.6rem, 7vw, 2.4rem);
   }
@@ -875,6 +1013,17 @@ a {
   .hero-actions-bar {
     bottom: 126px;
     width: min(100% - 20px, 420px);
+  }
+
+  .hero-tour-bar {
+    top: 154px;
+  }
+
+  .hero-stage-panel {
+    top: 222px;
+    bottom: 120px;
+    left: 10px;
+    right: 10px;
   }
 
   .metric-grid,

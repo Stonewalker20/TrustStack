@@ -1,6 +1,6 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import { Line, OrbitControls, Sparkles, Stars, useTexture } from '@react-three/drei'
-import { Suspense, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 type HeroSceneProps = {
@@ -8,6 +8,7 @@ type HeroSceneProps = {
   selectedIndex: number | null
   onSelectPlanet: (index: number) => void
   onClearSelection: () => void
+  onRendererLost?: () => void
 }
 
 type SubsystemPlanet = {
@@ -404,13 +405,9 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
 
 function DeepField() {
   const sunVisualDiameter = getSunVisualDiameter()
-  const milkyWayTexture = useTexture('/textures/milky_way.jpg')
-  useMemo(() => {
-    configureColorTexture(milkyWayTexture)
-  }, [milkyWayTexture])
   const galaxies = useMemo(
     () =>
-      Array.from({ length: 36 }, (_, index) => ({
+      Array.from({ length: 18 }, (_, index) => ({
         position: [
           (Math.random() - 0.5) * 140,
           (Math.sin(index * 0.38) * 9 + (Math.random() - 0.5) * 10),
@@ -429,7 +426,7 @@ function DeepField() {
 
   const stars = useMemo<StellarBody[]>(
     () =>
-      Array.from({ length: 120 }, () => ({
+      Array.from({ length: 72 }, () => ({
         distance: [
           (Math.random() - 0.5) * 220,
           (Math.random() - 0.5) * 110,
@@ -442,7 +439,7 @@ function DeepField() {
   )
   const upperStars = useMemo<StellarBody[]>(
     () =>
-      Array.from({ length: 180 }, () => ({
+      Array.from({ length: 150 }, () => ({
         distance: [
           (Math.random() - 0.5) * 210,
           12 + Math.random() * 64,
@@ -456,42 +453,38 @@ function DeepField() {
 
   return (
     <group>
-      <mesh>
-        <sphereGeometry args={[190, 64, 64]} />
-        <meshBasicMaterial map={milkyWayTexture} side={THREE.BackSide} transparent opacity={0.32} />
-      </mesh>
       <mesh position={[0, 2.8, -26]} rotation={[0, 0, -0.18]} scale={[128, 24, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#f3f8ff" transparent opacity={0.08} />
+        <meshBasicMaterial color="#f3f8ff" transparent opacity={0.05} depthWrite={false} />
       </mesh>
       <mesh position={[0, 2.2, -24]} rotation={[0, 0, -0.18]} scale={[136, 10, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#fff4c2" transparent opacity={0.08} />
+        <meshBasicMaterial color="#fff4c2" transparent opacity={0.045} depthWrite={false} />
       </mesh>
       <mesh position={[0, 20, -32]} rotation={[0, 0, -0.08]} scale={[144, 34, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#dbeafe" transparent opacity={0.05} />
+        <meshBasicMaterial color="#dbeafe" transparent opacity={0.03} depthWrite={false} />
       </mesh>
       {galaxies.map((galaxy, index) => (
         <mesh key={index} position={galaxy.position} rotation={[0, 0, galaxy.rotation]} scale={galaxy.scale}>
           <planeGeometry args={[1, 1]} />
-          <meshBasicMaterial color={galaxy.color} transparent opacity={0.14} />
+          <meshBasicMaterial color={galaxy.color} transparent opacity={0.12} depthWrite={false} />
         </mesh>
       ))}
       {stars.map((star, index) => (
         <mesh key={index} position={star.distance}>
           <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
-          <meshBasicMaterial color={star.color} transparent opacity={0.85} />
+          <meshBasicMaterial color={star.color} transparent opacity={0.8} />
         </mesh>
       ))}
       {upperStars.map((star, index) => (
         <mesh key={`upper-${index}`} position={star.distance}>
           <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
-          <meshBasicMaterial color={star.color} transparent opacity={0.94} />
+          <meshBasicMaterial color={star.color} transparent opacity={0.88} />
         </mesh>
       ))}
-      <Sparkles count={180} scale={[84, 34, 26]} size={3.2} speed={0.16} opacity={0.58} color="#f8fbff" />
-      <Sparkles count={220} scale={[118, 42, 28]} position={[0, 18, -18]} size={2.6} speed={0.12} opacity={0.46} color="#eaf4ff" />
+      <Sparkles count={120} scale={[84, 34, 26]} size={3.2} speed={0.16} opacity={0.58} color="#f8fbff" />
+      <Sparkles count={150} scale={[118, 42, 28]} position={[0, 18, -18]} size={2.6} speed={0.12} opacity={0.46} color="#eaf4ff" />
     </group>
   )
 }
@@ -500,14 +493,14 @@ function AsteroidBelt() {
   const groupRef = useRef<THREE.Group>(null)
   const asteroids = useMemo(
     () =>
-      Array.from({ length: 320 }, (_, index) => {
+      Array.from({ length: 220 }, (_, index) => {
         const semimajorAxisAu = 2.1 + Math.random() * 1.2
         const eccentricity = 0.02 + Math.random() * 0.16
         const inclinationDeg = Math.random() * 16
         const ascendingNodeDeg = Math.random() * 360
         const longitudeOfPerihelionDeg = Math.random() * 360
-        const meanLongitudeDeg = (index / 320) * 360
-        const asteroidDiameterKm = 1 + Math.random() * 520
+        const meanLongitudeDeg = (index / 220) * 360
+        const asteroidDiameterKm = 1 + Math.random() * 120
         const asteroidDiameter = getEarthDiameterScaled(asteroidDiameterKm)
         return {
           orbit: {
@@ -559,11 +552,11 @@ function TrojanFields() {
   const jupiter = PLANETS.find((planet) => planet.planet === 'Jupiter')!
   const trojans = useMemo(
     () =>
-      Array.from({ length: 280 }, (_, index) => {
-        const clusterOffset = index < 140 ? 60 : -60
+      Array.from({ length: 200 }, (_, index) => {
+        const clusterOffset = index < 100 ? 60 : -60
         const spread = (Math.random() - 0.5) * 22
         const semimajorAxisAu = jupiter.semimajorAxisAu + (Math.random() - 0.5) * 0.22
-        const asteroidDiameterKm = 1 + Math.random() * 240
+        const asteroidDiameterKm = 1 + Math.random() * 120
         const asteroidDiameter = getEarthDiameterScaled(asteroidDiameterKm)
         return {
           orbit: {
@@ -618,13 +611,13 @@ function KuiperBelt() {
   const groupRef = useRef<THREE.Group>(null)
   const bodies = useMemo(
     () =>
-      Array.from({ length: 360 }, (_, index) => {
+      Array.from({ length: 240 }, (_, index) => {
         const semimajorAxisAu = 30.5 + Math.random() * 19.5
         const eccentricity = 0.03 + Math.random() * 0.18
         const inclinationDeg = Math.random() * 22
         const ascendingNodeDeg = Math.random() * 360
         const longitudeOfPerihelionDeg = Math.random() * 360
-        const meanLongitudeDeg = (index / 360) * 360 + (Math.random() - 0.5) * 20
+        const meanLongitudeDeg = (index / 240) * 360 + (Math.random() - 0.5) * 20
         const bodyDiameterKm = 20 + Math.random() * 1800
         const bodyDiameter = getEarthDiameterScaled(bodyDiameterKm)
         return {
@@ -673,8 +666,9 @@ function ISSOrbit() {
   const groupRef = useRef<THREE.Group>(null)
   const earth = useMemo(() => PLANETS.find((planet) => planet.planet === 'Earth') ?? null, [])
   const earthSize = earth ? getPlanetVisualSize(earth) : EARTH_VISUAL_DIAMETER / 2
-  const issOrbitRadius = earthSize * 1.07
-  const issCoreLength = Math.max(earthSize * 0.095, 0.00018)
+  const earthRadius = earthSize / 2
+  const issOrbitRadius = earthRadius * 1.08
+  const issCoreLength = Math.max(earthSize * 0.009, 0.00008)
   const issCoreHeight = issCoreLength * 0.34
   const issPanelLength = issCoreLength * 1.55
   const issPanelHeight = issCoreLength * 0.18
@@ -804,6 +798,7 @@ function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   const groupRef = useRef<THREE.Group>(null)
   const moonTexture = useTexture('/textures/moon.jpg')
   const planetSize = getPlanetVisualSize(planet)
+  const planetRadius = planetSize / 2
   const isGasGiant = planet.planet === 'Jupiter' || planet.planet === 'Saturn'
   const isIceGiant = planet.planet === 'Uranus' || planet.planet === 'Neptune'
   useMemo(() => {
@@ -815,23 +810,25 @@ function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
         const moonsPerBand = isGasGiant ? 18 : isIceGiant ? 10 : planet.planet === 'Mars' ? 2 : 4
         const band = Math.floor(index / moonsPerBand)
         const slot = index % moonsPerBand
-        const baseRadiusMultiplier = planet.planet === 'Earth' ? 3.3 : planet.planet === 'Mars' ? 1.85 : isGasGiant ? 1.68 : isIceGiant ? 1.82 : 1.6
-        const bandStepMultiplier = isGasGiant ? 0.078 : isIceGiant ? 0.11 : 0.22
-        const slotStepMultiplier = isGasGiant ? 0.004 : isIceGiant ? 0.01 : 0.045
-        const radius = planetSize * (baseRadiusMultiplier + band * bandStepMultiplier + slot * slotStepMultiplier)
-        const angularVelocity = (isGasGiant ? 1.9 : isIceGiant ? 1.5 : planet.planet === 'Earth' ? 1.15 : 1.45) / Math.max(radius / planetSize, 1.2)
-        const moonSizeScale = isGasGiant ? 0.0032 : isIceGiant ? 0.0044 : planet.planet === 'Earth' ? 0.0135 : 0.009
+        const baseRadiusMultiplier = planet.planet === 'Earth' ? 5.8 : planet.planet === 'Mars' ? 3.2 : isGasGiant ? 3.1 : isIceGiant ? 3.25 : 2.8
+        const bandStepMultiplier = isGasGiant ? 0.26 : isIceGiant ? 0.16 : 0.18
+        const slotStepMultiplier = isGasGiant ? 0.012 : isIceGiant ? 0.02 : 0.04
+        const radius = planetRadius * (baseRadiusMultiplier + band * bandStepMultiplier + slot * slotStepMultiplier)
+        const angularVelocity =
+          (isGasGiant ? 1.9 : isIceGiant ? 1.5 : planet.planet === 'Earth' ? 1.15 : 1.45) /
+          Math.max(radius / planetRadius, 1.2)
+        const moonSizeScale = isGasGiant ? 0.0056 : isIceGiant ? 0.0074 : planet.planet === 'Earth' ? 0.022 : 0.014
 
         return {
           phase: (index / Math.max(1, planet.moonCount)) * Math.PI * 2,
           radius,
           angularVelocity,
-          inclination: ((index % 9) - 4) * planetSize * (isGasGiant ? 0.015 : isIceGiant ? 0.018 : 0.022),
-          yOffset: ((index % 5) - 2) * planetSize * (isGasGiant ? 0.004 : 0.006),
-          size: Math.max(planetSize * moonSizeScale, isGasGiant ? 0.00008 : isIceGiant ? 0.0001 : 0.00014),
+          inclination: ((index % 9) - 4) * planetRadius * (isGasGiant ? 0.012 : isIceGiant ? 0.015 : 0.018),
+          yOffset: ((index % 5) - 2) * planetRadius * (isGasGiant ? 0.003 : 0.004),
+          size: Math.max(planetRadius * moonSizeScale, isGasGiant ? 0.00008 : isIceGiant ? 0.0001 : 0.00012),
         }
       }),
-    [isGasGiant, isIceGiant, planet, planetSize],
+    [isGasGiant, isIceGiant, planet, planetRadius],
   )
 
   useFrame((state) => {
@@ -906,8 +903,17 @@ function PlanetBody({
     configureAlphaTexture(ringTexture)
   }, [baseTexture, cloudTexture, ringTexture])
   const earthLandMasses = useMemo(
-    () => [],
-    [],
+    () =>
+      planet.planet === 'Earth'
+        ? [
+            { lat: 48, lon: -105, scale: [0.26, 0.18, 0.22] as [number, number, number], color: '#4fa35a' },
+            { lat: 20, lon: -55, scale: [0.22, 0.16, 0.18] as [number, number, number], color: '#47a15d' },
+            { lat: -8, lon: 18, scale: [0.24, 0.14, 0.2] as [number, number, number], color: '#5cbf68' },
+            { lat: 31, lon: 108, scale: [0.28, 0.18, 0.24] as [number, number, number], color: '#3f8f4f' },
+            { lat: -30, lon: 142, scale: [0.2, 0.13, 0.16] as [number, number, number], color: '#66c76b' },
+          ]
+        : [],
+    [planet.planet],
   )
 
   useFrame((state) => {
@@ -1150,15 +1156,33 @@ function SolarCore({
   )
 }
 
-export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearSelection }: HeroSceneProps) {
+export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearSelection, onRendererLost }: HeroSceneProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !onRendererLost) return
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault()
+      onRendererLost()
+    }
+
+    canvas.addEventListener('webglcontextlost', handleContextLost, { passive: false })
+    return () => canvas.removeEventListener('webglcontextlost', handleContextLost)
+  }, [onRendererLost])
+
   return (
     <Canvas
       className="hero-canvas"
-      shadows
+      shadows={false}
       gl={{ antialias: true }}
-      dpr={[1, 1.35]}
+      dpr={1}
       camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34, near: 0.001, far: 500 }}
       onPointerMissed={onClearSelection}
+      onCreated={({ gl }) => {
+        canvasRef.current = gl.domElement
+      }}
     >
       <color attach="background" args={['#102033']} />
       <fog attach="fog" args={['#102033', 20, 68]} />
@@ -1167,15 +1191,11 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
         position={[0, 0, 0]}
         intensity={135}
         color="#ffb84d"
-        castShadow
-        shadow-bias={-0.00008}
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
       />
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
-      <Stars radius={170} depth={120} count={14000} factor={6.4} saturation={0.1} fade speed={0.42} />
+      <Stars radius={170} depth={120} count={7800} factor={6.4} saturation={0.1} fade speed={0.42} />
       <DeepField />
       <Comets />
       <Suspense fallback={null}>

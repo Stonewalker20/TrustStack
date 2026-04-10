@@ -1,27 +1,39 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 
 const HeroScene = lazy(() => import('./HeroScene').then((module) => ({ default: module.HeroScene })))
 
-const NODES = [
-  { subsystem: 'Safety', planet: 'Mercury' },
-  { subsystem: 'Robustness', planet: 'Venus' },
-  { subsystem: 'Privacy', planet: 'Earth' },
-  { subsystem: 'Bias', planet: 'Mars' },
-  { subsystem: 'Monitoring', planet: 'Jupiter' },
-  { subsystem: 'Hallucination', planet: 'Saturn' },
-  { subsystem: 'Unassigned', planet: 'Uranus' },
-  { subsystem: 'Unassigned', planet: 'Neptune' },
-  { subsystem: 'Unassigned', planet: 'Pluto' },
-]
-
-type TrustHeroProps = {
-  onRunEvaluation: () => void
-  onExploreFramework: () => void
+type TourNode = {
+  id: string
+  subsystem: string
+  planet: string
+  title: string
+  summary: string
 }
 
-export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProps) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+type TrustHeroProps = {
+  nodes: TourNode[]
+  activeIndex: number
+  autoTour: boolean
+  detailPanel: ReactNode
+  onActiveIndexChange: (index: number) => void
+  onToggleAutoTour: () => void
+  onNext: () => void
+  onPrevious: () => void
+}
+
+export function TrustHero({
+  nodes,
+  activeIndex,
+  autoTour,
+  detailPanel,
+  onActiveIndexChange,
+  onToggleAutoTour,
+  onNext,
+  onPrevious,
+}: TrustHeroProps) {
   const [shouldReduceMotion, setShouldReduceMotion] = useState(false)
+  const [sceneUnavailable, setSceneUnavailable] = useState(false)
+  const activeNode = nodes[activeIndex]
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -31,66 +43,97 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
     return () => media.removeEventListener('change', update)
   }, [])
 
-  const focusPlanet = (index: number) => {
-    setSelectedIndex((current) => (current === index ? null : index))
-  }
-
   return (
-    <section className="hero-shell">
+    <section className="hero-shell hero-shell--guided">
       <div className="hero-backdrop" />
 
       <div className="hero-visual">
         <div className="hero-visual-frame">
           <div className="hero-visual-overlay" />
           <Suspense fallback={<div className="scene-fallback">Loading trust core…</div>}>
-            {!shouldReduceMotion ? (
-              <HeroScene
-                activeIndex={selectedIndex}
-                selectedIndex={selectedIndex}
-                onSelectPlanet={(index) => focusPlanet(index)}
-                onClearSelection={() => setSelectedIndex(null)}
-              />
-            ) : (
+            {sceneUnavailable ? (
+              <div className="scene-fallback">
+                The solar system renderer lost its WebGL context. The guided TrustStack flow remains available.
+              </div>
+            ) : shouldReduceMotion ? (
               <div className="scene-fallback">3D scene paused to respect reduced motion settings.</div>
+            ) : (
+              <HeroScene
+                activeIndex={activeIndex}
+                selectedIndex={activeIndex}
+                onSelectPlanet={onActiveIndexChange}
+                onClearSelection={() => onActiveIndexChange(activeIndex)}
+                onRendererLost={() => setSceneUnavailable(true)}
+              />
             )}
           </Suspense>
         </div>
       </div>
 
-      <div className="hero-grid">
-        <header className={`hero-header ${selectedIndex !== null ? 'hero-header--hidden' : ''}`}>
+      <div className="hero-grid hero-grid--guided">
+        <header className="hero-header hero-header--guided">
           <div className="eyebrow">Solar Trust Map</div>
-          <h1>TrustStack turns the landing page into a living universe.</h1>
+          <h1>TrustStack turns the landing page into a guided planetary tour.</h1>
           <p>
-            Each subsystem now occupies a real planetary role. Select a world to lock the camera onto its orbit, or
-            click open space to return to the full system view.
+            The process no longer depends on scrolling. Each planet hosts a distinct part of the framework, and Pluto
+            closes the journey with author recognition.
           </p>
         </header>
 
+        <div className="hero-journey-card panel panel--glass">
+          <div className="framework-node-topline">
+            <span>{activeNode?.planet ?? 'Journey'}</span>
+            <strong>{autoTour ? 'Auto tour' : 'Manual tour'}</strong>
+          </div>
+          <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
+          <p className="muted muted--large">{activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}</p>
+          <div className="pill-grid">
+            <span className="data-pill">{activeNode?.subsystem ?? 'TrustStack'}</span>
+            <span className="data-pill">{activeIndex + 1} / {nodes.length}</span>
+          </div>
+        </div>
+
+        <div className="hero-stage-panel">
+          <div className="hero-stage-panel-head">
+            <div>
+              <div className="eyebrow">{activeNode?.subsystem ?? 'TrustStack'}</div>
+              <h2>{activeNode ? activeNode.title : 'TrustStack journey'}</h2>
+            </div>
+            <div className="badge badge--bright">
+              {activeIndex + 1} / {nodes.length}
+            </div>
+          </div>
+          <div className="hero-stage-panel-body">{detailPanel}</div>
+        </div>
+
         <div className="hero-actions-bar">
           <div className="hero-actions">
-            <button className="primary primary--glow" onClick={onRunEvaluation}>
-              Run Evaluation
+            <button className="primary primary--glow" onClick={onToggleAutoTour}>
+              {autoTour ? 'Pause Tour' : 'Resume Tour'}
             </button>
-            <button className="secondary" onClick={onExploreFramework}>
-              Explore Framework
+            <button className="secondary" onClick={onPrevious}>
+              Previous Planet
+            </button>
+            <button className="secondary" onClick={onNext}>
+              Next Planet
             </button>
           </div>
         </div>
 
         <div className="hero-node-ring" aria-label="Subsystem planets">
-          {NODES.map((node, index) => (
+          {nodes.map((node, index) => (
             <button
-              key={node.subsystem}
+              key={node.id}
               type="button"
-              className={`hero-node hero-node--orbital ${selectedIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
-              onClick={() => focusPlanet(index)}
+              className={`hero-node hero-node--orbital ${activeIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
+              onClick={() => onActiveIndexChange(index)}
             >
               <span className="hero-node-dot" />
               <div>
-                <strong>{node.subsystem}</strong>
+                <strong>{node.planet}</strong>
                 <small>
-                  {node.planet} {selectedIndex === index ? 'selected' : 'orbit'}
+                  {node.subsystem}
+                  {activeIndex === index ? ' selected' : ''}
                 </small>
               </div>
             </button>
