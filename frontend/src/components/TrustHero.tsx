@@ -84,27 +84,25 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
           </p>
         </header>
 
-        <div className="hero-copy hero-copy--orbital">
-          <div className="hero-copy-core">
-            <div className="hero-actions">
-              <button className="primary primary--glow" onClick={onRunEvaluation}>
-                Run Evaluation
-              </button>
-              <button className="secondary" onClick={onExploreFramework}>
-                Explore Framework
-              </button>
-            </div>
-
-            <div className="hero-metrics">
-              {metrics.map((metric) => (
-                <div className="hero-metric-card" key={metric.label}>
-                  <span>{metric.label}</span>
-                  <strong>{metric.value}</strong>
-                </div>
-              ))}
-            </div>
+        <div className="hero-actions-bar">
+          <div className="hero-actions">
+            <button className="primary primary--glow" onClick={onRunEvaluation}>
+              Run Evaluation
+            </button>
+            <button className="secondary" onClick={onExploreFramework}>
+              Explore Framework
+            </button>
           </div>
         </div>
+
+        <aside className="hero-metrics-rail" aria-label="Trust metrics">
+          {metrics.map((metric) => (
+            <div className="hero-metric-card" key={metric.label}>
+              <span>{metric.label}</span>
+              <strong>{metric.value}</strong>
+            </div>
+          ))}
+        </aside>
 
         <div className="hero-node-ring" aria-label="Subsystem planets">
           {NODES.map((node, index) => (

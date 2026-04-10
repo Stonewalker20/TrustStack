@@ -102,7 +102,6 @@ a {
   min-height: 100vh;
   margin: 0 auto;
   display: grid;
-  place-items: center;
   padding: 24px;
 }
 
@@ -130,16 +129,21 @@ a {
   line-height: 1.6;
 }
 
-.hero-copy,
 .hero-visual-frame,
 .hero-node-ring,
+.hero-actions-bar,
+.hero-metrics-rail,
 .panel,
 .card,
 .framework-node {
   backdrop-filter: blur(18px);
 }
 
-.hero-copy {
+.hero-copy,
+.hero-visual-frame,
+.panel,
+.card,
+.framework-node {
   position: relative;
   z-index: 2;
   padding: 32px 28px;
@@ -149,27 +153,6 @@ a {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 24px 80px rgba(2, 8, 18, 0.3);
-}
-
-.hero-copy--orbital {
-  width: min(300px, calc(100vw - 96px));
-  min-height: 300px;
-  padding: 22px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at center, rgba(8, 17, 29, 0.08) 0 28%, rgba(8, 17, 29, 0.58) 28.5%, rgba(8, 17, 29, 0.12) 29%, rgba(8, 17, 29, 0.04) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(125, 211, 252, 0.08),
-    0 28px 72px rgba(2, 8, 18, 0.18);
-  pointer-events: none;
-}
-
-.hero-copy-core {
-  width: min(216px, 100%);
-  text-align: center;
-  pointer-events: auto;
 }
 
 .hero-copy p,
@@ -201,11 +184,22 @@ a {
   justify-content: center;
 }
 
-.hero-metrics {
+.hero-actions-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 110px;
+  z-index: 4;
+  transform: translateX(-50%);
+}
+
+.hero-metrics-rail {
+  position: absolute;
+  right: 24px;
+  bottom: 110px;
+  z-index: 4;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 10px;
+  width: min(220px, calc(100vw - 48px));
 }
 
 .hero-metric-card,
@@ -865,11 +859,6 @@ a {
     top: 20px;
   }
 
-  .hero-copy--orbital {
-    width: min(290px, calc(100vw - 48px));
-    min-height: 290px;
-  }
-
   .hero-node-ring {
     inset-inline: 20px;
     bottom: 24px;
@@ -908,13 +897,11 @@ a {
     font-size: clamp(1.6rem, 7vw, 2.4rem);
   }
 
-  .hero-copy--orbital {
-    width: min(100%, 250px);
-    min-height: 250px;
-    padding: 18px;
+  .hero-actions-bar {
+    bottom: 126px;
+    width: min(100% - 20px, 420px);
   }
 
-  .hero-metrics,
   .metric-grid,
   .score-orbit,
   .framework-grid,
@@ -928,6 +915,12 @@ a {
     width: min(100%, 420px);
     margin-top: auto;
     padding-bottom: 12px;
+  }
+
+  .hero-metrics-rail {
+    position: static;
+    width: min(100%, 240px);
+    margin: 0 auto 12px;
   }
 
   .hero-node {
