@@ -19,18 +19,92 @@ type TourNode = {
   planet: string
   title: string
   summary: string
+  guideTitle: string
+  guideMessage: string
 }
 
 const TOUR_NODES: TourNode[] = [
-  { id: 'safety-mercury', subsystem: 'Safety Intake', planet: 'Mercury', title: 'Ingest source material', summary: 'Upload and normalize the evidence base before the model is touched.' },
-  { id: 'robustness-venus', subsystem: 'Robustness Bench', planet: 'Venus', title: 'Frame the evaluation path', summary: 'Define how the framework stages the test, scoring path, and control logic.' },
-  { id: 'privacy-earth', subsystem: 'Privacy Query', planet: 'Earth', title: 'Run the grounded evaluation', summary: 'Probe the indexed corpus with a live question and watch TrustStack respond.' },
-  { id: 'bias-mars', subsystem: 'Bias Evidence', planet: 'Mars', title: 'Inspect answer evidence', summary: 'See the answer, retrieval support, and the places where evidence is weak or missing.' },
-  { id: 'monitoring-jupiter', subsystem: 'Monitoring Risk', planet: 'Jupiter', title: 'Assess trust and operational risk', summary: 'Surface risk flags, confidence, and decision-ready monitoring signals.' },
-  { id: 'hallucination-saturn', subsystem: 'Hallucination History', planet: 'Saturn', title: 'Review longitudinal run history', summary: 'Track how repeated runs behave over time and where drift appears.' },
-  { id: 'framework-uranus', subsystem: 'Framework Ops', planet: 'Uranus', title: 'Survey the live framework map', summary: 'Walk the major stages of the TrustStack pipeline as an operator.' },
-  { id: 'methodology-neptune', subsystem: 'Methodology', planet: 'Neptune', title: 'Ground the demo in method', summary: 'Tie the cinematic interface back to an academically credible evaluation design.' },
-  { id: 'author-pluto', subsystem: 'Author Recognition', planet: 'Pluto', title: 'Recognize the builder', summary: 'Reserve Pluto for the project author and the intent behind TrustStack.' },
+  {
+    id: 'safety-mercury',
+    subsystem: 'Safety Intake',
+    planet: 'Mercury',
+    title: 'Ingest source material',
+    summary: 'Upload and normalize the evidence base before the model is touched.',
+    guideTitle: 'Dock at Mercury',
+    guideMessage: 'Start the mission by uploading source material. Once the corpus is loaded, move onward to frame the evaluation path.',
+  },
+  {
+    id: 'robustness-venus',
+    subsystem: 'Robustness Bench',
+    planet: 'Venus',
+    title: 'Frame the evaluation path',
+    summary: 'Define how the framework stages the test, scoring path, and control logic.',
+    guideTitle: 'Stabilize Venus',
+    guideMessage: 'Review the framework map here, then continue when you are ready to run a grounded prompt through the stack.',
+  },
+  {
+    id: 'privacy-earth',
+    subsystem: 'Privacy Query',
+    planet: 'Earth',
+    title: 'Run the grounded evaluation',
+    summary: 'Probe the indexed corpus with a live question and watch TrustStack respond.',
+    guideTitle: 'Orbit Earth',
+    guideMessage: 'Submit a query from Earth. TrustStack will hold here until the response is generated or you manually advance.',
+  },
+  {
+    id: 'bias-mars',
+    subsystem: 'Bias Evidence',
+    planet: 'Mars',
+    title: 'Inspect answer evidence',
+    summary: 'See the answer, retrieval support, and the places where evidence is weak or missing.',
+    guideTitle: 'Inspect Mars',
+    guideMessage: 'Use this stop to inspect the answer and the supporting evidence. Move on after you are satisfied with the grounding.',
+  },
+  {
+    id: 'monitoring-jupiter',
+    subsystem: 'Monitoring Risk',
+    planet: 'Jupiter',
+    title: 'Assess trust and operational risk',
+    summary: 'Surface risk flags, confidence, and decision-ready monitoring signals.',
+    guideTitle: 'Read Jupiter',
+    guideMessage: 'Jupiter consolidates confidence, risk, and monitoring signals. This is the checkpoint for operational trust decisions.',
+  },
+  {
+    id: 'hallucination-saturn',
+    subsystem: 'Hallucination History',
+    planet: 'Saturn',
+    title: 'Review longitudinal run history',
+    summary: 'Track how repeated runs behave over time and where drift appears.',
+    guideTitle: 'Survey Saturn',
+    guideMessage: 'Examine prior runs and drift patterns here before moving into the broader framework and methodology views.',
+  },
+  {
+    id: 'framework-uranus',
+    subsystem: 'Framework Ops',
+    planet: 'Uranus',
+    title: 'Survey the live framework map',
+    summary: 'Walk the major stages of the TrustStack pipeline as an operator.',
+    guideTitle: 'Chart Uranus',
+    guideMessage: 'This stop gives you the live operator view of the framework. Use it to orient the full pipeline in one place.',
+  },
+  {
+    id: 'methodology-neptune',
+    subsystem: 'Methodology',
+    planet: 'Neptune',
+    title: 'Ground the demo in method',
+    summary: 'Tie the cinematic interface back to an academically credible evaluation design.',
+    guideTitle: 'Anchor Neptune',
+    guideMessage: 'Neptune connects the interface to a defensible evaluation method. Review the method notes before the final stop.',
+  },
+  {
+    id: 'author-pluto',
+    subsystem: 'Author Recognition',
+    planet: 'Pluto',
+    title: 'Recognize the builder',
+    summary: 'Reserve Pluto for the project author and the intent behind TrustStack.',
+    guideTitle: 'Land on Pluto',
+    guideMessage: 'Pluto is reserved for the author recognition page. Use it as the closing frame for the full TrustStack journey.',
+  },
 ]
 
 function AuthorRecognitionCard() {
@@ -64,7 +138,7 @@ export default function App() {
   const [result, setResult] = useState<QueryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [activePlanetIndex, setActivePlanetIndex] = useState(0)
-  const [autoTour, setAutoTour] = useState(true)
+  const [guideEnabled, setGuideEnabled] = useState(true)
 
   const refreshDocuments = async () => {
     const res = await api.get<DocumentItem[]>('/documents')
@@ -81,21 +155,12 @@ export default function App() {
     refreshRuns().catch(console.error)
   }, [])
 
-  useEffect(() => {
-    if (!autoTour) return
-    const timer = window.setInterval(() => {
-      setActivePlanetIndex((current) => (current + 1) % TOUR_NODES.length)
-    }, 9000)
-    return () => window.clearInterval(timer)
-  }, [autoTour])
-
   const handleSubmit = async (question: string) => {
     setLoading(true)
     try {
       const res = await api.post<QueryResponse>('/query', { question, top_k: 5 })
       setResult(res.data)
       refreshRuns().catch(console.error)
-      setAutoTour(false)
       setActivePlanetIndex(3)
     } catch (error) {
       console.error(error)
@@ -132,7 +197,14 @@ export default function App() {
       case 0:
         return (
           <div className="stage-stack">
-            <UploadPanel onUploaded={() => refreshDocuments().catch(console.error)} />
+            <UploadPanel
+              onUploaded={() => {
+                refreshDocuments().catch(console.error)
+                if (guideEnabled && activePlanetIndex === 0) {
+                  setActivePlanetIndex(1)
+                }
+              }}
+            />
             <DocumentList items={documents} />
           </div>
         )
@@ -165,28 +237,17 @@ export default function App() {
       default:
         return null
     }
-  }, [activePlanetIndex, documents, loading, result, runs, trustSignals])
+  }, [activePlanetIndex, documents, guideEnabled, loading, result, runs, trustSignals])
 
   return (
     <div className="app-root app-root--fixed">
       <TrustHero
         nodes={TOUR_NODES}
         activeIndex={activePlanetIndex}
-        autoTour={autoTour}
+        guideEnabled={guideEnabled}
         detailPanel={activePanel}
-        onActiveIndexChange={(index) => {
-          setAutoTour(false)
-          setActivePlanetIndex(index)
-        }}
-        onToggleAutoTour={() => setAutoTour((current) => !current)}
-        onNext={() => {
-          setAutoTour(false)
-          setActivePlanetIndex((current) => (current + 1) % TOUR_NODES.length)
-        }}
-        onPrevious={() => {
-          setAutoTour(false)
-          setActivePlanetIndex((current) => (current - 1 + TOUR_NODES.length) % TOUR_NODES.length)
-        }}
+        onActiveIndexChange={setActivePlanetIndex}
+        onGuideEnabledChange={setGuideEnabled}
       />
     </div>
   )

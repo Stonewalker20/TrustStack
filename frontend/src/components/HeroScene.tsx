@@ -441,17 +441,17 @@ function DeepField() {
 
   return (
     <group>
-      <mesh position={[0, 2.8, -26]} rotation={[0, 0, -0.18]} scale={[128, 24, 1]}>
+      <mesh position={[0, 4.6, -28]} rotation={[0, 0, -0.16]} scale={[120, 18, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#f3f8ff" transparent opacity={0.05} depthWrite={false} />
+        <meshBasicMaterial color="#dbeafe" transparent opacity={0.022} depthWrite={false} />
       </mesh>
-      <mesh position={[0, 2.2, -24]} rotation={[0, 0, -0.18]} scale={[136, 10, 1]}>
+      <mesh position={[0, 2.4, -24]} rotation={[0, 0, -0.16]} scale={[132, 8, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#fff4c2" transparent opacity={0.045} depthWrite={false} />
+        <meshBasicMaterial color="#fff4c2" transparent opacity={0.018} depthWrite={false} />
       </mesh>
-      <mesh position={[0, 20, -32]} rotation={[0, 0, -0.08]} scale={[144, 34, 1]}>
+      <mesh position={[0, 19, -32]} rotation={[0, 0, -0.06]} scale={[144, 28, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#dbeafe" transparent opacity={0.03} depthWrite={false} />
+        <meshBasicMaterial color="#dbeafe" transparent opacity={0.02} depthWrite={false} />
       </mesh>
       {galaxies.map((galaxy, index) => (
         <mesh key={index} position={galaxy.position} rotation={[0, 0, galaxy.rotation]} scale={galaxy.scale}>
@@ -735,6 +735,7 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
   const targetLookAt = useRef(DEFAULT_CAMERA_TARGET.clone())
   const focusCoverage = 0.4
   const defaultViewDirection = useMemo(() => DEFAULT_CAMERA_POSITION.clone().sub(DEFAULT_CAMERA_TARGET).normalize(), [])
+  const worldUp = useMemo(() => new THREE.Vector3(0, 1, 0), [])
 
   useFrame((state) => {
     if (selectedIndex === null) {
@@ -746,22 +747,25 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
       const fovRadians = (((camera as THREE.PerspectiveCamera).fov ?? 34) * Math.PI) / 180
       const focusDistanceMultiplier =
-        planet.planet === 'Pluto' ? 0.46 : planet.planet === 'Neptune' ? 0.82 : planet.planet === 'Uranus' ? 0.88 : 1
+        planet.planet === 'Pluto' ? 0.3 : planet.planet === 'Neptune' ? 0.7 : planet.planet === 'Uranus' ? 0.82 : 1
       const focusDistance = Math.max(
         (planetSize / (focusCoverage * Math.tan(fovRadians / 2))) * focusDistanceMultiplier,
-        planetSize * (planet.planet === 'Pluto' ? 4.1 : 5.8),
-        planet.planet === 'Pluto' ? 0.045 : 0.07,
+        planetSize * (planet.planet === 'Pluto' ? 2.5 : planet.planet === 'Neptune' ? 4.5 : 5.4),
+        planet.planet === 'Pluto' ? 0.02 : planet.planet === 'Neptune' ? 0.05 : 0.07,
       )
       const antiSunDirection = position
         .clone()
         .sub(SUN_POSITION)
         .normalize()
-      const focusDirection = antiSunDirection.multiplyScalar(0.78).add(defaultViewDirection.clone().multiplyScalar(0.22)).normalize()
-      const worldUp = new THREE.Vector3(0, 1, 0)
+      const blendWeight = planet.planet === 'Neptune' || planet.planet === 'Pluto' ? 0.38 : 0.22
+      const focusDirection = antiSunDirection
+        .multiplyScalar(1 - blendWeight)
+        .add(defaultViewDirection.clone().multiplyScalar(blendWeight))
+        .normalize()
       const rightDirection = new THREE.Vector3().crossVectors(worldUp, focusDirection).normalize()
       const horizontalShift =
-        planet.planet === 'Neptune' ? -planetSize * 1.35 : planet.planet === 'Pluto' ? -planetSize * 0.45 : 0
-      const verticalShift = planet.planet === 'Pluto' ? -planetSize * 0.12 : planetSize * 0.06
+        planet.planet === 'Neptune' ? planetSize * 1.1 : planet.planet === 'Pluto' ? planetSize * 0.16 : 0
+      const verticalShift = planet.planet === 'Pluto' ? 0 : planet.planet === 'Neptune' ? planetSize * 0.03 : planetSize * 0.06
       const offset = focusDirection
         .multiplyScalar(focusDistance)
         .add(rightDirection.multiplyScalar(horizontalShift))
@@ -1033,7 +1037,9 @@ function PlanetBody({
                 emissive={planet.rings}
                 emissiveIntensity={selected ? 0.18 : 0.08}
                 transparent
-                opacity={0.9}
+                opacity={0.72}
+                alphaTest={0.18}
+                depthWrite={false}
                 side={THREE.DoubleSide}
                 roughness={0.68}
                 metalness={0.04}

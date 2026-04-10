@@ -164,12 +164,12 @@ a {
   top: 224px;
   bottom: 108px;
   z-index: 4;
-  width: min(460px, calc(100vw - 48px));
+  width: min(430px, calc(100vw - 48px));
   display: flex;
   flex-direction: column;
   min-height: 0;
   max-height: calc(100vh - 332px);
-  padding: 18px 18px 16px;
+  padding: 16px 16px 14px;
   border-radius: 28px;
   border: 1px solid rgba(125, 211, 252, 0.16);
   background: linear-gradient(180deg, rgba(6, 12, 22, 0.94), rgba(7, 14, 25, 0.86));
@@ -209,8 +209,8 @@ a {
   left: 24px;
   top: 238px;
   z-index: 4;
-  width: min(360px, calc(100vw - 48px));
-  padding: 20px 18px;
+  width: min(332px, calc(100vw - 48px));
+  padding: 18px 16px;
 }
 
 .hero-journey-card h3 {
@@ -297,6 +297,104 @@ a {
   bottom: 110px;
   z-index: 4;
   transform: translateX(-50%);
+}
+
+.hero-guide-popup {
+  position: absolute;
+  left: 24px;
+  top: 396px;
+  z-index: 4;
+  width: min(320px, calc(100vw - 48px));
+  padding: 18px 16px 16px;
+}
+
+.hero-guide-popup h3 {
+  margin: 12px 0 8px;
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+}
+
+.hero-guide-popup p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.hero-guide-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 999px;
+  background: rgba(8, 14, 24, 0.88);
+  color: var(--text-soft);
+}
+
+.hero-guide-toggle {
+  position: absolute;
+  left: 24px;
+  bottom: 112px;
+  z-index: 4;
+  padding: 12px 14px;
+  border-radius: 20px;
+}
+
+.guide-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.guide-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.guide-switch-track {
+  width: 48px;
+  height: 28px;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(18, 32, 52, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.guide-switch-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #dbeafe;
+  box-shadow: 0 4px 16px rgba(96, 165, 250, 0.32);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.guide-switch input:checked + .guide-switch-track {
+  background: rgba(23, 87, 168, 0.9);
+  border-color: rgba(125, 211, 252, 0.48);
+}
+
+.guide-switch input:checked + .guide-switch-track .guide-switch-thumb {
+  transform: translateX(20px);
+  background: #f8fbff;
+}
+
+.guide-switch-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.guide-switch-copy strong {
+  font-size: 0.95rem;
+}
+
+.guide-switch-copy small {
+  color: var(--text-dim);
 }
 
 .hero-metric-card,

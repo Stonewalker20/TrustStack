@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 const HeroScene = lazy(() => import('./HeroScene').then((module) => ({ default: module.HeroScene })))
 
@@ -8,33 +8,55 @@ type TourNode = {
   planet: string
   title: string
   summary: string
+  guideTitle: string
+  guideMessage: string
 }
 
 type TrustHeroProps = {
   nodes: TourNode[]
   activeIndex: number
-  autoTour: boolean
+  guideEnabled: boolean
   detailPanel: ReactNode
   onActiveIndexChange: (index: number) => void
-  onToggleAutoTour: () => void
-  onNext: () => void
-  onPrevious: () => void
+  onGuideEnabledChange: (enabled: boolean) => void
 }
 
 export function TrustHero({
   nodes,
   activeIndex,
-  autoTour,
+  guideEnabled,
   detailPanel,
   onActiveIndexChange,
-  onToggleAutoTour,
-  onNext,
-  onPrevious,
+  onGuideEnabledChange,
 }: TrustHeroProps) {
   const [shouldReduceMotion, setShouldReduceMotion] = useState(false)
   const [sceneUnavailable, setSceneUnavailable] = useState(false)
-  const [sceneSelectedIndex, setSceneSelectedIndex] = useState<number | null>(activeIndex)
+  const [sceneSelectedIndex, setSceneSelectedIndex] = useState<number | null>(null)
+  const [dismissedGuideIds, setDismissedGuideIds] = useState<string[]>([])
   const activeNode = nodes[activeIndex]
+  const showGuidePopup = guideEnabled && !sceneUnavailable && !shouldReduceMotion && !dismissedGuideIds.includes(activeNode.id)
+  const overviewMode = sceneSelectedIndex === null
+
+  const setFocusedPlanet = (index: number) => {
+    setSceneSelectedIndex(index)
+    onActiveIndexChange(index)
+  }
+
+  const handleNext = () => {
+    const nextIndex = (activeIndex + 1) % nodes.length
+    setFocusedPlanet(nextIndex)
+  }
+
+  const handlePrevious = () => {
+    const previousIndex = (activeIndex - 1 + nodes.length) % nodes.length
+    setFocusedPlanet(previousIndex)
+  }
+
+  const handleDismissGuide = () => {
+    setDismissedGuideIds((current) => (current.includes(activeNode.id) ? current : [...current, activeNode.id]))
+  }
+
+  const guideToggleId = useMemo(() => `guide-toggle-${activeNode.id}`, [activeNode.id])
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -45,10 +67,10 @@ export function TrustHero({
   }, [])
 
   useEffect(() => {
-    if (autoTour) {
+    if (sceneSelectedIndex !== null) {
       setSceneSelectedIndex(activeIndex)
     }
-  }, [activeIndex, autoTour])
+  }, [activeIndex, sceneSelectedIndex])
 
   return (
     <section className="hero-shell hero-shell--guided">
@@ -69,8 +91,7 @@ export function TrustHero({
                 activeIndex={activeIndex}
                 selectedIndex={sceneSelectedIndex}
                 onSelectPlanet={(index) => {
-                  setSceneSelectedIndex(index)
-                  onActiveIndexChange(index)
+                  setFocusedPlanet(index)
                 }}
                 onClearSelection={() => setSceneSelectedIndex(null)}
                 onRendererLost={() => setSceneUnavailable(true)}
@@ -81,19 +102,19 @@ export function TrustHero({
       </div>
 
       <div className="hero-grid hero-grid--guided">
-        <header className="hero-header hero-header--guided">
+        <header className={`hero-header hero-header--guided ${overviewMode ? '' : 'hero-header--hidden'}`}>
           <div className="eyebrow">Solar Trust Map</div>
-          <h1>TrustStack turns the landing page into a guided planetary tour.</h1>
+          <h1>Start in full-system view, then enter the TrustStack planetary tour when you are ready.</h1>
           <p>
-            The process no longer depends on scrolling. Each planet hosts a distinct part of the framework, and Pluto
-            closes the journey with author recognition.
+            The landing page stays in a solar-system overview until you focus a planet. Each world hosts one TrustStack
+            stage, and Pluto remains reserved for author recognition.
           </p>
         </header>
 
         <div className="hero-journey-card panel panel--glass">
           <div className="framework-node-topline">
             <span>{activeNode?.planet ?? 'Journey'}</span>
-            <strong>{autoTour ? 'Auto tour' : 'Manual tour'}</strong>
+            <strong>{guideEnabled ? 'Guide enabled' : 'Guide hidden'}</strong>
           </div>
           <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
           <p className="muted muted--large">{activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}</p>
@@ -116,18 +137,47 @@ export function TrustHero({
           <div className="hero-stage-panel-body">{detailPanel}</div>
         </div>
 
+        {showGuidePopup ? (
+          <aside className="hero-guide-popup panel panel--glass" role="dialog" aria-live="polite" aria-label="Guided tour message">
+            <button type="button" className="hero-guide-close" aria-label="Dismiss guided tour message" onClick={handleDismissGuide}>
+              x
+            </button>
+            <div className="eyebrow">Mission Prompt</div>
+            <h3>{activeNode.guideTitle}</h3>
+            <p>{activeNode.guideMessage}</p>
+          </aside>
+        ) : null}
+
         <div className="hero-actions-bar">
           <div className="hero-actions">
-            <button className="primary primary--glow" onClick={onToggleAutoTour}>
-              {autoTour ? 'Pause Tour' : 'Resume Tour'}
+            <button className="primary primary--glow" onClick={() => setFocusedPlanet(activeIndex)}>
+              Guided Tour
             </button>
-            <button className="secondary" onClick={onPrevious}>
+            <button className="secondary" onClick={handlePrevious}>
               Previous Planet
             </button>
-            <button className="secondary" onClick={onNext}>
+            <button className="secondary" onClick={handleNext}>
               Next Planet
             </button>
           </div>
+        </div>
+
+        <div className="hero-guide-toggle panel panel--glass">
+          <label className="guide-switch" htmlFor={guideToggleId}>
+            <input
+              id={guideToggleId}
+              type="checkbox"
+              checked={guideEnabled}
+              onChange={(event) => onGuideEnabledChange(event.target.checked)}
+            />
+            <span className="guide-switch-track" aria-hidden="true">
+              <span className="guide-switch-thumb" />
+            </span>
+            <span className="guide-switch-copy">
+              <strong>Guide</strong>
+              <small>{guideEnabled ? 'Space prompts on' : 'Space prompts off'}</small>
+            </span>
+          </label>
         </div>
 
         <div className="hero-node-ring" aria-label="Subsystem planets">
@@ -136,10 +186,7 @@ export function TrustHero({
               key={node.id}
               type="button"
               className={`hero-node hero-node--orbital ${activeIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
-              onClick={() => {
-                setSceneSelectedIndex(index)
-                onActiveIndexChange(index)
-              }}
+              onClick={() => setFocusedPlanet(index)}
             >
               <span className="hero-node-dot" />
               <div>
