@@ -98,28 +98,121 @@ const TOUR_NODES: TourNode[] = [
   },
   {
     id: 'author-pluto',
-    subsystem: 'System Overview',
+    subsystem: 'Mission Control',
     planet: 'Pluto',
-    title: 'View the full TrustStack workflow at once',
-    summary: 'Use Pluto as a consolidated overview page for anyone who prefers to scan every subsystem in one place.',
+    title: 'Operate TrustStack from one control center',
+    summary: 'Use Pluto as a practical command deck where uploads, live queries, evidence review, and trust signals are all accessible on one screen.',
     guideTitle: 'Survey Pluto',
-    guideMessage: 'Pluto combines the full TrustStack journey into one page for users who want a direct, non-cinematic overview.',
+    guideMessage: 'Pluto is the direct-access mode. Use it to run the full TrustStack workflow from one dense control-center view.',
   },
 ]
 
-function SystemOverviewCard({ nodes }: { nodes: TourNode[] }) {
+function ControlCenterCard({
+  nodes,
+  documents,
+  runs,
+  result,
+  signals,
+  loading,
+  onSubmit,
+  onUploaded,
+}: {
+  nodes: TourNode[]
+  documents: DocumentItem[]
+  runs: RunItem[]
+  result: QueryResponse | null
+  signals: { label: string; value: number }[]
+  loading: boolean
+  onSubmit: (question: string) => void
+  onUploaded: () => void
+}) {
+  const latestRun = runs[0] ?? null
+
   return (
-    <div className="panel panel--glass stack">
+    <div className="control-center stack">
       <div className="panel-header">
         <div>
-          <div className="eyebrow">System Overview</div>
-          <h2>See every TrustStack subsystem on one page.</h2>
+          <div className="eyebrow">Mission Control</div>
+          <h2>Use every major TrustStack feature from one screen.</h2>
         </div>
       </div>
       <p className="muted">
-        Pluto now acts as the practical overview mode. It summarizes the full TrustStack workflow for users who want a
-        direct map of the platform without stepping through each planet individually.
+        Pluto is the non-cinematic workspace. It keeps ingestion, querying, evidence review, trust signals, and the
+        subsystem map visible in one practical control-center layout.
       </p>
+
+      <div className="control-center-grid">
+        <div className="control-column">
+          <UploadPanel onUploaded={onUploaded} />
+          <DocumentList items={documents} />
+        </div>
+
+        <div className="control-column">
+          <QueryBox onSubmit={onSubmit} loading={loading} />
+          <div className="panel panel--glass">
+            <div className="panel-header">
+              <div>
+                <div className="eyebrow">Latest Response</div>
+                <h3>{result ? 'Current evaluation output' : 'Run a query to populate this panel'}</h3>
+              </div>
+              {result ? <span className="badge badge--bright">{result.confidence_score}</span> : null}
+            </div>
+            <p className="muted">
+              {result ? result.answer : 'Pluto keeps your latest answer, summary, and source coverage visible in one place.'}
+            </p>
+            <div className="pill-grid">
+              {(result?.citations ?? []).slice(0, 4).map((citation) => (
+                <span className="data-pill" key={citation}>
+                  {citation}
+                </span>
+              ))}
+              {!result ? <span className="data-pill">Awaiting live query</span> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="control-column">
+          <div className="panel panel--glass">
+            <div className="panel-header">
+              <div>
+                <div className="eyebrow">Trust Signals</div>
+                <h3>Read the current posture instantly.</h3>
+              </div>
+            </div>
+            {signals.map((signal) => (
+              <div className="signal-row" key={signal.label}>
+                <span>{signal.label}</span>
+                <div className="signal-bar">
+                  <div className="signal-bar-fill" style={{ width: `${signal.value}%` }} />
+                </div>
+                <strong>{signal.value}</strong>
+              </div>
+            ))}
+            <div className="framework-note">
+              {result ? result.trust_summary : 'Run an evaluation to populate the live trust summary and risk posture.'}
+            </div>
+          </div>
+
+          <div className="panel panel--glass">
+            <div className="panel-header">
+              <div>
+                <div className="eyebrow">Run History</div>
+                <h3>Track the most recent evaluation.</h3>
+              </div>
+              <span className="badge">{runs.length} total</span>
+            </div>
+            {latestRun ? (
+              <div className="framework-note">
+                <strong>{latestRun.question}</strong>
+                <div>{latestRun.trust_summary}</div>
+              </div>
+            ) : (
+              <div className="framework-note">No evaluations have been logged yet.</div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="overview-grid">
         {nodes.map((node, index) => (
           <article key={node.id} className="overview-card">
@@ -133,9 +226,9 @@ function SystemOverviewCard({ nodes }: { nodes: TourNode[] }) {
         ))}
       </div>
       <div className="pill-grid">
-        <span className="data-pill">Full subsystem scan</span>
-        <span className="data-pill">Low-friction overview mode</span>
-        <span className="data-pill">TrustStack at a glance</span>
+        <span className="data-pill">Single-screen workflow</span>
+        <span className="data-pill">Low-friction operator mode</span>
+        <span className="data-pill">Direct feature access</span>
       </div>
     </div>
   )
@@ -242,7 +335,18 @@ export default function App() {
       case 7:
         return <MethodologySection />
       case 8:
-        return <SystemOverviewCard nodes={TOUR_NODES.slice(0, -1)} />
+        return (
+          <ControlCenterCard
+            nodes={TOUR_NODES.slice(0, -1)}
+            documents={documents}
+            runs={runs}
+            result={result}
+            signals={trustSignals}
+            loading={loading}
+            onSubmit={handleSubmit}
+            onUploaded={() => refreshDocuments().catch(console.error)}
+          />
+        )
       default:
         return null
     }

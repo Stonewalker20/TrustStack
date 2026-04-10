@@ -38,7 +38,7 @@ export function TrustHero({
   const overviewMode = sceneSelectedIndex === null
 
   const setFocusedPlanet = (index: number) => {
-    setSceneSelectedIndex(index)
+    setSceneSelectedIndex(nodes[index]?.planet === 'Pluto' ? null : index)
     onActiveIndexChange(index)
   }
 

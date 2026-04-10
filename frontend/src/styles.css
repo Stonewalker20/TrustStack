@@ -175,14 +175,12 @@ a {
   flex-direction: column;
   min-height: 0;
   max-height: calc(100vh - 286px);
-  padding: 14px 14px 12px;
-  border-radius: 28px;
-  border: 1px solid rgba(125, 211, 252, 0.16);
-  background: linear-gradient(180deg, rgba(6, 12, 22, 0.94), rgba(7, 14, 25, 0.86));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 24px 80px rgba(2, 8, 18, 0.34);
-  backdrop-filter: blur(22px);
+  padding: 8px 0 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
   overflow: hidden;
 }
 
@@ -197,6 +195,7 @@ a {
 .hero-stage-panel-head h2 {
   margin: 8px 0 0;
   font-size: clamp(1.24rem, 1.8vw, 1.72rem);
+  text-shadow: 0 10px 30px rgba(2, 8, 18, 0.72);
 }
 
 .hero-stage-panel-body {
@@ -545,12 +544,22 @@ a {
 .hero-node--orbital {
   min-width: 172px;
   pointer-events: auto;
-  background: linear-gradient(180deg, rgba(8, 14, 24, 0.9), rgba(8, 14, 24, 0.72));
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 10px 12px;
 }
 
 .hero-node--selected {
-  border-color: rgba(255, 208, 126, 0.54);
-  box-shadow: 0 0 26px rgba(255, 184, 77, 0.22);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.hero-node--orbital:hover,
+.hero-node--orbital.hero-node--active {
+  background: rgba(7, 13, 24, 0.22);
+  transform: translateY(-1px);
 }
 
 .hero-node-dot,
@@ -576,10 +585,12 @@ a {
 .hero-node strong {
   display: block;
   font-size: 0.95rem;
+  text-shadow: 0 8px 20px rgba(2, 8, 18, 0.7);
 }
 
 .hero-node small {
   color: var(--text-dim);
+  text-shadow: 0 6px 18px rgba(2, 8, 18, 0.56);
 }
 
 .section-heading {
@@ -688,6 +699,22 @@ a {
   border: 1px solid var(--line);
   color: var(--text-soft);
   line-height: 1.55;
+}
+
+.control-center {
+  gap: 12px;
+}
+
+.control-center-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.control-column {
+  display: grid;
+  gap: 10px;
+  align-content: start;
 }
 
 .overview-grid {
@@ -1116,6 +1143,7 @@ a {
 
 @media (max-width: 1280px) {
   .framework-layout,
+  .control-center-grid,
   .ops-layout,
   .method-grid {
     grid-template-columns: 1fr;
@@ -1241,6 +1269,7 @@ a {
 
   .metric-grid,
   .score-orbit,
+  .control-center-grid,
   .framework-grid,
   .method-grid,
   .framework-track {
