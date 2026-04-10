@@ -314,18 +314,6 @@ function getSunVisualDiameter() {
   return SUN_DIAMETER_RATIO_EARTH * EARTH_VISUAL_DIAMETER
 }
 
-function latLonToVector3(radius: number, latitudeDeg: number, longitudeDeg: number) {
-  const latitude = toRadians(latitudeDeg)
-  const longitude = toRadians(longitudeDeg)
-  const cosLatitude = Math.cos(latitude)
-
-  return new THREE.Vector3(
-    radius * cosLatitude * Math.cos(longitude),
-    radius * Math.sin(latitude),
-    radius * cosLatitude * Math.sin(longitude),
-  )
-}
-
 function getPlanetTexturePath(planet: string) {
   switch (planet) {
     case 'Mercury':
@@ -902,20 +890,6 @@ function PlanetBody({
     configureColorTexture(cloudTexture)
     configureAlphaTexture(ringTexture)
   }, [baseTexture, cloudTexture, ringTexture])
-  const earthLandMasses = useMemo(
-    () =>
-      planet.planet === 'Earth'
-        ? [
-            { lat: 48, lon: -105, scale: [0.26, 0.18, 0.22] as [number, number, number], color: '#4fa35a' },
-            { lat: 20, lon: -55, scale: [0.22, 0.16, 0.18] as [number, number, number], color: '#47a15d' },
-            { lat: -8, lon: 18, scale: [0.24, 0.14, 0.2] as [number, number, number], color: '#5cbf68' },
-            { lat: 31, lon: 108, scale: [0.28, 0.18, 0.24] as [number, number, number], color: '#3f8f4f' },
-            { lat: -30, lon: 142, scale: [0.2, 0.13, 0.16] as [number, number, number], color: '#66c76b' },
-          ]
-        : [],
-    [planet.planet],
-  )
-
   useFrame((state) => {
     const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
     const t = state.clock.getElapsedTime()
@@ -1026,21 +1000,6 @@ function PlanetBody({
                 metalness={planet.planet === 'Mercury' ? 0.12 : 0.04}
               />
             </mesh>
-            {earthLandMasses.map((landMass, landIndex) => {
-              const position = latLonToVector3(planetSize * 1.006, landMass.lat, landMass.lon)
-              return (
-                <mesh key={landIndex} position={position} scale={landMass.scale} castShadow receiveShadow>
-                  <sphereGeometry args={[planetSize * 0.32, 18, 18]} />
-                  <meshStandardMaterial
-                    color={landMass.color}
-                    emissive={landMass.color}
-                    emissiveIntensity={0.09}
-                    roughness={0.72}
-                    metalness={0.01}
-                  />
-                </mesh>
-              )
-            })}
             {planet.poles ? (
               <>
                 <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
