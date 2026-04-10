@@ -53,14 +53,14 @@ type StellarBody = {
   color: string
 }
 
-const ORBIT_SCALE = 1.12
+const ORBIT_SCALE = 0.94
 const SCREEN_ORBIT_SECONDS = 300
 const EARTH_DIAMETER_KM = 12742
 const SUN_DIAMETER_KM = 1392700
 const SUN_DIAMETER_RATIO_EARTH = SUN_DIAMETER_KM / EARTH_DIAMETER_KM
 const EARTH_VISUAL_DIAMETER = 0.01
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 14.2, 24.6)
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 12.2, 20.8)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
 
 const PLANETS: SubsystemPlanet[] = [
