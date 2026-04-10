@@ -1,5 +1,5 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Line, OrbitControls, Sparkles, Stars } from '@react-three/drei'
+import { Line, OrbitControls, Sparkles, Stars, useTexture } from '@react-three/drei'
 import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -325,6 +325,63 @@ function latLonToVector3(radius: number, latitudeDeg: number, longitudeDeg: numb
   )
 }
 
+function getPlanetTexturePath(planet: string) {
+  switch (planet) {
+    case 'Mercury':
+      return '/textures/mercury.jpg'
+    case 'Venus':
+      return '/textures/venus_surface.jpg'
+    case 'Earth':
+      return '/textures/earth_day.jpg'
+    case 'Mars':
+      return '/textures/mars.jpg'
+    case 'Jupiter':
+      return '/textures/jupiter.jpg'
+    case 'Saturn':
+      return '/textures/saturn.jpg'
+    case 'Uranus':
+      return '/textures/uranus.jpg'
+    case 'Neptune':
+      return '/textures/neptune.jpg'
+    case 'Pluto':
+      return '/textures/pluto.jpg'
+    default:
+      return '/textures/earth_day.jpg'
+  }
+}
+
+function getPlanetCloudTexturePath(planet: string) {
+  switch (planet) {
+    case 'Venus':
+      return '/textures/venus_atmosphere.jpg'
+    case 'Earth':
+      return '/textures/earth_clouds.jpg'
+    case 'Jupiter':
+      return '/textures/jupiter.jpg'
+    case 'Saturn':
+      return '/textures/saturn.jpg'
+    case 'Uranus':
+      return '/textures/uranus.jpg'
+    case 'Neptune':
+      return '/textures/neptune.jpg'
+    default:
+      return getPlanetTexturePath(planet)
+  }
+}
+
+function configureColorTexture(texture: THREE.Texture) {
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
+  texture.needsUpdate = true
+}
+
+function configureAlphaTexture(texture: THREE.Texture) {
+  texture.wrapS = THREE.ClampToEdgeWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
+  texture.needsUpdate = true
+}
+
 function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolean }) {
   const points = useMemo(() => {
     const sampleCount = 320
@@ -347,6 +404,10 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
 
 function DeepField() {
   const sunVisualDiameter = getSunVisualDiameter()
+  const milkyWayTexture = useTexture('/textures/milky_way.jpg')
+  useMemo(() => {
+    configureColorTexture(milkyWayTexture)
+  }, [milkyWayTexture])
   const galaxies = useMemo(
     () =>
       Array.from({ length: 36 }, (_, index) => ({
@@ -395,6 +456,10 @@ function DeepField() {
 
   return (
     <group>
+      <mesh>
+        <sphereGeometry args={[190, 64, 64]} />
+        <meshBasicMaterial map={milkyWayTexture} side={THREE.BackSide} transparent opacity={0.32} />
+      </mesh>
       <mesh position={[0, 2.8, -26]} rotation={[0, 0, -0.18]} scale={[128, 24, 1]}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial color="#f3f8ff" transparent opacity={0.08} />
@@ -737,9 +802,13 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
 
 function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   const groupRef = useRef<THREE.Group>(null)
+  const moonTexture = useTexture('/textures/moon.jpg')
   const planetSize = getPlanetVisualSize(planet)
   const isGasGiant = planet.planet === 'Jupiter' || planet.planet === 'Saturn'
   const isIceGiant = planet.planet === 'Uranus' || planet.planet === 'Neptune'
+  useMemo(() => {
+    configureColorTexture(moonTexture)
+  }, [moonTexture])
   const moons = useMemo(
     () =>
       Array.from({ length: planet.moonCount }, (_, index) => {
@@ -786,7 +855,14 @@ function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
       {moons.map((moon, index) => (
         <mesh key={index} castShadow receiveShadow>
           <sphereGeometry args={[moon.size, 10, 10]} />
-          <meshStandardMaterial color={planet.moon} emissive={planet.moon} emissiveIntensity={0.08} roughness={0.58} metalness={0.01} />
+          <meshStandardMaterial
+            color="#ffffff"
+            map={moonTexture}
+            emissive={planet.moon}
+            emissiveIntensity={0.03}
+            roughness={0.72}
+            metalness={0.01}
+          />
         </mesh>
       ))}
     </group>
@@ -819,19 +895,19 @@ function PlanetBody({
   const active = activeIndex !== null && index === activeIndex
   const selected = index === selectedIndex
   const planetSize = getPlanetVisualSize(planet)
+  const baseTexture = useTexture(getPlanetTexturePath(planet.planet))
+  const cloudTexture = useTexture(getPlanetCloudTexturePath(planet.planet))
+  const ringTexture = useTexture('/textures/saturn_ring.png')
+  const hasBandOverlay = planet.planet === 'Jupiter' || planet.planet === 'Saturn'
+  const hasTexturedClouds = ['Venus', 'Earth', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'].includes(planet.planet)
+  useMemo(() => {
+    configureColorTexture(baseTexture)
+    configureColorTexture(cloudTexture)
+    configureAlphaTexture(ringTexture)
+  }, [baseTexture, cloudTexture, ringTexture])
   const earthLandMasses = useMemo(
-    () =>
-      planet.planet === 'Earth'
-        ? [
-            { lat: 12, lon: -102, scale: [0.32, 0.15, 0.2] as [number, number, number], color: '#4f9f4d' },
-            { lat: 2, lon: -62, scale: [0.18, 0.12, 0.12] as [number, number, number], color: '#5faa56' },
-            { lat: 18, lon: 20, scale: [0.24, 0.17, 0.16] as [number, number, number], color: '#6aae4f' },
-            { lat: 42, lon: 78, scale: [0.44, 0.18, 0.22] as [number, number, number], color: '#5c9b4c' },
-            { lat: -24, lon: 134, scale: [0.18, 0.1, 0.11] as [number, number, number], color: '#6fb45f' },
-            { lat: 72, lon: -42, scale: [0.13, 0.08, 0.09] as [number, number, number], color: '#84bf74' },
-          ]
-        : [],
-    [planet.planet],
+    () => [],
+    [],
   )
 
   useFrame((state) => {
@@ -902,27 +978,32 @@ function PlanetBody({
             </mesh>
           ) : null}
           <group ref={spinRef}>
-            <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
-              <sphereGeometry args={[planetSize * 1.01, 48, 48]} />
-              <meshStandardMaterial
-                color={planet.band}
-                emissive={planet.band}
-                emissiveIntensity={selected ? 0.28 : 0.14}
-                transparent
-                opacity={planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.34 : 0.16}
-                roughness={0.44}
-                metalness={0.02}
-              />
-            </mesh>
-            {planet.cloud ? (
+            {hasBandOverlay ? (
+              <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
+                <sphereGeometry args={[planetSize * 1.01, 48, 48]} />
+                <meshStandardMaterial
+                  color="#ffffff"
+                  map={cloudTexture}
+                  emissive={planet.band}
+                  emissiveIntensity={selected ? 0.24 : 0.1}
+                  transparent
+                  opacity={0.16}
+                  roughness={0.44}
+                  metalness={0.02}
+                />
+              </mesh>
+            ) : null}
+            {hasTexturedClouds ? (
               <mesh ref={cloudRef} scale={[1.035, 1.035, 1.035]} castShadow receiveShadow>
                 <sphereGeometry args={[planetSize, 48, 48]} />
                 <meshStandardMaterial
-                  color={planet.cloud}
-                  emissive={planet.cloud}
-                  emissiveIntensity={0.08}
+                  color="#ffffff"
+                  map={cloudTexture}
+                  alphaMap={planet.planet === 'Earth' ? cloudTexture : undefined}
+                  emissive={planet.cloud ?? '#ffffff'}
+                  emissiveIntensity={planet.planet === 'Earth' ? 0.02 : 0.05}
                   transparent
-                  opacity={planet.planet === 'Earth' ? 0.24 : 0.14}
+                  opacity={planet.planet === 'Venus' ? 0.55 : planet.planet === 'Earth' ? 0.36 : 0.1}
                   roughness={0.48}
                   metalness={0.01}
                 />
@@ -931,10 +1012,11 @@ function PlanetBody({
             <mesh castShadow receiveShadow>
               <sphereGeometry args={[planetSize, 56, 56]} />
               <meshStandardMaterial
-                color={planet.color}
+                color="#ffffff"
+                map={baseTexture}
                 emissive={planet.emissive}
-                emissiveIntensity={selected ? 1.28 : active ? 0.92 : 0.68}
-                roughness={0.42}
+                emissiveIntensity={selected ? 0.42 : active ? 0.26 : 0.16}
+                roughness={planet.planet === 'Mercury' || planet.planet === 'Mars' || planet.planet === 'Pluto' ? 0.8 : 0.54}
                 metalness={planet.planet === 'Mercury' ? 0.12 : 0.04}
               />
             </mesh>
@@ -968,14 +1050,17 @@ function PlanetBody({
           </group>
           {planet.rings ? (
             <mesh ref={ringRef} receiveShadow>
-              <torusGeometry args={[planetSize * 1.72, planetSize * 0.12, 20, 140]} />
+              <ringGeometry args={[planetSize * 1.38, planetSize * 2.08, 160]} />
               <meshStandardMaterial
-                color={planet.rings}
+                color="#d8c093"
+                map={ringTexture}
+                alphaMap={ringTexture}
                 emissive={planet.rings}
-                emissiveIntensity={selected ? 0.34 : 0.18}
+                emissiveIntensity={selected ? 0.18 : 0.08}
                 transparent
-                opacity={0.76}
-                roughness={0.5}
+                opacity={0.9}
+                side={THREE.DoubleSide}
+                roughness={0.68}
                 metalness={0.04}
               />
             </mesh>
@@ -997,8 +1082,12 @@ function SolarCore({
   onSelectPlanet: (index: number) => void
 }) {
   const sunRef = useRef<THREE.Mesh>(null)
+  const sunTexture = useTexture('/textures/sun.jpg')
   const sunDiameter = getSunVisualDiameter()
   const sunRadius = sunDiameter / 2
+  useMemo(() => {
+    configureColorTexture(sunTexture)
+  }, [sunTexture])
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
@@ -1015,7 +1104,14 @@ function SolarCore({
         <>
           <mesh ref={sunRef} position={SUN_POSITION}>
             <sphereGeometry args={[sunRadius, 64, 64]} />
-            <meshStandardMaterial color="#ffd07e" emissive="#ff8f3a" emissiveIntensity={2.4} roughness={0.16} metalness={0.02} />
+            <meshStandardMaterial
+              color="#ffffff"
+              map={sunTexture}
+              emissive="#ff8f3a"
+              emissiveIntensity={1.8}
+              roughness={0.16}
+              metalness={0.02}
+            />
           </mesh>
           <mesh position={SUN_POSITION} scale={0.52}>
             <sphereGeometry args={[sunRadius, 48, 48]} />
