@@ -17,7 +17,6 @@ type TrustHeroProps = {
 }
 
 export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProps) {
-  const [activeIndex, setActiveIndex] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [shouldReduceMotion, setShouldReduceMotion] = useState(false)
 
@@ -29,18 +28,8 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
     return () => media.removeEventListener('change', update)
   }, [])
 
-  useEffect(() => {
-    if (selectedIndex !== null) {
-      setActiveIndex(selectedIndex)
-      return
-    }
-    const id = window.setInterval(() => setActiveIndex((current) => (current + 1) % NODES.length), 2400)
-    return () => window.clearInterval(id)
-  }, [selectedIndex])
-
   const focusPlanet = (index: number) => {
     setSelectedIndex((current) => (current === index ? null : index))
-    setActiveIndex(index)
   }
 
   return (
@@ -53,7 +42,7 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
           <Suspense fallback={<div className="scene-fallback">Loading trust core…</div>}>
             {!shouldReduceMotion ? (
               <HeroScene
-                activeIndex={activeIndex}
+                activeIndex={selectedIndex}
                 selectedIndex={selectedIndex}
                 onSelectPlanet={(index) => focusPlanet(index)}
                 onClearSelection={() => setSelectedIndex(null)}
@@ -91,9 +80,7 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
             <button
               key={node.subsystem}
               type="button"
-              className={`hero-node hero-node--orbital ${index === activeIndex ? 'hero-node--active' : ''} ${
-                selectedIndex === index ? 'hero-node--selected' : ''
-              }`}
+              className={`hero-node hero-node--orbital ${selectedIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
               onClick={() => focusPlanet(index)}
             >
               <span className="hero-node-dot" />
