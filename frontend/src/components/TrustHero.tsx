@@ -56,6 +56,14 @@ export function TrustHero({
     setDismissedGuideIds((current) => (current.includes(activeNode.id) ? current : [...current, activeNode.id]))
   }
 
+  const handlePlanetButtonClick = (index: number) => {
+    if (sceneSelectedIndex === index) {
+      setSceneSelectedIndex(null)
+      return
+    }
+    setFocusedPlanet(index)
+  }
+
   const guideToggleId = useMemo(() => `guide-toggle-${activeNode.id}`, [activeNode.id])
 
   useEffect(() => {
@@ -124,29 +132,31 @@ export function TrustHero({
           </div>
         </div>
 
-        <div className="hero-stage-panel">
-          <div className="hero-stage-panel-head">
-            <div>
-              <div className="eyebrow">{activeNode?.subsystem ?? 'TrustStack'}</div>
-              <h2>{activeNode ? activeNode.title : 'TrustStack journey'}</h2>
-            </div>
-            <div className="badge badge--bright">
-              {activeIndex + 1} / {nodes.length}
-            </div>
-          </div>
-          <div className="hero-stage-panel-body">{detailPanel}</div>
-        </div>
+        <div className="hero-stage-cluster">
+          {showGuidePopup ? (
+            <aside className="hero-guide-popup panel panel--glass" role="dialog" aria-live="polite" aria-label="Guided tour message">
+              <button type="button" className="hero-guide-close" aria-label="Dismiss guided tour message" onClick={handleDismissGuide}>
+                x
+              </button>
+              <div className="eyebrow">Mission Prompt</div>
+              <h3>{activeNode.guideTitle}</h3>
+              <p>{activeNode.guideMessage}</p>
+            </aside>
+          ) : null}
 
-        {showGuidePopup ? (
-          <aside className="hero-guide-popup panel panel--glass" role="dialog" aria-live="polite" aria-label="Guided tour message">
-            <button type="button" className="hero-guide-close" aria-label="Dismiss guided tour message" onClick={handleDismissGuide}>
-              x
-            </button>
-            <div className="eyebrow">Mission Prompt</div>
-            <h3>{activeNode.guideTitle}</h3>
-            <p>{activeNode.guideMessage}</p>
-          </aside>
-        ) : null}
+          <div className="hero-stage-panel">
+            <div className="hero-stage-panel-head">
+              <div>
+                <div className="eyebrow">{activeNode?.subsystem ?? 'TrustStack'}</div>
+                <h2>{activeNode ? activeNode.title : 'TrustStack journey'}</h2>
+              </div>
+              <div className="badge badge--bright">
+                {activeIndex + 1} / {nodes.length}
+              </div>
+            </div>
+            <div className="hero-stage-panel-body">{detailPanel}</div>
+          </div>
+        </div>
 
         <div className="hero-actions-bar">
           <div className="hero-actions">
@@ -186,7 +196,7 @@ export function TrustHero({
               key={node.id}
               type="button"
               className={`hero-node hero-node--orbital ${activeIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
-              onClick={() => setFocusedPlanet(index)}
+              onClick={() => handlePlanetButtonClick(index)}
             >
               <span className="hero-node-dot" />
               <div>

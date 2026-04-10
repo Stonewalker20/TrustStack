@@ -158,13 +158,19 @@ a {
   justify-content: center;
 }
 
-.hero-stage-panel {
+.hero-stage-cluster {
   position: absolute;
   right: 24px;
   top: 210px;
   bottom: 108px;
   z-index: 4;
-  width: min(640px, calc(100vw - 360px));
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.hero-stage-panel {
+  width: min(640px, calc(100vw - 420px));
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -210,7 +216,8 @@ a {
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
-  width: min(260px, calc(100vw - 48px));
+  width: 260px;
+  max-width: 260px;
   padding: 14px 14px 13px;
 }
 
@@ -239,7 +246,6 @@ a {
 }
 
 .hero-visual-frame,
-.hero-node-ring,
 .hero-actions-bar,
 .panel,
 .card,
@@ -301,11 +307,10 @@ a {
 }
 
 .hero-guide-popup {
-  position: absolute;
-  left: 24px;
-  top: calc(50% + 150px);
+  position: relative;
   z-index: 4;
-  width: min(280px, calc(100vw - 48px));
+  width: 280px;
+  max-width: 280px;
   padding: 16px 14px 14px;
 }
 
@@ -1080,18 +1085,25 @@ a {
   }
 
   .hero-stage-panel {
+    width: auto;
+    left: 20px;
+    right: 20px;
+    max-height: calc(100vh - 348px);
+  }
+
+  .hero-stage-cluster {
     left: 20px;
     right: 20px;
     top: 244px;
-    width: auto;
-    max-height: calc(100vh - 348px);
+    bottom: auto;
+    display: grid;
+    gap: 12px;
   }
 
   .hero-guide-popup {
     left: 20px;
-    top: auto;
-    bottom: 210px;
     width: min(320px, calc(100vw - 40px));
+    max-width: none;
   }
 
   .framework-track {
@@ -1143,18 +1155,24 @@ a {
   }
 
   .hero-stage-panel {
-    top: 222px;
     bottom: 120px;
-    left: 10px;
-    right: 10px;
+    left: auto;
+    right: auto;
     max-height: calc(100vh - 342px);
   }
 
-  .hero-guide-popup {
+  .hero-stage-cluster {
     left: 10px;
     right: 10px;
-    bottom: 188px;
+    top: 222px;
+    bottom: auto;
+  }
+
+  .hero-guide-popup {
+    left: auto;
+    right: auto;
     width: auto;
+    max-width: none;
   }
 
   .metric-grid,
