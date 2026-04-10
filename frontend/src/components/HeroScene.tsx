@@ -773,7 +773,13 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
         .normalize()
       const rightDirection = new THREE.Vector3().crossVectors(worldUp, focusDirection).normalize()
       const horizontalShift =
-        planet.planet === 'Neptune' ? planetSize * 1.1 : planet.planet === 'Pluto' ? planetSize * 0.16 : 0
+        planet.planet === 'Neptune'
+          ? planetSize * 1.1
+          : planet.planet === 'Uranus'
+            ? -planetSize * 0.48
+            : planet.planet === 'Pluto'
+              ? planetSize * 0.16
+              : 0
       const verticalShift = planet.planet === 'Pluto' ? 0 : planet.planet === 'Neptune' ? planetSize * 0.03 : planetSize * 0.06
       const offset = focusDirection
         .multiplyScalar(focusDistance)

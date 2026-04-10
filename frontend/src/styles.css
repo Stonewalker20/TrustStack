@@ -161,21 +161,21 @@ a {
 .hero-stage-cluster {
   position: absolute;
   right: 24px;
-  top: 210px;
-  bottom: 108px;
+  top: 188px;
+  bottom: 98px;
   z-index: 4;
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .hero-stage-panel {
-  width: min(640px, calc(100vw - 420px));
+  width: min(708px, calc(100vw - 396px));
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100vh - 318px);
-  padding: 15px 15px 13px;
+  max-height: calc(100vh - 286px);
+  padding: 14px 14px 12px;
   border-radius: 28px;
   border: 1px solid rgba(125, 211, 252, 0.16);
   background: linear-gradient(180deg, rgba(6, 12, 22, 0.94), rgba(7, 14, 25, 0.86));
@@ -189,9 +189,9 @@ a {
 .hero-stage-panel-head {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   align-items: start;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .hero-stage-panel-head h2 {
@@ -207,7 +207,7 @@ a {
 
 .stage-stack {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .hero-journey-card {
@@ -311,7 +311,7 @@ a {
   z-index: 4;
   width: 280px;
   max-width: 280px;
-  padding: 16px 14px 14px;
+  padding: 14px 13px 13px;
 }
 
 .hero-guide-popup h3 {
@@ -553,20 +553,22 @@ a {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   align-items: end;
 }
 
 .section-heading h2 {
   margin: 8px 0 0;
-  font-size: clamp(1.9rem, 3vw, 3rem);
-  line-height: 1.05;
+  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
+  line-height: 1.08;
   max-width: 18ch;
 }
 
 .section-heading p {
-  max-width: 58ch;
+  max-width: 50ch;
   margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
 }
 
 .framework-shell {
@@ -577,26 +579,26 @@ a {
 .framework-detail-head {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   align-items: start;
 }
 
 .framework-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 1.06fr);
-  gap: 14px;
+  gap: 12px;
   align-items: start;
 }
 
 .framework-track {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .framework-node {
-  min-height: 154px;
-  padding: 12px;
+  min-height: 138px;
+  padding: 10px;
 }
 
 .framework-node-topline,
@@ -624,30 +626,30 @@ a {
 }
 
 .framework-node h3 {
-  margin: 9px 0 7px;
-  font-size: 1rem;
+  margin: 8px 0 6px;
+  font-size: 0.94rem;
 }
 
 .framework-node p {
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 0.81rem;
+  line-height: 1.38;
 }
 
 .framework-detail {
   min-height: 100%;
-  padding: 14px;
+  padding: 12px;
 }
 
 .framework-grid {
   display: grid;
   grid-template-columns: 1fr 0.96fr;
-  gap: 14px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .framework-note {
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: 10px;
+  padding: 10px;
   border-radius: 16px;
   background: rgba(5, 12, 22, 0.7);
   border: 1px solid var(--line);
@@ -657,15 +659,15 @@ a {
 
 .signal-panel h4,
 .framework-evidence h4 {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .signal-row {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) 32px;
-  gap: 8px;
+  grid-template-columns: 70px minmax(0, 1fr) 30px;
+  gap: 6px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .signal-bar {
@@ -698,10 +700,15 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   border: 1px solid rgba(125, 211, 252, 0.16);
+}
+
+.hero-stage-panel .panel,
+.hero-stage-panel .card {
+  padding: 14px;
 }
 
 .badge {
