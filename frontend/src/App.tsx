@@ -325,7 +325,7 @@ export default function App() {
         return (
           <div className="stage-stack">
             <RiskPanel result={result} />
-            <ResultsSection result={result} runs={runs} signals={trustSignals} />
+            <ResultsSection result={result} runs={runs} signals={trustSignals} minimal />
           </div>
         )
       case 5:

@@ -1093,6 +1093,10 @@ a {
   gap: 14px;
 }
 
+.score-orbit--minimal {
+  gap: 12px;
+}
+
 .score-ring {
   position: relative;
   display: grid;
@@ -1101,6 +1105,14 @@ a {
   border-radius: 18px;
   background: rgba(6, 12, 21, 0.78);
   border: 1px solid rgba(125, 211, 252, 0.08);
+}
+
+.score-ring--minimal {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .score-ring-svg {
