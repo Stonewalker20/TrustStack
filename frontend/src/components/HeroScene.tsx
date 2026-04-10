@@ -522,6 +522,7 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
   const controlsRef = useRef<any>(null)
   const targetPosition = useRef(DEFAULT_CAMERA_POSITION.clone())
   const targetLookAt = useRef(DEFAULT_CAMERA_TARGET.clone())
+  const focusCoverage = 0.4
 
   useFrame((state) => {
     if (selectedIndex === null) {
@@ -531,12 +532,14 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       const planet = PLANETS[selectedIndex]
       const planetSize = getPlanetVisualSize(planet)
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
+      const fovRadians = (camera.fov * Math.PI) / 180
+      const focusDistance = planetSize / (focusCoverage * Math.tan(fovRadians / 2))
       const offset = position
         .clone()
         .sub(SUN_POSITION)
         .normalize()
-        .multiplyScalar(Math.max(planetSize * 2.2, 0.42))
-        .add(new THREE.Vector3(0, planetSize * 0.12, 0))
+        .multiplyScalar(focusDistance)
+        .add(new THREE.Vector3(0, planetSize * 0.16, 0))
 
       targetLookAt.current.copy(position)
       targetPosition.current.copy(position.clone().add(offset))
