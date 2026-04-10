@@ -1,5 +1,5 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Html, Line, OrbitControls, Sparkles, Stars } from '@react-three/drei'
+import { Line, OrbitControls, Sparkles, Stars } from '@react-three/drei'
 import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -601,11 +601,6 @@ function PlanetBody({
           </mesh>
         ) : null}
         <MoonSystem planet={planet} />
-        <Html distanceFactor={10} position={[-planet.size * 1.15, planet.size * 1.22, 0]} transform>
-          <div className={`scene-label ${active || selected ? 'scene-label--active' : ''}`}>
-            {planet.subsystem} · {planet.planet}
-          </div>
-        </Html>
       </group>
     </>
   )
@@ -633,14 +628,18 @@ function SolarCore({
 
   return (
     <group>
-      <mesh ref={sunRef} position={SUN_POSITION}>
-        <sphereGeometry args={[1.38, 64, 64]} />
-        <meshStandardMaterial color="#ffd07e" emissive="#ff8f3a" emissiveIntensity={2.4} roughness={0.16} metalness={0.02} />
-      </mesh>
-      <mesh position={SUN_POSITION} scale={0.52}>
-        <sphereGeometry args={[1.38, 48, 48]} />
-        <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
-      </mesh>
+      {selectedIndex === null ? (
+        <>
+          <mesh ref={sunRef} position={SUN_POSITION}>
+            <sphereGeometry args={[1.38, 64, 64]} />
+            <meshStandardMaterial color="#ffd07e" emissive="#ff8f3a" emissiveIntensity={2.4} roughness={0.16} metalness={0.02} />
+          </mesh>
+          <mesh position={SUN_POSITION} scale={0.52}>
+            <sphereGeometry args={[1.38, 48, 48]} />
+            <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
+          </mesh>
+        </>
+      ) : null}
       <ISSOrbit />
       {PLANETS.map((planet, index) => (
         <PlanetBody
