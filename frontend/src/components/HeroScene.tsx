@@ -21,7 +21,7 @@ type SubsystemPlanet = {
   longitudeOfPerihelionDeg: number
   meanLongitudeDeg: number
   moonCount: number
-  size: number
+  diameterRatioEarth: number
   color: string
   emissive: string
   band: string
@@ -45,6 +45,7 @@ type OrbitalBody = Pick<
 
 const ORBIT_SCALE = 1.12
 const SCREEN_ORBIT_SECONDS = 300
+const EARTH_VISUAL_DIAMETER = 0.11
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 8.6, 21.5)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
@@ -61,7 +62,7 @@ const PLANETS: SubsystemPlanet[] = [
     longitudeOfPerihelionDeg: 77.45645,
     meanLongitudeDeg: 252.25084,
     moonCount: 0,
-    size: 0.2,
+    diameterRatioEarth: 0.383,
     color: '#a8adb7',
     emissive: '#252b36',
     band: '#cfd5de',
@@ -79,7 +80,7 @@ const PLANETS: SubsystemPlanet[] = [
     longitudeOfPerihelionDeg: 131.53298,
     meanLongitudeDeg: 181.97973,
     moonCount: 0,
-    size: 0.31,
+    diameterRatioEarth: 0.949,
     color: '#dcb77c',
     emissive: '#6f4d21',
     band: '#fff0cc',
@@ -97,7 +98,7 @@ const PLANETS: SubsystemPlanet[] = [
     longitudeOfPerihelionDeg: 102.94719,
     meanLongitudeDeg: 100.46435,
     moonCount: 1,
-    size: 0.34,
+    diameterRatioEarth: 1,
     color: '#3f7eff',
     emissive: '#173f77',
     band: '#6ed27f',
@@ -116,7 +117,7 @@ const PLANETS: SubsystemPlanet[] = [
     longitudeOfPerihelionDeg: 336.04084,
     meanLongitudeDeg: 355.45332,
     moonCount: 2,
-    size: 0.28,
+    diameterRatioEarth: 0.532,
     color: '#c96846',
     emissive: '#6d2719',
     band: '#e9b097',
@@ -135,7 +136,7 @@ const PLANETS: SubsystemPlanet[] = [
     longitudeOfPerihelionDeg: 14.75385,
     meanLongitudeDeg: 34.40438,
     moonCount: 95,
-    size: 0.62,
+    diameterRatioEarth: 11.21,
     color: '#cba274',
     emissive: '#6a4822',
     band: '#f5e4c9',
@@ -153,7 +154,7 @@ const PLANETS: SubsystemPlanet[] = [
     longitudeOfPerihelionDeg: 92.43194,
     meanLongitudeDeg: 49.94432,
     moonCount: 274,
-    size: 0.56,
+    diameterRatioEarth: 9.45,
     color: '#d5bf86',
     emissive: '#5b4721',
     band: '#fef1c4',
@@ -207,6 +208,10 @@ function getOrbitalPosition(planet: OrbitalBody, elapsedDaysSinceEpoch: number) 
 
 function getSimulationDays(orbitalPeriodDays: number, elapsedSeconds: number) {
   return ((elapsedSeconds % SCREEN_ORBIT_SECONDS) / SCREEN_ORBIT_SECONDS) * orbitalPeriodDays
+}
+
+function getPlanetVisualSize(planet: SubsystemPlanet) {
+  return planet.diameterRatioEarth * EARTH_VISUAL_DIAMETER
 }
 
 function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolean }) {
@@ -327,6 +332,64 @@ function AsteroidBelt() {
   )
 }
 
+function TrojanFields() {
+  const groupRef = useRef<THREE.Group>(null)
+  const jupiter = PLANETS.find((planet) => planet.planet === 'Jupiter')!
+  const trojans = useMemo(
+    () =>
+      Array.from({ length: 280 }, (_, index) => {
+        const clusterOffset = index < 140 ? 60 : -60
+        const spread = (Math.random() - 0.5) * 22
+        const semimajorAxisAu = jupiter.semimajorAxisAu + (Math.random() - 0.5) * 0.22
+        return {
+          orbit: {
+            siderealDays: jupiter.siderealDays + (Math.random() - 0.5) * 180,
+            semimajorAxisAu,
+            eccentricity: Math.max(0.01, jupiter.eccentricity + (Math.random() - 0.5) * 0.03),
+            inclinationDeg: Math.max(0.2, jupiter.inclinationDeg + (Math.random() - 0.5) * 18),
+            ascendingNodeDeg: jupiter.ascendingNodeDeg + (Math.random() - 0.5) * 18,
+            longitudeOfPerihelionDeg: jupiter.longitudeOfPerihelionDeg + (Math.random() - 0.5) * 12,
+            meanLongitudeDeg: jupiter.meanLongitudeDeg + clusterOffset + spread,
+          },
+          rotation: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [
+            number,
+            number,
+            number,
+          ],
+          scale: [0.018 + Math.random() * 0.03, 0.01 + Math.random() * 0.018, 0.016 + Math.random() * 0.026] as [
+            number,
+            number,
+            number,
+          ],
+        }
+      }),
+    [jupiter],
+  )
+
+  useFrame((state) => {
+    if (!groupRef.current) return
+    groupRef.current.children.forEach((child, index) => {
+      const asteroid = trojans[index]
+      const position = getOrbitalPosition(
+        asteroid.orbit as OrbitalBody,
+        getSimulationDays(asteroid.orbit.siderealDays, state.clock.getElapsedTime()),
+      )
+      child.position.copy(position)
+    })
+  })
+
+  return (
+    <group ref={groupRef}>
+      {trojans.map((asteroid, index) => (
+        <mesh key={index} rotation={asteroid.rotation} scale={asteroid.scale}>
+          <dodecahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color="#7b6f63" emissive="#17110d" roughness={0.95} metalness={0.02} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
 function ISSOrbit() {
   const groupRef = useRef<THREE.Group>(null)
 
@@ -408,13 +471,14 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       targetLookAt.current.copy(DEFAULT_CAMERA_TARGET)
     } else {
       const planet = PLANETS[selectedIndex]
+      const planetSize = getPlanetVisualSize(planet)
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
       const offset = position
         .clone()
         .sub(SUN_POSITION)
         .normalize()
-        .multiplyScalar(Math.max(planet.size * 3.6, 1.25))
-        .add(new THREE.Vector3(0, planet.size * 0.28, 0))
+        .multiplyScalar(Math.max(planetSize * 2.2, 0.42))
+        .add(new THREE.Vector3(0, planetSize * 0.12, 0))
 
       targetLookAt.current.copy(position)
       targetPosition.current.copy(position.clone().add(offset))
@@ -443,23 +507,24 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
 
 function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   const groupRef = useRef<THREE.Group>(null)
+  const planetSize = getPlanetVisualSize(planet)
   const moons = useMemo(
     () =>
       Array.from({ length: planet.moonCount }, (_, index) => {
         const band = Math.floor(index / Math.max(1, Math.ceil(planet.moonCount / 8)))
         const radius =
-          planet.size * 1.9 +
-          band * planet.size * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.48 : 0.3) +
-          (index % 8) * planet.size * 0.06
+          planetSize * 1.9 +
+          band * planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.48 : 0.3) +
+          (index % 8) * planetSize * 0.06
         return {
           phase: (index / Math.max(1, planet.moonCount)) * Math.PI * 2,
           radius,
           inclination: ((index % 9) - 4) * 0.08,
-          yOffset: ((index % 5) - 2) * planet.size * 0.04,
-          size: Math.max(planet.size * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.03 : 0.08), 0.012),
+          yOffset: ((index % 5) - 2) * planetSize * 0.04,
+          size: Math.max(planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.03 : 0.08), 0.012),
         }
       }),
-    [planet],
+    [planet, planetSize],
   )
 
   useFrame((state) => {
@@ -507,6 +572,7 @@ function PlanetBody({
   const ringRef = useRef<THREE.Mesh>(null)
   const active = activeIndex !== null && index === activeIndex
   const selected = index === selectedIndex
+  const planetSize = getPlanetVisualSize(planet)
 
   useFrame((state) => {
     const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
@@ -541,7 +607,7 @@ function PlanetBody({
       {showOrbit ? <OrbitPath planet={planet} active={active || selected} /> : null}
       <group ref={groupRef} onPointerDown={handleClick}>
         <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
-          <sphereGeometry args={[planet.size * 1.01, 48, 48]} />
+          <sphereGeometry args={[planetSize * 1.01, 48, 48]} />
           <meshStandardMaterial
             color={planet.band}
             emissive={planet.band}
@@ -554,7 +620,7 @@ function PlanetBody({
         </mesh>
         {planet.cloud ? (
           <mesh ref={cloudRef} scale={[1.035, 1.035, 1.035]}>
-            <sphereGeometry args={[planet.size, 48, 48]} />
+            <sphereGeometry args={[planetSize, 48, 48]} />
             <meshStandardMaterial
               color={planet.cloud}
               emissive={planet.cloud}
@@ -567,7 +633,7 @@ function PlanetBody({
           </mesh>
         ) : null}
         <mesh>
-          <sphereGeometry args={[planet.size, 56, 56]} />
+          <sphereGeometry args={[planetSize, 56, 56]} />
           <meshStandardMaterial
             color={planet.color}
             emissive={planet.emissive}
@@ -578,19 +644,19 @@ function PlanetBody({
         </mesh>
         {planet.poles ? (
           <>
-            <mesh position={[0, planet.size * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
-              <sphereGeometry args={[planet.size * 0.34, 24, 24]} />
+            <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
+              <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
               <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.1} />
             </mesh>
-            <mesh position={[0, -planet.size * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
-              <sphereGeometry args={[planet.size * 0.34, 24, 24]} />
+            <mesh position={[0, -planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
+              <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
               <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.08} />
             </mesh>
           </>
         ) : null}
         {planet.rings ? (
           <mesh ref={ringRef}>
-            <torusGeometry args={[planet.size * 1.72, planet.size * 0.12, 20, 140]} />
+            <torusGeometry args={[planetSize * 1.72, planetSize * 0.12, 20, 140]} />
             <meshStandardMaterial
               color={planet.rings}
               emissive={planet.rings}
@@ -654,7 +720,12 @@ function SolarCore({
           onSelectPlanet={onSelectPlanet}
         />
       ))}
-      {selectedIndex === null ? <AsteroidBelt /> : null}
+      {selectedIndex === null ? (
+        <>
+          <AsteroidBelt />
+          <TrojanFields />
+        </>
+      ) : null}
     </group>
   )
 }
