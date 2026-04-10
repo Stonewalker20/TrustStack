@@ -343,21 +343,38 @@ function DeepField() {
       })),
     [],
   )
+  const upperStars = useMemo<StellarBody[]>(
+    () =>
+      Array.from({ length: 180 }, () => ({
+        distance: [
+          (Math.random() - 0.5) * 210,
+          12 + Math.random() * 64,
+          -70 - Math.random() * 70,
+        ],
+        diameterRatioSun: 0.08 + Math.random() * 3.4,
+        color: ['#f8fafc', '#e0f2fe', '#dbeafe', '#fef3c7'][Math.floor(Math.random() * 4)],
+      })),
+    [],
+  )
 
   return (
     <group>
-      <mesh position={[0, 1.2, -26]} rotation={[0, 0, -0.18]} scale={[120, 18, 1]}>
+      <mesh position={[0, 2.8, -26]} rotation={[0, 0, -0.18]} scale={[128, 24, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#edf6ff" transparent opacity={0.05} />
+        <meshBasicMaterial color="#f3f8ff" transparent opacity={0.08} />
       </mesh>
-      <mesh position={[0, 1.2, -24]} rotation={[0, 0, -0.18]} scale={[128, 8, 1]}>
+      <mesh position={[0, 2.2, -24]} rotation={[0, 0, -0.18]} scale={[136, 10, 1]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#fff4c2" transparent opacity={0.06} />
+        <meshBasicMaterial color="#fff4c2" transparent opacity={0.08} />
+      </mesh>
+      <mesh position={[0, 20, -32]} rotation={[0, 0, -0.08]} scale={[144, 34, 1]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial color="#dbeafe" transparent opacity={0.05} />
       </mesh>
       {galaxies.map((galaxy, index) => (
         <mesh key={index} position={galaxy.position} rotation={[0, 0, galaxy.rotation]} scale={galaxy.scale}>
           <planeGeometry args={[1, 1]} />
-          <meshBasicMaterial color={galaxy.color} transparent opacity={0.12} />
+          <meshBasicMaterial color={galaxy.color} transparent opacity={0.14} />
         </mesh>
       ))}
       {stars.map((star, index) => (
@@ -366,7 +383,14 @@ function DeepField() {
           <meshBasicMaterial color={star.color} transparent opacity={0.85} />
         </mesh>
       ))}
+      {upperStars.map((star, index) => (
+        <mesh key={`upper-${index}`} position={star.distance}>
+          <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
+          <meshBasicMaterial color={star.color} transparent opacity={0.94} />
+        </mesh>
+      ))}
       <Sparkles count={180} scale={[84, 34, 26]} size={3.2} speed={0.16} opacity={0.58} color="#f8fbff" />
+      <Sparkles count={220} scale={[118, 42, 28]} position={[0, 18, -18]} size={2.6} speed={0.12} opacity={0.46} color="#eaf4ff" />
     </group>
   )
 }
@@ -572,6 +596,7 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
   const targetPosition = useRef(DEFAULT_CAMERA_POSITION.clone())
   const targetLookAt = useRef(DEFAULT_CAMERA_TARGET.clone())
   const focusCoverage = 0.4
+  const defaultViewDirection = useMemo(() => DEFAULT_CAMERA_POSITION.clone().sub(DEFAULT_CAMERA_TARGET).normalize(), [])
 
   useFrame((state) => {
     if (selectedIndex === null) {
@@ -583,12 +608,12 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
       const fovRadians = (((camera as THREE.PerspectiveCamera).fov ?? 34) * Math.PI) / 180
       const focusDistance = planetSize / (focusCoverage * Math.tan(fovRadians / 2))
-      const offset = position
+      const antiSunDirection = position
         .clone()
         .sub(SUN_POSITION)
         .normalize()
-        .multiplyScalar(focusDistance)
-        .add(new THREE.Vector3(0, planetSize * 0.16, 0))
+      const focusDirection = antiSunDirection.multiplyScalar(0.78).add(defaultViewDirection.clone().multiplyScalar(0.22)).normalize()
+      const offset = focusDirection.multiplyScalar(focusDistance).add(new THREE.Vector3(0, planetSize * 0.06, 0))
 
       targetLookAt.current.copy(position)
       targetPosition.current.copy(position.clone().add(offset))
@@ -857,14 +882,14 @@ function SolarCore({
 export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearSelection }: HeroSceneProps) {
   return (
     <Canvas className="hero-canvas" camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34 }} onPointerMissed={onClearSelection}>
-      <color attach="background" args={['#08111d']} />
-      <fog attach="fog" args={['#08111d', 20, 64]} />
+      <color attach="background" args={['#102033']} />
+      <fog attach="fog" args={['#102033', 20, 68]} />
       <ambientLight intensity={0.34} />
       <pointLight position={[0, 0, 0]} intensity={125} color="#ffb84d" />
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
-      <Stars radius={160} depth={110} count={16000} factor={6.6} saturation={0.08} fade speed={0.42} />
+      <Stars radius={170} depth={120} count={21000} factor={7.2} saturation={0.1} fade speed={0.42} />
       <DeepField />
       <Comets />
       <Suspense fallback={null}>
