@@ -1,5 +1,5 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Line, OrbitControls, Stars, useTexture } from '@react-three/drei'
+import { Line, OrbitControls, useTexture } from '@react-three/drei'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -46,12 +46,6 @@ type OrbitalBody = Pick<
   | 'longitudeOfPerihelionDeg'
   | 'meanLongitudeDeg'
 >
-
-type StellarBody = {
-  distance: [number, number, number]
-  diameterRatioSun: number
-  color: string
-}
 
 const ORBIT_SCALE = 0.94
 const SCREEN_ORBIT_SECONDS = 300
@@ -391,51 +385,32 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
   )
 }
 
-function DeepField() {
-  const sunVisualDiameter = getSunVisualDiameter()
-  const stars = useMemo<StellarBody[]>(
+function ReferenceSkybox() {
+  const { scene } = useThree()
+  const skyTexture = useMemo(
     () =>
-      Array.from({ length: 72 }, () => ({
-        distance: [
-          (Math.random() - 0.5) * 220,
-          (Math.random() - 0.5) * 110,
-          -80 - Math.random() * 90,
-        ],
-        diameterRatioSun: 0.15 + Math.random() * 8,
-        color: ['#f8fafc', '#e0f2fe', '#dbeafe', '#fde68a'][Math.floor(Math.random() * 4)],
-      })),
-    [],
-  )
-  const upperStars = useMemo<StellarBody[]>(
-    () =>
-      Array.from({ length: 150 }, () => ({
-        distance: [
-          (Math.random() - 0.5) * 210,
-          12 + Math.random() * 64,
-          -70 - Math.random() * 70,
-        ],
-        diameterRatioSun: 0.08 + Math.random() * 3.4,
-        color: ['#f8fafc', '#e0f2fe', '#dbeafe', '#fef3c7'][Math.floor(Math.random() * 4)],
-      })),
+      new THREE.CubeTextureLoader().load([
+        '/textures/reference-sky/3.jpg',
+        '/textures/reference-sky/1.jpg',
+        '/textures/reference-sky/2.jpg',
+        '/textures/reference-sky/2.jpg',
+        '/textures/reference-sky/4.jpg',
+        '/textures/reference-sky/2.jpg',
+      ]),
     [],
   )
 
-  return (
-    <group>
-      {stars.map((star, index) => (
-        <mesh key={index} position={star.distance}>
-          <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
-          <meshBasicMaterial color={star.color} transparent opacity={0.8} />
-        </mesh>
-      ))}
-      {upperStars.map((star, index) => (
-        <mesh key={`upper-${index}`} position={star.distance}>
-          <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
-          <meshBasicMaterial color={star.color} transparent opacity={0.88} />
-        </mesh>
-      ))}
-    </group>
-  )
+  useEffect(() => {
+    const previousBackground = scene.background
+    skyTexture.colorSpace = THREE.SRGBColorSpace
+    scene.background = skyTexture
+
+    return () => {
+      scene.background = previousBackground
+    }
+  }, [scene, skyTexture])
+
+  return null
 }
 
 function AsteroidBelt() {
@@ -1092,7 +1067,6 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
         canvasRef.current = gl.domElement
       }}
     >
-      <color attach="background" args={['#102033']} />
       <fog attach="fog" args={['#102033', 20, 68]} />
       <ambientLight intensity={0.22} />
       <pointLight
@@ -1103,9 +1077,8 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
-      <Stars radius={170} depth={120} count={7800} factor={6.4} saturation={0.1} fade speed={0.42} />
-      <DeepField />
       <Suspense fallback={null}>
+        <ReferenceSkybox />
         <SolarCore activeIndex={activeIndex} selectedIndex={selectedIndex} onSelectPlanet={onSelectPlanet} />
       </Suspense>
       <CameraRig selectedIndex={selectedIndex} />
