@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
 const HeroScene = lazy(() => import('./HeroScene').then((module) => ({ default: module.HeroScene })))
 
@@ -38,15 +38,6 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
     return () => window.clearInterval(id)
   }, [selectedIndex])
 
-  const metrics = useMemo(
-    () => [
-      { label: 'Prompt probes', value: '128' },
-      { label: 'Policy gates', value: '24' },
-      { label: 'Confidence sync', value: '97%' },
-    ],
-    [],
-  )
-
   const focusPlanet = (index: number) => {
     setSelectedIndex((current) => (current === index ? null : index))
     setActiveIndex(index)
@@ -75,7 +66,7 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
       </div>
 
       <div className="hero-grid">
-        <header className="hero-header">
+        <header className={`hero-header ${selectedIndex !== null ? 'hero-header--hidden' : ''}`}>
           <div className="eyebrow">Solar Trust Map</div>
           <h1>TrustStack turns the landing page into a living universe.</h1>
           <p>
@@ -94,15 +85,6 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
             </button>
           </div>
         </div>
-
-        <aside className="hero-metrics-rail" aria-label="Trust metrics">
-          {metrics.map((metric) => (
-            <div className="hero-metric-card" key={metric.label}>
-              <span>{metric.label}</span>
-              <strong>{metric.value}</strong>
-            </div>
-          ))}
-        </aside>
 
         <div className="hero-node-ring" aria-label="Subsystem planets">
           {NODES.map((node, index) => (
