@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react'
 
 const HeroScene = lazy(() => import('./HeroScene').then((module) => ({ default: module.HeroScene })))
 
@@ -19,11 +18,8 @@ type TrustHeroProps = {
 
 export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProps) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [shouldReduceMotion, setShouldReduceMotion] = useState(false)
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-  const tiltX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), { stiffness: 110, damping: 20 })
-  const tiltY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), { stiffness: 110, damping: 20 })
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -34,9 +30,13 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
   }, [])
 
   useEffect(() => {
-    const id = window.setInterval(() => setActiveIndex((current) => (current + 1) % NODES.length), 2200)
+    if (selectedIndex !== null) {
+      setActiveIndex(selectedIndex)
+      return
+    }
+    const id = window.setInterval(() => setActiveIndex((current) => (current + 1) % NODES.length), 2400)
     return () => window.clearInterval(id)
-  }, [])
+  }, [selectedIndex])
 
   const metrics = useMemo(
     () => [
@@ -47,17 +47,13 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
     [],
   )
 
+  const focusPlanet = (index: number) => {
+    setSelectedIndex((current) => (current === index ? null : index))
+    setActiveIndex(index)
+  }
+
   return (
-    <section
-      className="hero-shell"
-      onMouseMove={(event) => {
-        const bounds = (event.currentTarget as HTMLDivElement).getBoundingClientRect()
-        const x = (event.clientX - bounds.left) / bounds.width - 0.5
-        const y = (event.clientY - bounds.top) / bounds.height - 0.5
-        mouseX.set(x)
-        mouseY.set(y)
-      }}
-    >
+    <section className="hero-shell">
       <div className="hero-backdrop" />
 
       <div className="hero-visual">
@@ -65,7 +61,12 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
           <div className="hero-visual-overlay" />
           <Suspense fallback={<div className="scene-fallback">Loading trust core…</div>}>
             {!shouldReduceMotion ? (
-              <HeroScene activeIndex={activeIndex} />
+              <HeroScene
+                activeIndex={activeIndex}
+                selectedIndex={selectedIndex}
+                onSelectPlanet={(index) => focusPlanet(index)}
+                onClearSelection={() => setSelectedIndex(null)}
+              />
             ) : (
               <div className="scene-fallback">3D scene paused to respect reduced motion settings.</div>
             )}
@@ -73,52 +74,57 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
         </div>
       </div>
 
-      <motion.div className="hero-grid" style={shouldReduceMotion ? undefined : { rotateX: tiltX, rotateY: tiltY }}>
-        <div className="hero-copy">
-          <div className="eyebrow">Inside the Trust Engine</div>
-          <h1>Visualize how AI outputs earn trust before they earn action.</h1>
-          <p>
-            TrustStack turns evaluation into an interactive operations console. Watch evidence move through retrieval,
-            policy checks, red-team probes, and scoring until the system commits to a final risk verdict.
-          </p>
+      <div className="hero-grid">
+        <div className="hero-copy hero-copy--orbital">
+          <div className="hero-copy-core">
+            <div className="eyebrow">Solar Trust Map</div>
+            <h1>TrustStack turns the landing page into a living universe.</h1>
+            <p>
+              Each subsystem now occupies a real planetary role. Select a world to lock the camera onto its orbit, or
+              click open space to return to the full system view.
+            </p>
 
-          <div className="hero-actions">
-            <button className="primary primary--glow" onClick={onRunEvaluation}>
-              Run Evaluation
-            </button>
-            <button className="secondary" onClick={onExploreFramework}>
-              Explore Framework
-            </button>
-          </div>
+            <div className="hero-actions">
+              <button className="primary primary--glow" onClick={onRunEvaluation}>
+                Run Evaluation
+              </button>
+              <button className="secondary" onClick={onExploreFramework}>
+                Explore Framework
+              </button>
+            </div>
 
-          <div className="hero-metrics">
-            {metrics.map((metric) => (
-              <div className="hero-metric-card" key={metric.label}>
-                <span>{metric.label}</span>
-                <strong>{metric.value}</strong>
-              </div>
-            ))}
+            <div className="hero-metrics">
+              {metrics.map((metric) => (
+                <div className="hero-metric-card" key={metric.label}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="hero-node-rail">
+        <div className="hero-node-ring" aria-label="Subsystem planets">
           {NODES.map((node, index) => (
             <button
               key={node.subsystem}
               type="button"
-              className={`hero-node ${index === activeIndex ? 'hero-node--active' : ''}`}
-              onMouseEnter={() => setActiveIndex(index)}
-              onFocus={() => setActiveIndex(index)}
+              className={`hero-node hero-node--orbital ${index === activeIndex ? 'hero-node--active' : ''} ${
+                selectedIndex === index ? 'hero-node--selected' : ''
+              }`}
+              onClick={() => focusPlanet(index)}
             >
               <span className="hero-node-dot" />
               <div>
                 <strong>{node.subsystem}</strong>
-                <small>{node.planet} orbit {index === activeIndex ? 'in focus' : 'tracked live'}</small>
+                <small>
+                  {node.planet} {selectedIndex === index ? 'selected' : 'orbit'}
+                </small>
               </div>
             </button>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   )
 }

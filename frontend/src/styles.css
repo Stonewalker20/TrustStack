@@ -100,22 +100,17 @@ a {
 .hero-grid {
   position: relative;
   z-index: 2;
-  width: min(1440px, calc(100% - 32px));
+  width: 100%;
   min-height: 100vh;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(320px, 620px) minmax(240px, 320px);
-  align-items: end;
-  justify-content: space-between;
-  gap: 28px;
-  perspective: 1200px;
-  transform-style: preserve-3d;
-  padding: 56px 0 36px;
+  place-items: center;
+  padding: 24px;
 }
 
 .hero-copy,
 .hero-visual-frame,
-.hero-node-rail,
+.hero-node-ring,
 .panel,
 .card,
 .framework-node {
@@ -125,7 +120,6 @@ a {
 .hero-copy {
   position: relative;
   z-index: 2;
-  align-self: center;
   padding: 32px 28px;
   border-radius: 34px;
   border: 1px solid rgba(125, 211, 252, 0.14);
@@ -135,12 +129,34 @@ a {
     0 24px 80px rgba(2, 8, 18, 0.3);
 }
 
+.hero-copy--orbital {
+  width: min(620px, calc(100vw - 64px));
+  min-height: 620px;
+  padding: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, rgba(7, 14, 25, 0.18) 0 24%, rgba(7, 14, 25, 0.72) 24.5%, rgba(7, 14, 25, 0.2) 25%, rgba(7, 14, 25, 0.08) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, 0.12),
+    0 40px 110px rgba(2, 8, 18, 0.28);
+  pointer-events: none;
+}
+
+.hero-copy-core {
+  width: min(420px, 100%);
+  text-align: center;
+  pointer-events: auto;
+}
+
 .hero-copy h1 {
   margin: 10px 0 18px;
-  font-size: clamp(3rem, 7vw, 5.4rem);
-  line-height: 0.95;
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  line-height: 0.98;
   letter-spacing: -0.05em;
-  max-width: 12ch;
+  max-width: 11ch;
+  margin-inline: auto;
 }
 
 .hero-copy p,
@@ -169,6 +185,7 @@ a {
   align-items: center;
   flex-wrap: wrap;
   margin-top: 24px;
+  justify-content: center;
 }
 
 .hero-metrics {
@@ -259,6 +276,7 @@ a {
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: 0 8px 25px rgba(2, 8, 18, 0.35);
+  pointer-events: none;
 }
 
 .scene-label--active {
@@ -266,15 +284,15 @@ a {
   box-shadow: 0 0 26px rgba(96, 165, 250, 0.24);
 }
 
-.hero-node-rail {
-  position: relative;
-  z-index: 2;
+.hero-node-ring {
+  position: absolute;
+  inset: auto 24px 28px;
+  z-index: 3;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   gap: 12px;
-  align-self: end;
-  justify-self: end;
-  width: min(100%, 280px);
+  flex-wrap: wrap;
+  pointer-events: none;
 }
 
 .hero-node,
@@ -301,6 +319,17 @@ a {
   gap: 12px;
   align-items: center;
   padding: 15px 16px;
+}
+
+.hero-node--orbital {
+  min-width: 172px;
+  pointer-events: auto;
+  background: linear-gradient(180deg, rgba(8, 14, 24, 0.9), rgba(8, 14, 24, 0.72));
+}
+
+.hero-node--selected {
+  border-color: rgba(255, 208, 126, 0.54);
+  box-shadow: 0 0 26px rgba(255, 184, 77, 0.22);
 }
 
 .hero-node-dot,
@@ -817,20 +846,17 @@ a {
   }
 
   .hero-grid {
-    grid-template-columns: 1fr;
-    align-items: start;
     padding-top: 72px;
   }
 
-  .hero-copy {
-    max-width: 680px;
+  .hero-copy--orbital {
+    width: min(560px, calc(100vw - 48px));
+    min-height: 560px;
   }
 
-  .hero-node-rail {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    justify-self: stretch;
-    width: 100%;
+  .hero-node-ring {
+    inset-inline: 20px;
+    bottom: 24px;
   }
 
   .framework-track {
@@ -856,9 +882,10 @@ a {
     padding-bottom: 28px;
   }
 
-  .hero-copy {
-    padding: 24px 20px;
-    border-radius: 28px;
+  .hero-copy--orbital {
+    width: min(100%, 440px);
+    min-height: 440px;
+    padding: 34px;
   }
 
   .hero-copy h1 {
@@ -870,9 +897,15 @@ a {
   .score-orbit,
   .framework-grid,
   .method-grid,
-  .hero-node-rail,
   .framework-track {
     grid-template-columns: 1fr;
+  }
+
+  .hero-node-ring {
+    position: static;
+    width: min(100%, 420px);
+    margin-top: auto;
+    padding-bottom: 12px;
   }
 
   .hero-node {
