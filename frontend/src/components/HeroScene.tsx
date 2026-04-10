@@ -618,13 +618,13 @@ function KuiperBelt() {
   const groupRef = useRef<THREE.Group>(null)
   const bodies = useMemo(
     () =>
-      Array.from({ length: 900 }, (_, index) => {
+      Array.from({ length: 360 }, (_, index) => {
         const semimajorAxisAu = 30.5 + Math.random() * 19.5
         const eccentricity = 0.03 + Math.random() * 0.18
         const inclinationDeg = Math.random() * 22
         const ascendingNodeDeg = Math.random() * 360
         const longitudeOfPerihelionDeg = Math.random() * 360
-        const meanLongitudeDeg = (index / 900) * 360 + (Math.random() - 0.5) * 20
+        const meanLongitudeDeg = (index / 360) * 360 + (Math.random() - 0.5) * 20
         const bodyDiameterKm = 20 + Math.random() * 1800
         const bodyDiameter = getEarthDiameterScaled(bodyDiameterKm)
         return {
@@ -853,7 +853,7 @@ function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   return (
     <group ref={groupRef}>
       {moons.map((moon, index) => (
-        <mesh key={index} castShadow receiveShadow>
+        <mesh key={index}>
           <sphereGeometry args={[moon.size, 10, 10]} />
           <meshStandardMaterial
             color="#ffffff"
@@ -1156,6 +1156,7 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
       className="hero-canvas"
       shadows
       gl={{ antialias: true }}
+      dpr={[1, 1.35]}
       camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34, near: 0.001, far: 500 }}
       onPointerMissed={onClearSelection}
     >
@@ -1168,13 +1169,13 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
         color="#ffb84d"
         castShadow
         shadow-bias={-0.00008}
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
       />
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
-      <Stars radius={170} depth={120} count={21000} factor={7.2} saturation={0.1} fade speed={0.42} />
+      <Stars radius={170} depth={120} count={14000} factor={6.4} saturation={0.1} fade speed={0.42} />
       <DeepField />
       <Comets />
       <Suspense fallback={null}>
