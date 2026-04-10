@@ -6,7 +6,7 @@ class HealthResponse(BaseModel):
 
 
 class IngestResponse(BaseModel):
-    document_id: int
+    document_id: str
     filename: str
     num_chunks: int
     status: str
@@ -55,7 +55,7 @@ class QueryResponse(BaseModel):
 
 
 class RunItem(BaseModel):
-    id: int
+    id: str
     question: str
     answer: str
     confidence_score: float
@@ -66,6 +66,6 @@ class RunItem(BaseModel):
 
 
 class DocumentItem(BaseModel):
-    id: int
+    id: str
     filename: str
     uploaded_at: str

@@ -2,11 +2,9 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.db import get_db
-from app.models import Chunk, Document
+from app.repository import TrustRepository, get_repository
 from app.schemas import IngestResponse
 from app.services.chunker import chunk_pages
 from app.services.embeddings import get_embedder
@@ -23,7 +21,7 @@ def _sanitize_filename(filename: str) -> str:
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def ingest_file(file: UploadFile = File(...), repo: TrustRepository = Depends(get_repository)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename.")
 
@@ -54,26 +52,13 @@ async def ingest_file(file: UploadFile = File(...), db: Session = Depends(get_db
         destination.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail="No text could be extracted from file.")
 
-    document = Document(filename=original_name, file_path=str(destination))
-    db.add(document)
-    db.commit()
-    db.refresh(document)
-
-    db_chunks = []
+    document_id = repo.create_document(filename=original_name, file_path=str(destination))
     texts = []
     metadatas = []
     ids = []
 
     for idx, chunk in enumerate(chunks):
-        chunk_uid = f"doc{document.id}_chunk{idx}"
-        row = Chunk(
-            document_id=document.id,
-            chunk_index=idx,
-            page_num=chunk["page_num"],
-            chunk_uid=chunk_uid,
-            text=chunk["text"],
-        )
-        db_chunks.append(row)
+        chunk_uid = f"doc{document_id}_chunk{idx}"
         texts.append(chunk["text"])
         metadatas.append({
             "filename": original_name,
@@ -82,8 +67,7 @@ async def ingest_file(file: UploadFile = File(...), db: Session = Depends(get_db
         })
         ids.append(chunk_uid)
 
-    db.add_all(db_chunks)
-    db.commit()
+    repo.create_chunks(document_id=document_id, filename=original_name, chunks=chunks)
 
     try:
         embedder = get_embedder()
@@ -93,4 +77,4 @@ async def ingest_file(file: UploadFile = File(...), db: Session = Depends(get_db
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Indexing failed after upload: {exc}") from exc
 
-    return IngestResponse(document_id=document.id, filename=original_name, num_chunks=len(chunks), status="indexed")
+    return IngestResponse(document_id=document_id, filename=original_name, num_chunks=len(chunks), status="indexed")

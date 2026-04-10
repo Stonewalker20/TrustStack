@@ -1,6 +1,7 @@
 import time
 
 from app.config import settings
+from app.repository import get_repository
 from app.services.embeddings import get_embedder
 from app.services.explanations import build_query_explanation
 from app.services.llm import client as llm_client
@@ -30,6 +31,27 @@ def _extract_hits(raw: dict) -> list[dict]:
     return results
 
 
+def _rebuild_index_from_chunks(vector_store, embedder) -> int:
+    chunks = get_repository().list_chunks()
+    if not chunks:
+        return 0
+
+    ids = [chunk["chunk_uid"] for chunk in chunks]
+    documents = [chunk["text"] for chunk in chunks]
+    metadatas = [
+        {
+            "filename": chunk["filename"],
+            "page_num": chunk["page_num"],
+            "chunk_uid": chunk["chunk_uid"],
+        }
+        for chunk in chunks
+    ]
+
+    embeddings = embedder.embed_texts(documents)
+    vector_store.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
+    return len(ids)
+
+
 def answer_question(question: str, top_k: int | None = None) -> dict:
     start = time.perf_counter()
     top_k = top_k or settings.top_k
@@ -37,6 +59,8 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
     vector_store = get_vector_store()
 
     collection_size = vector_store.count()
+    if collection_size == 0:
+        collection_size = _rebuild_index_from_chunks(vector_store, embedder)
     if collection_size == 0:
         raise ValueError("No indexed documents found. Upload and index at least one document first.")
 

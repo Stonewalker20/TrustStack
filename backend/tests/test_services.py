@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import Mock, patch
 
 from app.services.explanations import build_query_explanation
-from app.services.rag import _extract_hits
+from app.services.rag import _extract_hits, _rebuild_index_from_chunks
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
 
@@ -66,6 +67,27 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertEqual(explanation["score_breakdown"][0]["label"], "Retrieval strength")
         self.assertEqual(len(explanation["flagged_concerns"]), 1)
         self.assertIn("retrieved passages", explanation["flagged_concerns"][0].lower())
+
+    def test_rebuild_index_from_repository_chunks(self):
+        fake_repo = Mock()
+        fake_repo.list_chunks.return_value = [
+            {
+                "document_id": "doc-1",
+                "filename": "policy.txt",
+                "page_num": None,
+                "chunk_uid": "docdoc-1_chunk0",
+                "text": "Inspect the system before startup.",
+            }
+        ]
+        fake_store = Mock()
+        fake_embedder = Mock()
+        fake_embedder.embed_texts.return_value = [[0.2, 0.3, 0.4]]
+
+        with patch("app.services.rag.get_repository", return_value=fake_repo):
+            indexed = _rebuild_index_from_chunks(fake_store, fake_embedder)
+
+        self.assertEqual(indexed, 1)
+        fake_store.upsert.assert_called_once()
 
 
 if __name__ == "__main__":

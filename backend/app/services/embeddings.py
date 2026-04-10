@@ -79,20 +79,39 @@ class OllamaEmbedder:
         return self.embed_texts([text])[0]
 
 
+class ResilientEmbedder:
+    def __init__(self, primary, fallback):
+        self.primary = primary
+        self.fallback = fallback
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        try:
+            return self.primary.embed_texts(texts)
+        except Exception:
+            return self.fallback.embed_texts(texts)
+
+    def embed_query(self, text: str) -> list[float]:
+        try:
+            return self.primary.embed_query(text)
+        except Exception:
+            return self.fallback.embed_query(text)
+
+
 @lru_cache(maxsize=1)
 def get_embedder():
     provider = settings.embedding_provider.lower().strip()
+    lexical = LexicalEmbedder()
 
     if provider == "ollama":
         try:
-            return OllamaEmbedder(settings.embedding_model)
+            return ResilientEmbedder(OllamaEmbedder(settings.embedding_model), lexical)
         except Exception:
-            pass
+            return lexical
 
     if provider == "local":
         try:
             return LocalSentenceTransformerEmbedder(settings.embedding_model)
         except Exception:
-            return LexicalEmbedder()
+            return lexical
 
-    return LexicalEmbedder()
+    return lexical

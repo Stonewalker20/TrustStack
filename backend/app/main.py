@@ -2,10 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.db import Base, engine
 from app.routers import documents, health, ingest, query, runs
 
-Base.metadata.create_all(bind=engine)
 settings.ensure_dirs()
 
 app = FastAPI(title=settings.app_name)
