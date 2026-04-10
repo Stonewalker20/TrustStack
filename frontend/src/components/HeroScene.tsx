@@ -56,7 +56,7 @@ const SUN_DIAMETER_KM = 1392700
 const SUN_DIAMETER_RATIO_EARTH = SUN_DIAMETER_KM / EARTH_DIAMETER_KM
 const EARTH_VISUAL_DIAMETER = 0.01
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 8.6, 21.5)
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 32, 8.5)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
 
 const PLANETS: SubsystemPlanet[] = [
@@ -613,17 +613,17 @@ function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   const moons = useMemo(
     () =>
       Array.from({ length: planet.moonCount }, (_, index) => {
-        const band = Math.floor(index / Math.max(1, Math.ceil(planet.moonCount / 8)))
+        const band = Math.floor(index / Math.max(1, Math.ceil(planet.moonCount / 10)))
         const radius =
-          planetSize * 1.9 +
-          band * planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.48 : 0.3) +
-          (index % 8) * planetSize * 0.06
+          planetSize * 1.25 +
+          band * planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.2 : 0.12) +
+          (index % 10) * planetSize * 0.024
         return {
           phase: (index / Math.max(1, planet.moonCount)) * Math.PI * 2,
           radius,
-          inclination: ((index % 9) - 4) * 0.08,
-          yOffset: ((index % 5) - 2) * planetSize * 0.04,
-          size: Math.max(planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.03 : 0.08), 0.012),
+          inclination: ((index % 9) - 4) * 0.018,
+          yOffset: ((index % 5) - 2) * planetSize * 0.012,
+          size: Math.max(planetSize * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.007 : 0.02), 0.0025),
         }
       }),
     [planet, planetSize],
