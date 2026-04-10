@@ -121,7 +121,7 @@ export function TrustHero({
           </p>
         </header>
 
-        <div className={`hero-journey-card ${isPlutoView ? 'hero-journey-card--hidden' : ''}`}>
+        <div className={`hero-journey-card ${overviewMode || isPlutoView ? 'hero-journey-card--hidden' : ''}`}>
           <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
           <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
           <p className="muted muted--large">{activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}</p>
@@ -131,7 +131,7 @@ export function TrustHero({
           </div>
         </div>
 
-        <div className={`hero-stage-cluster ${isPlutoView ? 'hero-stage-cluster--pluto' : ''}`}>
+        <div className={`hero-stage-cluster ${isPlutoView ? 'hero-stage-cluster--pluto' : ''} ${overviewMode ? 'hero-stage-cluster--hidden' : ''}`}>
           {showGuidePopup ? (
             <aside className="hero-guide-popup panel panel--glass" role="dialog" aria-live="polite" aria-label="Guided tour message">
               <button type="button" className="hero-guide-close" aria-label="Dismiss guided tour message" onClick={handleDismissGuide}>

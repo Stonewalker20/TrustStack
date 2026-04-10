@@ -177,6 +177,12 @@ a {
   display: block;
 }
 
+.hero-stage-cluster--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .hero-stage-panel {
   width: min(708px, calc(100vw - 396px));
   display: flex;
