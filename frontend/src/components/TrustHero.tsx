@@ -119,16 +119,13 @@ export function TrustHero({
           </p>
         </header>
 
-        <div className="hero-journey-card panel panel--glass">
-          <div className="framework-node-topline">
-            <span>{activeNode?.planet ?? 'Journey'}</span>
-            <strong>{guideEnabled ? 'Guide enabled' : 'Guide hidden'}</strong>
-          </div>
+        <div className="hero-journey-card">
+          <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
           <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
           <p className="muted muted--large">{activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}</p>
-          <div className="pill-grid">
-            <span className="data-pill">{activeNode?.subsystem ?? 'TrustStack'}</span>
-            <span className="data-pill">{activeIndex + 1} / {nodes.length}</span>
+          <div className="hero-journey-meta">
+            <span>{activeNode?.subsystem ?? 'TrustStack'}</span>
+            <strong>{activeIndex + 1} / {nodes.length}</strong>
           </div>
         </div>
 
