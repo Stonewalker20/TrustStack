@@ -1,6 +1,6 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import { Html, Line, OrbitControls, Sparkles, Stars } from '@react-three/drei'
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 type HeroSceneProps = {
@@ -20,6 +20,7 @@ type SubsystemPlanet = {
   ascendingNodeDeg: number
   longitudeOfPerihelionDeg: number
   meanLongitudeDeg: number
+  moonCount: number
   size: number
   color: string
   emissive: string
@@ -31,8 +32,19 @@ type SubsystemPlanet = {
   moon?: string
 }
 
-const J2000_UNIX_MS = Date.UTC(2000, 0, 1, 12, 0, 0, 0)
+type OrbitalBody = Pick<
+  SubsystemPlanet,
+  | 'siderealDays'
+  | 'semimajorAxisAu'
+  | 'eccentricity'
+  | 'inclinationDeg'
+  | 'ascendingNodeDeg'
+  | 'longitudeOfPerihelionDeg'
+  | 'meanLongitudeDeg'
+>
+
 const ORBIT_SCALE = 1.12
+const SCREEN_ORBIT_SECONDS = 60
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 8.6, 21.5)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
@@ -48,6 +60,7 @@ const PLANETS: SubsystemPlanet[] = [
     ascendingNodeDeg: 48.33167,
     longitudeOfPerihelionDeg: 77.45645,
     meanLongitudeDeg: 252.25084,
+    moonCount: 0,
     size: 0.2,
     color: '#a8adb7',
     emissive: '#252b36',
@@ -65,6 +78,7 @@ const PLANETS: SubsystemPlanet[] = [
     ascendingNodeDeg: 76.68069,
     longitudeOfPerihelionDeg: 131.53298,
     meanLongitudeDeg: 181.97973,
+    moonCount: 0,
     size: 0.31,
     color: '#dcb77c',
     emissive: '#6f4d21',
@@ -82,6 +96,7 @@ const PLANETS: SubsystemPlanet[] = [
     ascendingNodeDeg: -11.26064,
     longitudeOfPerihelionDeg: 102.94719,
     meanLongitudeDeg: 100.46435,
+    moonCount: 1,
     size: 0.34,
     color: '#3f7eff',
     emissive: '#173f77',
@@ -100,6 +115,7 @@ const PLANETS: SubsystemPlanet[] = [
     ascendingNodeDeg: 49.57854,
     longitudeOfPerihelionDeg: 336.04084,
     meanLongitudeDeg: 355.45332,
+    moonCount: 2,
     size: 0.28,
     color: '#c96846',
     emissive: '#6d2719',
@@ -118,6 +134,7 @@ const PLANETS: SubsystemPlanet[] = [
     ascendingNodeDeg: 100.55615,
     longitudeOfPerihelionDeg: 14.75385,
     meanLongitudeDeg: 34.40438,
+    moonCount: 95,
     size: 0.62,
     color: '#cba274',
     emissive: '#6a4822',
@@ -135,6 +152,7 @@ const PLANETS: SubsystemPlanet[] = [
     ascendingNodeDeg: 113.71504,
     longitudeOfPerihelionDeg: 92.43194,
     meanLongitudeDeg: 49.94432,
+    moonCount: 274,
     size: 0.56,
     color: '#d5bf86',
     emissive: '#5b4721',
@@ -164,11 +182,7 @@ function solveEccentricAnomaly(meanAnomaly: number, eccentricity: number) {
   return eccentricAnomaly
 }
 
-function getElapsedDaysSinceJ2000() {
-  return (Date.now() - J2000_UNIX_MS) / 86400000
-}
-
-function getOrbitalPosition(planet: SubsystemPlanet, elapsedDaysSinceJ2000: number) {
+function getOrbitalPosition(planet: OrbitalBody, elapsedDaysSinceEpoch: number) {
   const semimajor = planet.semimajorAxisAu * ORBIT_SCALE
   const eccentricity = planet.eccentricity
   const inclination = toRadians(planet.inclinationDeg)
@@ -177,7 +191,7 @@ function getOrbitalPosition(planet: SubsystemPlanet, elapsedDaysSinceJ2000: numb
   const argumentOfPerihelion = longitudeOfPerihelion - ascendingNode
   const initialMeanAnomaly = normalizeAngle(toRadians(planet.meanLongitudeDeg - planet.longitudeOfPerihelionDeg))
   const meanMotion = (Math.PI * 2) / planet.siderealDays
-  const meanAnomaly = normalizeAngle(initialMeanAnomaly + elapsedDaysSinceJ2000 * meanMotion)
+  const meanAnomaly = normalizeAngle(initialMeanAnomaly + elapsedDaysSinceEpoch * meanMotion)
   const eccentricAnomaly = solveEccentricAnomaly(meanAnomaly, eccentricity)
 
   const xPrime = semimajor * (Math.cos(eccentricAnomaly) - eccentricity)
@@ -189,6 +203,10 @@ function getOrbitalPosition(planet: SubsystemPlanet, elapsedDaysSinceJ2000: numb
   position.applyAxisAngle(new THREE.Vector3(0, 1, 0), ascendingNode)
 
   return position
+}
+
+function getSimulationDays(orbitalPeriodDays: number, elapsedSeconds: number) {
+  return ((elapsedSeconds % SCREEN_ORBIT_SECONDS) / SCREEN_ORBIT_SECONDS) * orbitalPeriodDays
 }
 
 function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolean }) {
@@ -256,13 +274,24 @@ function AsteroidBelt() {
   const groupRef = useRef<THREE.Group>(null)
   const asteroids = useMemo(
     () =>
-      Array.from({ length: 240 }, (_, index) => {
-        const angle = (index / 240) * Math.PI * 2
-        const radius = 3.05 + Math.random() * 0.9
-        const y = (Math.random() - 0.5) * 0.24
+      Array.from({ length: 320 }, (_, index) => {
+        const semimajorAxisAu = 2.1 + Math.random() * 1.2
+        const eccentricity = 0.02 + Math.random() * 0.16
+        const inclinationDeg = Math.random() * 16
+        const ascendingNodeDeg = Math.random() * 360
+        const longitudeOfPerihelionDeg = Math.random() * 360
+        const meanLongitudeDeg = (index / 320) * 360
         const size = 0.015 + Math.random() * 0.05
         return {
-          position: [Math.cos(angle) * radius, y, Math.sin(angle) * radius] as [number, number, number],
+          orbit: {
+            siderealDays: 1680 + semimajorAxisAu * 260,
+            semimajorAxisAu,
+            eccentricity,
+            inclinationDeg,
+            ascendingNodeDeg,
+            longitudeOfPerihelionDeg,
+            meanLongitudeDeg,
+          },
           rotation: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [
             number,
             number,
@@ -275,17 +304,21 @@ function AsteroidBelt() {
   )
 
   useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.x = 0.36
-      groupRef.current.rotation.z = 0.08
-      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.016
-    }
+    if (!groupRef.current) return
+    groupRef.current.children.forEach((child, index) => {
+      const asteroid = asteroids[index]
+      const position = getOrbitalPosition(
+        asteroid.orbit as OrbitalBody,
+        getSimulationDays(asteroid.orbit.siderealDays, state.clock.getElapsedTime()),
+      )
+      child.position.copy(position)
+    })
   })
 
   return (
     <group ref={groupRef}>
       {asteroids.map((asteroid, index) => (
-        <mesh key={index} position={asteroid.position} rotation={asteroid.rotation} scale={asteroid.scale}>
+        <mesh key={index} rotation={asteroid.rotation} scale={asteroid.scale}>
           <dodecahedronGeometry args={[1, 0]} />
           <meshStandardMaterial color="#6c7686" emissive="#0f1319" roughness={0.94} metalness={0.04} />
         </mesh>
@@ -300,7 +333,7 @@ function ISSOrbit() {
   useFrame((state) => {
     const earth = PLANETS.find((planet) => planet.planet === 'Earth')
     if (!groupRef.current || !earth) return
-    const earthPosition = getOrbitalPosition(earth, getElapsedDaysSinceJ2000())
+    const earthPosition = getOrbitalPosition(earth, getSimulationDays(earth.siderealDays, state.clock.getElapsedTime()))
     const t = state.clock.getElapsedTime()
     groupRef.current.position.copy(earthPosition)
     groupRef.current.rotation.y = t * 1.8
@@ -369,27 +402,24 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
   const targetPosition = useRef(DEFAULT_CAMERA_POSITION.clone())
   const targetLookAt = useRef(DEFAULT_CAMERA_TARGET.clone())
 
-  useEffect(() => {
+  useFrame((state) => {
     if (selectedIndex === null) {
       targetPosition.current.copy(DEFAULT_CAMERA_POSITION)
       targetLookAt.current.copy(DEFAULT_CAMERA_TARGET)
-      return
+    } else {
+      const planet = PLANETS[selectedIndex]
+      const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
+      const offset = position
+        .clone()
+        .sub(SUN_POSITION)
+        .normalize()
+        .multiplyScalar(Math.max(planet.size * 8.5, 3.2))
+        .add(new THREE.Vector3(0, planet.size * 1.8 + 0.7, 0))
+
+      targetLookAt.current.copy(position)
+      targetPosition.current.copy(position.clone().add(offset))
     }
 
-    const planet = PLANETS[selectedIndex]
-    const position = getOrbitalPosition(planet, getElapsedDaysSinceJ2000())
-    const offset = position
-      .clone()
-      .sub(SUN_POSITION)
-      .normalize()
-      .multiplyScalar(Math.max(planet.size * 8.5, 3.2))
-      .add(new THREE.Vector3(0, planet.size * 1.8 + 0.7, 0))
-
-    targetLookAt.current.copy(position)
-    targetPosition.current.copy(position.clone().add(offset))
-  }, [selectedIndex])
-
-  useFrame(() => {
     camera.position.lerp(targetPosition.current, 0.055)
     if (controlsRef.current) {
       controlsRef.current.target.lerp(targetLookAt.current, 0.07)
@@ -411,6 +441,51 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
   )
 }
 
+function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
+  const groupRef = useRef<THREE.Group>(null)
+  const moons = useMemo(
+    () =>
+      Array.from({ length: planet.moonCount }, (_, index) => {
+        const band = Math.floor(index / Math.max(1, Math.ceil(planet.moonCount / 8)))
+        const radius =
+          planet.size * 1.9 +
+          band * planet.size * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.48 : 0.3) +
+          (index % 8) * planet.size * 0.06
+        return {
+          phase: (index / Math.max(1, planet.moonCount)) * Math.PI * 2,
+          radius,
+          inclination: ((index % 9) - 4) * 0.08,
+          yOffset: ((index % 5) - 2) * planet.size * 0.04,
+          size: Math.max(planet.size * (planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.03 : 0.08), 0.012),
+        }
+      }),
+    [planet],
+  )
+
+  useFrame((state) => {
+    if (!groupRef.current) return
+    const orbitAngle = ((state.clock.getElapsedTime() % SCREEN_ORBIT_SECONDS) / SCREEN_ORBIT_SECONDS) * Math.PI * 2
+    groupRef.current.children.forEach((child, index) => {
+      const moon = moons[index]
+      const angle = orbitAngle + moon.phase
+      child.position.set(Math.cos(angle) * moon.radius, moon.yOffset + Math.sin(angle * 0.7) * moon.inclination, Math.sin(angle) * moon.radius)
+    })
+  })
+
+  if (planet.moonCount === 0 || !planet.moon) return null
+
+  return (
+    <group ref={groupRef}>
+      {moons.map((moon, index) => (
+        <mesh key={index}>
+          <sphereGeometry args={[moon.size, 10, 10]} />
+          <meshStandardMaterial color={planet.moon} emissive={planet.moon} emissiveIntensity={0.08} roughness={0.58} metalness={0.01} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
 function PlanetBody({
   planet,
   index,
@@ -428,12 +503,11 @@ function PlanetBody({
   const bandRef = useRef<THREE.Mesh>(null)
   const cloudRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
-  const moonOrbitRef = useRef<THREE.Group>(null)
   const active = index === activeIndex
   const selected = index === selectedIndex
 
   useFrame((state) => {
-    const position = getOrbitalPosition(planet, getElapsedDaysSinceJ2000())
+    const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
     const t = state.clock.getElapsedTime()
 
     if (groupRef.current) {
@@ -452,11 +526,6 @@ function PlanetBody({
 
     if (ringRef.current) {
       ringRef.current.rotation.set(Math.PI * 0.42, t * 0.14, Math.PI * 0.14)
-    }
-
-    if (moonOrbitRef.current) {
-      moonOrbitRef.current.rotation.y = t * 1.35
-      moonOrbitRef.current.rotation.x = 0.5
     }
   })
 
@@ -531,20 +600,7 @@ function PlanetBody({
             />
           </mesh>
         ) : null}
-        {planet.moon ? (
-          <group ref={moonOrbitRef}>
-            <mesh position={[planet.size * 1.95, 0, 0]}>
-              <sphereGeometry args={[planet.size * 0.18, 24, 24]} />
-              <meshStandardMaterial
-                color={planet.moon}
-                emissive={planet.moon}
-                emissiveIntensity={selected ? 0.24 : 0.1}
-                roughness={0.52}
-                metalness={0.02}
-              />
-            </mesh>
-          </group>
-        ) : null}
+        <MoonSystem planet={planet} />
         <Html distanceFactor={10} center>
           <div className={`scene-label ${active || selected ? 'scene-label--active' : ''}`}>
             {planet.subsystem} · {planet.planet}
