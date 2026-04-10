@@ -43,9 +43,18 @@ type OrbitalBody = Pick<
   | 'meanLongitudeDeg'
 >
 
+type StellarBody = {
+  distance: [number, number, number]
+  diameterRatioSun: number
+  color: string
+}
+
 const ORBIT_SCALE = 1.12
 const SCREEN_ORBIT_SECONDS = 300
-const EARTH_VISUAL_DIAMETER = 0.11
+const EARTH_DIAMETER_KM = 12742
+const SUN_DIAMETER_KM = 1392700
+const SUN_DIAMETER_RATIO_EARTH = SUN_DIAMETER_KM / EARTH_DIAMETER_KM
+const EARTH_VISUAL_DIAMETER = 0.01
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 8.6, 21.5)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
@@ -272,6 +281,14 @@ function getPlanetVisualSize(planet: SubsystemPlanet) {
   return planet.diameterRatioEarth * EARTH_VISUAL_DIAMETER
 }
 
+function getEarthDiameterScaled(diameterKm: number) {
+  return (diameterKm / EARTH_DIAMETER_KM) * EARTH_VISUAL_DIAMETER
+}
+
+function getSunVisualDiameter() {
+  return SUN_DIAMETER_RATIO_EARTH * EARTH_VISUAL_DIAMETER
+}
+
 function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolean }) {
   const points = useMemo(() => {
     const sampleCount = 320
@@ -293,6 +310,7 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
 }
 
 function DeepField() {
+  const sunVisualDiameter = getSunVisualDiameter()
   const galaxies = useMemo(
     () =>
       Array.from({ length: 36 }, (_, index) => ({
@@ -308,6 +326,20 @@ function DeepField() {
         scale: [3.2 + Math.random() * 7.2, 0.32 + Math.random() * 0.74, 1] as [number, number, number],
         rotation: (Math.random() - 0.5) * 0.55,
         color: ['#dbeafe', '#f8fafc', '#fde68a', '#bfdbfe', '#e0f2fe'][Math.floor(Math.random() * 5)],
+      })),
+    [],
+  )
+
+  const stars = useMemo<StellarBody[]>(
+    () =>
+      Array.from({ length: 120 }, () => ({
+        distance: [
+          (Math.random() - 0.5) * 220,
+          (Math.random() - 0.5) * 110,
+          -80 - Math.random() * 90,
+        ],
+        diameterRatioSun: 0.15 + Math.random() * 8,
+        color: ['#f8fafc', '#e0f2fe', '#dbeafe', '#fde68a'][Math.floor(Math.random() * 4)],
       })),
     [],
   )
@@ -328,6 +360,12 @@ function DeepField() {
           <meshBasicMaterial color={galaxy.color} transparent opacity={0.12} />
         </mesh>
       ))}
+      {stars.map((star, index) => (
+        <mesh key={index} position={star.distance}>
+          <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
+          <meshBasicMaterial color={star.color} transparent opacity={0.85} />
+        </mesh>
+      ))}
       <Sparkles count={180} scale={[84, 34, 26]} size={3.2} speed={0.16} opacity={0.58} color="#f8fbff" />
     </group>
   )
@@ -344,7 +382,8 @@ function AsteroidBelt() {
         const ascendingNodeDeg = Math.random() * 360
         const longitudeOfPerihelionDeg = Math.random() * 360
         const meanLongitudeDeg = (index / 320) * 360
-        const size = 0.015 + Math.random() * 0.05
+        const asteroidDiameterKm = 1 + Math.random() * 520
+        const asteroidDiameter = getEarthDiameterScaled(asteroidDiameterKm)
         return {
           orbit: {
             siderealDays: 1680 + semimajorAxisAu * 260,
@@ -360,7 +399,7 @@ function AsteroidBelt() {
             number,
             number,
           ],
-          scale: [size * 1.6, size, size * 1.2] as [number, number, number],
+          scale: [asteroidDiameter * 0.8, asteroidDiameter * 0.5, asteroidDiameter * 0.65] as [number, number, number],
         }
       }),
     [],
@@ -399,6 +438,8 @@ function TrojanFields() {
         const clusterOffset = index < 140 ? 60 : -60
         const spread = (Math.random() - 0.5) * 22
         const semimajorAxisAu = jupiter.semimajorAxisAu + (Math.random() - 0.5) * 0.22
+        const asteroidDiameterKm = 1 + Math.random() * 240
+        const asteroidDiameter = getEarthDiameterScaled(asteroidDiameterKm)
         return {
           orbit: {
             siderealDays: jupiter.siderealDays + (Math.random() - 0.5) * 180,
@@ -414,7 +455,7 @@ function TrojanFields() {
             number,
             number,
           ],
-          scale: [0.018 + Math.random() * 0.03, 0.01 + Math.random() * 0.018, 0.016 + Math.random() * 0.026] as [
+          scale: [asteroidDiameter * 0.84, asteroidDiameter * 0.52, asteroidDiameter * 0.7] as [
             number,
             number,
             number,
@@ -745,6 +786,8 @@ function SolarCore({
   onSelectPlanet: (index: number) => void
 }) {
   const sunRef = useRef<THREE.Mesh>(null)
+  const sunDiameter = getSunVisualDiameter()
+  const sunRadius = sunDiameter / 2
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
@@ -760,11 +803,11 @@ function SolarCore({
       {selectedIndex === null ? (
         <>
           <mesh ref={sunRef} position={SUN_POSITION}>
-            <sphereGeometry args={[1.38, 64, 64]} />
+            <sphereGeometry args={[sunRadius, 64, 64]} />
             <meshStandardMaterial color="#ffd07e" emissive="#ff8f3a" emissiveIntensity={2.4} roughness={0.16} metalness={0.02} />
           </mesh>
           <mesh position={SUN_POSITION} scale={0.52}>
-            <sphereGeometry args={[1.38, 48, 48]} />
+            <sphereGeometry args={[sunRadius, 48, 48]} />
             <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
           </mesh>
         </>
