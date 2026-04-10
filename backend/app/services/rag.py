@@ -2,6 +2,7 @@ import time
 
 from app.config import settings
 from app.services.embeddings import get_embedder
+from app.services.explanations import build_query_explanation
 from app.services.llm import client as llm_client
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
@@ -59,6 +60,14 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
     confidence_score = compute_confidence(evidence_scores, citations, insufficient_evidence, answer)
     risk_flags = build_risk_flags(evidence_scores, citations, insufficient_evidence, answer)
     trust_summary = summarize_trust(confidence_score, risk_flags)
+    explanation = build_query_explanation(
+        confidence_score=confidence_score,
+        evidence_scores=evidence_scores,
+        citations=citations,
+        insufficient_evidence=insufficient_evidence,
+        risk_flags=risk_flags,
+        answer=answer,
+    )
     latency_ms = int((time.perf_counter() - start) * 1000)
 
     return {
@@ -71,4 +80,5 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         "trust_summary": trust_summary,
         "insufficient_evidence": insufficient_evidence,
         "latency_ms": latency_ms,
+        "explanation": explanation,
     }

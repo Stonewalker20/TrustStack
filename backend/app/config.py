@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,6 +31,19 @@ class Settings(BaseSettings):
     weak_retrieval_score: float = 0.45
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug(cls, value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes", "on", "debug", "development"}:
+                return True
+            if normalized in {"false", "0", "no", "off", "release", "prod", "production"}:
+                return False
+        return bool(value)
 
     def ensure_dirs(self) -> None:
         Path(self.chroma_persist_dir).mkdir(parents=True, exist_ok=True)

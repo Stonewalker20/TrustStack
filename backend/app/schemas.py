@@ -25,6 +25,22 @@ class EvidenceItem(BaseModel):
     text: str
 
 
+class ExplanationFactor(BaseModel):
+    label: str
+    value: float
+    detail: str
+
+
+class QueryExplanation(BaseModel):
+    overview: str
+    teaching_points: list[str]
+    review_recommendation: str
+    score_breakdown: list[ExplanationFactor]
+    evidence_strength: str
+    citation_coverage: str
+    flagged_concerns: list[str]
+
+
 class QueryResponse(BaseModel):
     question: str
     answer: str
@@ -35,6 +51,7 @@ class QueryResponse(BaseModel):
     trust_summary: str
     insufficient_evidence: bool = False
     latency_ms: int | None = None
+    explanation: QueryExplanation
 
 
 class RunItem(BaseModel):
