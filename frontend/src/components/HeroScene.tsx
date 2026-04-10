@@ -1,17 +1,32 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Html, OrbitControls, Stars } from '@react-three/drei'
-import { Suspense, useRef } from 'react'
+import { Html, OrbitControls, Sparkles, Stars } from '@react-three/drei'
+import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 type HeroSceneProps = { activeIndex: number }
 
-const PLANETS = [
+type PlanetConfig = {
+  label: string
+  radius: number
+  speed: number
+  phase: number
+  tilt: [number, number, number]
+  size: number
+  color: string
+  emissive: string
+  band: string
+  halo: string
+  rings?: string
+  moon?: string
+}
+
+const PLANETS: PlanetConfig[] = [
   {
     label: 'Safety',
     radius: 4.8,
     speed: 0.42,
     phase: 0.4,
-    tilt: [0.22, 0.1, 0.35] as [number, number, number],
+    tilt: [0.22, 0.1, 0.35],
     size: 0.34,
     color: '#8ae7ff',
     emissive: '#0f5b76',
@@ -23,7 +38,7 @@ const PLANETS = [
     radius: 6.1,
     speed: 0.3,
     phase: 2.1,
-    tilt: [-0.28, 0.18, -0.22] as [number, number, number],
+    tilt: [-0.28, 0.18, -0.22],
     size: 0.42,
     color: '#f7d17a',
     emissive: '#6d4314',
@@ -36,7 +51,7 @@ const PLANETS = [
     radius: 7.5,
     speed: 0.22,
     phase: 3.4,
-    tilt: [0.3, -0.14, 0.18] as [number, number, number],
+    tilt: [0.3, -0.14, 0.18],
     size: 0.38,
     color: '#b7a6ff',
     emissive: '#372a82',
@@ -48,7 +63,7 @@ const PLANETS = [
     radius: 5.5,
     speed: 0.36,
     phase: 4.6,
-    tilt: [-0.24, 0.22, 0.3] as [number, number, number],
+    tilt: [-0.24, 0.22, 0.3],
     size: 0.31,
     color: '#ff9ba9',
     emissive: '#6f1d3b',
@@ -61,7 +76,7 @@ const PLANETS = [
     radius: 8.6,
     speed: 0.18,
     phase: 1.2,
-    tilt: [0.16, -0.3, -0.24] as [number, number, number],
+    tilt: [0.16, -0.3, -0.24],
     size: 0.47,
     color: '#91f2c5',
     emissive: '#145b43',
@@ -73,7 +88,7 @@ const PLANETS = [
     radius: 6.8,
     speed: 0.27,
     phase: 5.3,
-    tilt: [0.12, 0.28, -0.33] as [number, number, number],
+    tilt: [0.12, 0.28, -0.33],
     size: 0.36,
     color: '#7bb2ff',
     emissive: '#1b3e86',
@@ -83,40 +98,134 @@ const PLANETS = [
   },
 ]
 
-function OrbitPlane({
-  radius,
-  rotation,
-  active,
-}: {
-  radius: number
-  rotation: [number, number, number]
-  active: boolean
-}) {
+function OrbitPlane({ radius, rotation, active }: { radius: number; rotation: [number, number, number]; active: boolean }) {
   const orbitRef = useRef<THREE.Mesh>(null)
 
   useFrame((state) => {
     if (!orbitRef.current) return
     const material = orbitRef.current.material as THREE.MeshBasicMaterial
-    material.opacity = active ? 0.78 + Math.sin(state.clock.elapsedTime * 2) * 0.05 : 0.32
+    material.opacity = active ? 0.78 + Math.sin(state.clock.elapsedTime * 2) * 0.05 : 0.22
   })
 
   return (
     <mesh ref={orbitRef} rotation={rotation}>
-      <torusGeometry args={[radius, 0.026, 16, 220]} />
-      <meshBasicMaterial color={active ? '#d5efff' : '#385067'} transparent opacity={active ? 0.78 : 0.32} />
+      <torusGeometry args={[radius, 0.024, 16, 260]} />
+      <meshBasicMaterial color={active ? '#d5efff' : '#304355'} transparent opacity={active ? 0.78 : 0.22} />
     </mesh>
   )
 }
 
-function Planet({
-  planet,
-  index,
-  activeIndex,
-}: {
-  planet: (typeof PLANETS)[number]
-  index: number
-  activeIndex: number
-}) {
+function AsteroidBelt() {
+  const groupRef = useRef<THREE.Group>(null)
+  const asteroids = useMemo(
+    () =>
+      Array.from({ length: 180 }, (_, index) => {
+        const angle = (index / 180) * Math.PI * 2
+        const radius = 9.6 + Math.random() * 1.6
+        const y = (Math.random() - 0.5) * 0.35
+        const size = 0.03 + Math.random() * 0.08
+        return {
+          position: [Math.cos(angle) * radius, y, Math.sin(angle) * radius] as [number, number, number],
+          rotation: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [
+            number,
+            number,
+            number,
+          ],
+          scale: [size * 1.6, size, size * 1.2] as [number, number, number],
+        }
+      }),
+    [],
+  )
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.x = 0.62
+      groupRef.current.rotation.z = 0.16
+      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.028
+    }
+  })
+
+  return (
+    <group ref={groupRef}>
+      {asteroids.map((asteroid, index) => (
+        <mesh key={index} position={asteroid.position} rotation={asteroid.rotation} scale={asteroid.scale}>
+          <dodecahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color="#7d8593" emissive="#0f1319" roughness={0.9} metalness={0.06} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+function ISSOrbit() {
+  const orbitRef = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (!orbitRef.current) return
+    const t = state.clock.getElapsedTime()
+    orbitRef.current.rotation.x = 0.46
+    orbitRef.current.rotation.z = -0.34
+    orbitRef.current.rotation.y = t * 0.74
+  })
+
+  return (
+    <group ref={orbitRef}>
+      <group position={[3.2, 0.08, 0]}>
+        <mesh>
+          <boxGeometry args={[0.18, 0.08, 0.08]} />
+          <meshStandardMaterial color="#cfd7e3" emissive="#293241" metalness={0.65} roughness={0.34} />
+        </mesh>
+        <mesh position={[-0.2, 0, 0]}>
+          <boxGeometry args={[0.18, 0.03, 0.16]} />
+          <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
+        </mesh>
+        <mesh position={[0.2, 0, 0]}>
+          <boxGeometry args={[0.18, 0.03, 0.16]} />
+          <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
+        </mesh>
+        <mesh position={[0, 0.07, 0]}>
+          <boxGeometry args={[0.06, 0.04, 0.04]} />
+          <meshStandardMaterial color="#eef5ff" emissive="#40556d" metalness={0.55} roughness={0.2} />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
+function BackgroundStars() {
+  const starsRef = useRef<THREE.Group>(null)
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 70 }, () => ({
+        position: new THREE.Vector3(
+          (Math.random() - 0.5) * 80,
+          (Math.random() - 0.5) * 46,
+          -12 - Math.random() * 24,
+        ),
+        scale: 0.04 + Math.random() * 0.08,
+      })),
+    [],
+  )
+
+  useFrame((state) => {
+    if (starsRef.current) {
+      starsRef.current.rotation.y = state.clock.getElapsedTime() * 0.01
+    }
+  })
+
+  return (
+    <group ref={starsRef}>
+      {stars.map((star, index) => (
+        <mesh key={index} position={star.position}>
+          <sphereGeometry args={[star.scale, 12, 12]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.85} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+function Planet({ planet, index, activeIndex }: { planet: PlanetConfig; index: number; activeIndex: number }) {
   const orbitRef = useRef<THREE.Group>(null)
   const planetRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
@@ -129,9 +238,8 @@ function Planet({
     const t = state.clock.getElapsedTime()
     if (orbitRef.current) {
       orbitRef.current.rotation.x = planet.tilt[0]
-      orbitRef.current.rotation.y = planet.tilt[1]
+      orbitRef.current.rotation.y = planet.tilt[1] + t * planet.speed
       orbitRef.current.rotation.z = planet.tilt[2]
-      orbitRef.current.rotation.y += t * planet.speed
     }
 
     if (planetRef.current) {
@@ -143,7 +251,7 @@ function Planet({
 
     if (glowRef.current && planetRef.current) {
       glowRef.current.position.copy(planetRef.current.position)
-      glowRef.current.scale.setScalar(active ? 1.45 : 1.12)
+      glowRef.current.scale.setScalar(active ? 1.5 : 1.12)
     }
 
     if (bandRef.current && planetRef.current) {
@@ -155,7 +263,7 @@ function Planet({
     if (ringRef.current && planetRef.current) {
       ringRef.current.position.copy(planetRef.current.position)
       ringRef.current.rotation.set(Math.PI * 0.4, t * 0.3, Math.PI * 0.15)
-      ringRef.current.scale.setScalar(active ? 1.06 : 1)
+      ringRef.current.scale.setScalar(active ? 1.08 : 1)
     }
 
     if (moonOrbitRef.current && planetRef.current) {
@@ -170,8 +278,8 @@ function Planet({
       <OrbitPlane radius={planet.radius} rotation={planet.tilt} active={active} />
       <group ref={orbitRef} rotation={planet.tilt}>
         <mesh ref={glowRef}>
-          <sphereGeometry args={[planet.size * 1.75, 32, 32]} />
-          <meshBasicMaterial color={planet.halo} transparent opacity={active ? 0.14 : 0.08} />
+          <sphereGeometry args={[planet.size * 1.78, 32, 32]} />
+          <meshBasicMaterial color={planet.halo} transparent opacity={active ? 0.16 : 0.08} />
         </mesh>
         <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
           <sphereGeometry args={[planet.size * 1.01, 48, 48]} />
@@ -234,7 +342,7 @@ function Planet({
 function SolarCore({ activeIndex }: { activeIndex: number }) {
   const systemRef = useRef<THREE.Group>(null)
   const sunRef = useRef<THREE.Mesh>(null)
-  const shellRef = useRef<THREE.Mesh>(null)
+  const coronaRef = useRef<THREE.Mesh>(null)
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
@@ -252,24 +360,28 @@ function SolarCore({ activeIndex }: { activeIndex: number }) {
       sunRef.current.rotation.y = t * 0.25
     }
 
-    if (shellRef.current) {
-      shellRef.current.scale.setScalar(1.25 + Math.sin(t * 0.9) * 0.04)
-      shellRef.current.rotation.y = -t * 0.18
+    if (coronaRef.current) {
+      coronaRef.current.scale.setScalar(1.26 + Math.sin(t * 0.9) * 0.05)
+      coronaRef.current.rotation.y = -t * 0.18
     }
   })
 
   return (
     <group ref={systemRef}>
-      <mesh ref={shellRef}>
+      <mesh ref={coronaRef}>
         <sphereGeometry args={[2.7, 56, 56]} />
         <meshBasicMaterial color="#79d7ff" transparent opacity={0.08} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[3.7, 56, 56]} />
+        <meshBasicMaterial color="#ffba59" transparent opacity={0.05} />
       </mesh>
       <mesh ref={sunRef}>
         <sphereGeometry args={[2.12, 64, 64]} />
         <meshStandardMaterial
           color={activeIndex % 2 === 0 ? '#fbd38d' : '#ffe79a'}
           emissive={activeIndex % 2 === 0 ? '#ff8f3a' : '#ffb347'}
-          emissiveIntensity={2.1}
+          emissiveIntensity={2.2}
           roughness={0.16}
           metalness={0.04}
         />
@@ -278,27 +390,32 @@ function SolarCore({ activeIndex }: { activeIndex: number }) {
         <sphereGeometry args={[2.12, 48, 48]} />
         <meshBasicMaterial color="#fff7cf" transparent opacity={0.38} />
       </mesh>
+      <ISSOrbit />
       {PLANETS.map((planet, index) => (
         <Planet key={planet.label} planet={planet} index={index} activeIndex={activeIndex} />
       ))}
+      <AsteroidBelt />
     </group>
   )
 }
 
 export function HeroScene({ activeIndex }: HeroSceneProps) {
   return (
-    <Canvas className="hero-canvas" dpr={[1, 1.5]} camera={{ position: [0, 0, 15], fov: 34 }}>
+    <Canvas className="hero-canvas" dpr={[1, 1.5]} camera={{ position: [0, 0, 15.5], fov: 34 }}>
       <color attach="background" args={['#020611']} />
-      <fog attach="fog" args={['#020611', 10, 26]} />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[0, 0, 0]} intensity={95} color="#ffb84d" />
+      <fog attach="fog" args={['#020611', 11, 34]} />
+      <ambientLight intensity={0.26} />
+      <pointLight position={[0, 0, 0]} intensity={120} color="#ffb84d" />
       <pointLight position={[8, 5, 7]} intensity={28} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={14} color="#6ca7ff" />
-      <Stars radius={110} depth={80} count={3400} factor={4.4} saturation={0.08} fade speed={0.7} />
+      <spotLight position={[0, 10, 10]} angle={0.4} penumbra={1} intensity={28} color="#ffffff" />
+      <Stars radius={110} depth={84} count={5200} factor={4.8} saturation={0.06} fade speed={0.55} />
+      <Sparkles count={42} scale={[34, 18, 12]} size={2.4} speed={0.18} opacity={0.32} color="#f8fbff" />
+      <BackgroundStars />
       <Suspense fallback={null}>
         <SolarCore activeIndex={activeIndex} />
       </Suspense>
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.18} />
+      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.14} />
     </Canvas>
   )
 }
