@@ -22,10 +22,13 @@ type SubsystemPlanet = {
   meanLongitudeDeg: number
   moonCount: number
   diameterRatioEarth: number
+  axialTiltDeg: number
   color: string
   emissive: string
   band: string
   halo: string
+  atmosphereColor?: string
+  atmosphereOpacity?: number
   poles?: string
   cloud?: string
   rings?: string
@@ -72,6 +75,7 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 252.25084,
     moonCount: 0,
     diameterRatioEarth: 0.383,
+    axialTiltDeg: 0.03,
     color: '#a8adb7',
     emissive: '#252b36',
     band: '#cfd5de',
@@ -90,10 +94,13 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 181.97973,
     moonCount: 0,
     diameterRatioEarth: 0.949,
+    axialTiltDeg: 177.4,
     color: '#dcb77c',
     emissive: '#6f4d21',
     band: '#fff0cc',
     halo: '#ffd99f',
+    atmosphereColor: '#f9d7a0',
+    atmosphereOpacity: 0.22,
     cloud: '#f3d8a3',
   },
   {
@@ -108,10 +115,13 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 100.46435,
     moonCount: 1,
     diameterRatioEarth: 1,
+    axialTiltDeg: 23.44,
     color: '#3f7eff',
     emissive: '#173f77',
     band: '#6ed27f',
     halo: '#7fb3ff',
+    atmosphereColor: '#8ec5ff',
+    atmosphereOpacity: 0.18,
     cloud: '#e9f3ff',
     moon: '#d8dce6',
   },
@@ -127,10 +137,13 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 355.45332,
     moonCount: 2,
     diameterRatioEarth: 0.532,
+    axialTiltDeg: 25.19,
     color: '#c96846',
     emissive: '#6d2719',
     band: '#e9b097',
     halo: '#f3a07e',
+    atmosphereColor: '#e3a28d',
+    atmosphereOpacity: 0.1,
     poles: '#f2dfd3',
     moon: '#f2e7dc',
   },
@@ -146,6 +159,7 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 34.40438,
     moonCount: 95,
     diameterRatioEarth: 11.21,
+    axialTiltDeg: 3.13,
     color: '#cba274',
     emissive: '#6a4822',
     band: '#f5e4c9',
@@ -164,10 +178,13 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 49.94432,
     moonCount: 274,
     diameterRatioEarth: 9.45,
+    axialTiltDeg: 26.73,
     color: '#d5bf86',
     emissive: '#5b4721',
     band: '#fef1c4',
     halo: '#f0d7a0',
+    atmosphereColor: '#edd5a2',
+    atmosphereOpacity: 0.1,
     cloud: '#e6d29e',
     rings: '#ccb27a',
     moon: '#ebe2cb',
@@ -184,10 +201,13 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 313.23218,
     moonCount: 28,
     diameterRatioEarth: 4.01,
+    axialTiltDeg: 97.77,
     color: '#9fd7df',
     emissive: '#235b66',
     band: '#c7eef4',
     halo: '#b8edf4',
+    atmosphereColor: '#ccfbff',
+    atmosphereOpacity: 0.12,
     cloud: '#d7f6fa',
     rings: '#93c8cf',
     moon: '#d4e0e6',
@@ -204,10 +224,13 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 304.88003,
     moonCount: 16,
     diameterRatioEarth: 3.88,
+    axialTiltDeg: 28.32,
     color: '#456de6',
     emissive: '#17377e',
     band: '#8db2ff',
     halo: '#6b93ff',
+    atmosphereColor: '#8ab4ff',
+    atmosphereOpacity: 0.12,
     cloud: '#d6e4ff',
     moon: '#d3d8f2',
   },
@@ -223,6 +246,7 @@ const PLANETS: SubsystemPlanet[] = [
     meanLongitudeDeg: 238.92881,
     moonCount: 5,
     diameterRatioEarth: 0.186,
+    axialTiltDeg: 119.61,
     color: '#b9967d',
     emissive: '#4a2f22',
     band: '#dfc3ad',
@@ -525,6 +549,61 @@ function TrojanFields() {
   )
 }
 
+function KuiperBelt() {
+  const groupRef = useRef<THREE.Group>(null)
+  const bodies = useMemo(
+    () =>
+      Array.from({ length: 900 }, (_, index) => {
+        const semimajorAxisAu = 30.5 + Math.random() * 19.5
+        const eccentricity = 0.03 + Math.random() * 0.18
+        const inclinationDeg = Math.random() * 22
+        const ascendingNodeDeg = Math.random() * 360
+        const longitudeOfPerihelionDeg = Math.random() * 360
+        const meanLongitudeDeg = (index / 900) * 360 + (Math.random() - 0.5) * 20
+        const bodyDiameterKm = 20 + Math.random() * 1800
+        const bodyDiameter = getEarthDiameterScaled(bodyDiameterKm)
+        return {
+          orbit: {
+            siderealDays: 65000 + semimajorAxisAu * 900,
+            semimajorAxisAu,
+            eccentricity,
+            inclinationDeg,
+            ascendingNodeDeg,
+            longitudeOfPerihelionDeg,
+            meanLongitudeDeg,
+          },
+          rotation: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [number, number, number],
+          scale: [bodyDiameter * 0.72, bodyDiameter * 0.5, bodyDiameter * 0.62] as [number, number, number],
+          color: ['#6f7681', '#8c7a67', '#9e9fb0', '#7f8897'][Math.floor(Math.random() * 4)],
+        }
+      }),
+    [],
+  )
+
+  useFrame((state) => {
+    if (!groupRef.current) return
+    groupRef.current.children.forEach((child, index) => {
+      const body = bodies[index]
+      const position = getOrbitalPosition(
+        body.orbit as OrbitalBody,
+        getSimulationDays(body.orbit.siderealDays, state.clock.getElapsedTime()),
+      )
+      child.position.copy(position)
+    })
+  })
+
+  return (
+    <group ref={groupRef}>
+      {bodies.map((body, index) => (
+        <mesh key={index} rotation={body.rotation} scale={body.scale}>
+          <icosahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color={body.color} emissive="#101216" roughness={0.96} metalness={0.02} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
 function ISSOrbit() {
   const groupRef = useRef<THREE.Group>(null)
   const earth = useMemo(() => PLANETS.find((planet) => planet.planet === 'Earth') ?? null, [])
@@ -730,10 +809,13 @@ function PlanetBody({
   onSelectPlanet: (index: number) => void
 }) {
   const groupRef = useRef<THREE.Group>(null)
+  const tiltRef = useRef<THREE.Group>(null)
+  const spinRef = useRef<THREE.Group>(null)
   const bandRef = useRef<THREE.Mesh>(null)
   const cloudRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
   const haloRef = useRef<THREE.Mesh>(null)
+  const atmosphereRef = useRef<THREE.Mesh>(null)
   const active = activeIndex !== null && index === activeIndex
   const selected = index === selectedIndex
   const planetSize = getPlanetVisualSize(planet)
@@ -758,8 +840,15 @@ function PlanetBody({
 
     if (groupRef.current) {
       groupRef.current.position.copy(position)
-      groupRef.current.rotation.y = t * 0.35
       groupRef.current.scale.setScalar(selected ? 1.2 : active ? 1.12 : 1)
+    }
+
+    if (tiltRef.current) {
+      tiltRef.current.rotation.z = toRadians(planet.axialTiltDeg)
+    }
+
+    if (spinRef.current) {
+      spinRef.current.rotation.y = t * 0.35
     }
 
     if (bandRef.current) {
@@ -768,6 +857,10 @@ function PlanetBody({
 
     if (cloudRef.current) {
       cloudRef.current.rotation.y = -t * 0.22
+    }
+
+    if (atmosphereRef.current) {
+      atmosphereRef.current.rotation.y = t * 0.08
     }
 
     if (haloRef.current) {
@@ -789,88 +882,106 @@ function PlanetBody({
     <>
       {showOrbit ? <OrbitPath planet={planet} active={active || selected} /> : null}
       <group ref={groupRef} onPointerDown={handleClick}>
-        <mesh ref={haloRef} scale={[1.028, 1.028, 1.028]}>
-          <sphereGeometry args={[planetSize, 40, 40]} />
-          <meshBasicMaterial color={planet.halo} transparent opacity={planet.planet === 'Earth' ? 0.15 : 0.08} />
-        </mesh>
-        <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
-          <sphereGeometry args={[planetSize * 1.01, 48, 48]} />
-          <meshStandardMaterial
-            color={planet.band}
-            emissive={planet.band}
-            emissiveIntensity={selected ? 0.28 : 0.14}
-            transparent
-            opacity={planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.3 : 0.16}
-            roughness={0.44}
-            metalness={0.02}
-          />
-        </mesh>
-        {planet.cloud ? (
-          <mesh ref={cloudRef} scale={[1.035, 1.035, 1.035]} castShadow receiveShadow>
-            <sphereGeometry args={[planetSize, 48, 48]} />
-            <meshStandardMaterial
-              color={planet.cloud}
-              emissive={planet.cloud}
-              emissiveIntensity={0.08}
-              transparent
-              opacity={planet.planet === 'Earth' ? 0.22 : 0.14}
-              roughness={0.48}
-              metalness={0.01}
-            />
+        <group ref={tiltRef}>
+          <mesh ref={haloRef} scale={[1.028, 1.028, 1.028]}>
+            <sphereGeometry args={[planetSize, 40, 40]} />
+            <meshBasicMaterial color={planet.halo} transparent opacity={planet.planet === 'Earth' ? 0.15 : 0.08} />
           </mesh>
-        ) : null}
-        <mesh castShadow receiveShadow>
-          <sphereGeometry args={[planetSize, 56, 56]} />
-          <meshStandardMaterial
-            color={planet.color}
-            emissive={planet.emissive}
-            emissiveIntensity={selected ? 1.28 : active ? 0.92 : 0.68}
-            roughness={0.42}
-            metalness={planet.planet === 'Mercury' ? 0.12 : 0.04}
-          />
-        </mesh>
-        {earthLandMasses.map((landMass, landIndex) => {
-          const position = latLonToVector3(planetSize * 1.006, landMass.lat, landMass.lon)
-          return (
-            <mesh key={landIndex} position={position} scale={landMass.scale} castShadow receiveShadow>
-              <sphereGeometry args={[planetSize * 0.32, 18, 18]} />
+          {planet.atmosphereColor ? (
+            <mesh ref={atmosphereRef} scale={[1.06, 1.06, 1.06]}>
+              <sphereGeometry args={[planetSize, 40, 40]} />
               <meshStandardMaterial
-                color={landMass.color}
-                emissive={landMass.color}
-                emissiveIntensity={0.09}
-                roughness={0.72}
+                color={planet.atmosphereColor}
+                emissive={planet.atmosphereColor}
+                emissiveIntensity={0.12}
+                transparent
+                opacity={planet.atmosphereOpacity ?? 0.12}
+                roughness={0.46}
                 metalness={0.01}
               />
             </mesh>
-          )
-        })}
-        {planet.poles ? (
-          <>
-            <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
-              <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
-              <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.1} />
+          ) : null}
+          <group ref={spinRef}>
+            <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
+              <sphereGeometry args={[planetSize * 1.01, 48, 48]} />
+              <meshStandardMaterial
+                color={planet.band}
+                emissive={planet.band}
+                emissiveIntensity={selected ? 0.28 : 0.14}
+                transparent
+                opacity={planet.planet === 'Jupiter' || planet.planet === 'Saturn' ? 0.34 : 0.16}
+                roughness={0.44}
+                metalness={0.02}
+              />
             </mesh>
-            <mesh position={[0, -planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
-              <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
-              <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.08} />
+            {planet.cloud ? (
+              <mesh ref={cloudRef} scale={[1.035, 1.035, 1.035]} castShadow receiveShadow>
+                <sphereGeometry args={[planetSize, 48, 48]} />
+                <meshStandardMaterial
+                  color={planet.cloud}
+                  emissive={planet.cloud}
+                  emissiveIntensity={0.08}
+                  transparent
+                  opacity={planet.planet === 'Earth' ? 0.24 : 0.14}
+                  roughness={0.48}
+                  metalness={0.01}
+                />
+              </mesh>
+            ) : null}
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={[planetSize, 56, 56]} />
+              <meshStandardMaterial
+                color={planet.color}
+                emissive={planet.emissive}
+                emissiveIntensity={selected ? 1.28 : active ? 0.92 : 0.68}
+                roughness={0.42}
+                metalness={planet.planet === 'Mercury' ? 0.12 : 0.04}
+              />
             </mesh>
-          </>
-        ) : null}
-        {planet.rings ? (
-          <mesh ref={ringRef} receiveShadow>
-            <torusGeometry args={[planetSize * 1.72, planetSize * 0.12, 20, 140]} />
-            <meshStandardMaterial
-              color={planet.rings}
-              emissive={planet.rings}
-              emissiveIntensity={selected ? 0.34 : 0.18}
-              transparent
-              opacity={0.76}
-              roughness={0.5}
-              metalness={0.04}
-            />
-          </mesh>
-        ) : null}
-        <MoonSystem planet={planet} />
+            {earthLandMasses.map((landMass, landIndex) => {
+              const position = latLonToVector3(planetSize * 1.006, landMass.lat, landMass.lon)
+              return (
+                <mesh key={landIndex} position={position} scale={landMass.scale} castShadow receiveShadow>
+                  <sphereGeometry args={[planetSize * 0.32, 18, 18]} />
+                  <meshStandardMaterial
+                    color={landMass.color}
+                    emissive={landMass.color}
+                    emissiveIntensity={0.09}
+                    roughness={0.72}
+                    metalness={0.01}
+                  />
+                </mesh>
+              )
+            })}
+            {planet.poles ? (
+              <>
+                <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
+                  <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
+                  <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.1} />
+                </mesh>
+                <mesh position={[0, -planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
+                  <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
+                  <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.08} />
+                </mesh>
+              </>
+            ) : null}
+          </group>
+          {planet.rings ? (
+            <mesh ref={ringRef} receiveShadow>
+              <torusGeometry args={[planetSize * 1.72, planetSize * 0.12, 20, 140]} />
+              <meshStandardMaterial
+                color={planet.rings}
+                emissive={planet.rings}
+                emissiveIntensity={selected ? 0.34 : 0.18}
+                transparent
+                opacity={0.76}
+                roughness={0.5}
+                metalness={0.04}
+              />
+            </mesh>
+          ) : null}
+          <MoonSystem planet={planet} />
+        </group>
       </group>
     </>
   )
@@ -936,6 +1047,7 @@ function SolarCore({
         <>
           <AsteroidBelt />
           <TrojanFields />
+          <KuiperBelt />
         </>
       ) : null}
     </group>
