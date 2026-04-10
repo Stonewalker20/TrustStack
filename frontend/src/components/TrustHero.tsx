@@ -9,6 +9,9 @@ const NODES = [
   { subsystem: 'Bias', planet: 'Mars' },
   { subsystem: 'Monitoring', planet: 'Jupiter' },
   { subsystem: 'Hallucination', planet: 'Saturn' },
+  { subsystem: 'Unassigned', planet: 'Uranus' },
+  { subsystem: 'Unassigned', planet: 'Neptune' },
+  { subsystem: 'Unassigned', planet: 'Pluto' },
 ]
 
 type TrustHeroProps = {
