@@ -184,7 +184,7 @@ a {
 }
 
 .hero-stage-panel {
-  width: min(708px, calc(100vw - 396px));
+  width: min(860px, calc(100vw - 344px));
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -225,7 +225,9 @@ a {
 
 .stage-stack {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px 18px;
+  align-items: start;
 }
 
 .hero-journey-card {
@@ -838,8 +840,137 @@ a {
 }
 
 .hero-stage-panel .panel,
-.hero-stage-panel .card {
-  padding: 14px;
+.hero-stage-panel .card,
+.hero-stage-panel .framework-detail,
+.hero-stage-panel .overview-card,
+.hero-stage-panel .method-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.hero-stage-panel .stack,
+.hero-stage-panel .list,
+.hero-stage-panel .results-stack,
+.hero-stage-panel .control-center,
+.hero-stage-panel .control-column {
+  gap: 10px;
+}
+
+.hero-stage-panel .section-heading {
+  margin-bottom: 10px;
+  gap: 16px;
+  align-items: start;
+}
+
+.hero-stage-panel .section-heading h2,
+.hero-stage-panel .panel h2,
+.hero-stage-panel .panel h3,
+.hero-stage-panel .method-card h3 {
+  margin: 6px 0 6px;
+  font-size: clamp(1.04rem, 1.45vw, 1.42rem);
+  line-height: 1.08;
+  max-width: none;
+}
+
+.hero-stage-panel .section-heading p,
+.hero-stage-panel .muted--large,
+.hero-stage-panel .framework-node p,
+.hero-stage-panel .overview-card p {
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.hero-stage-panel .framework-layout,
+.hero-stage-panel .framework-grid,
+.hero-stage-panel .control-center-grid {
+  gap: 10px 14px;
+}
+
+.hero-stage-panel .framework-layout {
+  grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+}
+
+.hero-stage-panel .framework-detail {
+  min-height: auto;
+}
+
+.hero-stage-panel .framework-note,
+.hero-stage-panel .answer-box--hero,
+.hero-stage-panel .run-stage,
+.hero-stage-panel .comparison-row,
+.hero-stage-panel .metric-card,
+.hero-stage-panel .overview-card,
+.hero-stage-panel .upload-dropzone {
+  background: rgba(6, 12, 21, 0.42);
+  border: 1px solid rgba(125, 211, 252, 0.08);
+  box-shadow: none;
+}
+
+.hero-stage-panel .framework-note,
+.hero-stage-panel .upload-dropzone,
+.hero-stage-panel .overview-card,
+.hero-stage-panel .answer-box--hero,
+.hero-stage-panel .run-stage,
+.hero-stage-panel .comparison-row {
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+.hero-stage-panel .framework-node {
+  min-height: 122px;
+  padding: 8px;
+}
+
+.hero-stage-panel .framework-node h3 {
+  font-size: 0.88rem;
+}
+
+.hero-stage-panel .score-ring {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.hero-stage-panel .score-ring-svg {
+  width: 102px;
+  height: 102px;
+}
+
+.hero-stage-panel .confidence-gauge-ring {
+  width: 148px;
+  height: 148px;
+}
+
+.hero-stage-panel .comparison-row,
+.hero-stage-panel .signal-row {
+  font-size: 0.8rem;
+}
+
+.hero-stage-panel .overview-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.hero-stage-panel--pluto .control-center-grid {
+  grid-template-columns: 0.95fr 1fr 0.82fr;
+}
+
+.hero-stage-panel--pluto .overview-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.hero-stage-panel .query-actions {
+  gap: 10px;
+  align-items: start;
+}
+
+.hero-stage-panel .textarea {
+  min-height: 132px;
 }
 
 .badge {
@@ -1208,6 +1339,10 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .stage-stack {
+    grid-template-columns: 1fr;
+  }
+
   .hero-grid {
     padding-top: 72px;
   }
@@ -1341,6 +1476,13 @@ a {
   .framework-grid,
   .method-grid,
   .framework-track {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-stage-panel .framework-layout,
+  .hero-stage-panel--pluto .control-center-grid,
+  .stage-stack,
+  .hero-stage-panel .overview-grid {
     grid-template-columns: 1fr;
   }
 
