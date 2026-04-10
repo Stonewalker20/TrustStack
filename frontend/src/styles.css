@@ -106,6 +106,30 @@ a {
   padding: 24px;
 }
 
+.hero-header {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  z-index: 4;
+  width: min(760px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.hero-header h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.hero-header p {
+  max-width: 58ch;
+  margin: 0 auto;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
 .hero-copy,
 .hero-visual-frame,
 .hero-node-ring,
@@ -128,9 +152,9 @@ a {
 }
 
 .hero-copy--orbital {
-  width: min(360px, calc(100vw - 80px));
-  min-height: 360px;
-  padding: 28px;
+  width: min(300px, calc(100vw - 96px));
+  min-height: 300px;
+  padding: 22px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -143,18 +167,9 @@ a {
 }
 
 .hero-copy-core {
-  width: min(240px, 100%);
+  width: min(216px, 100%);
   text-align: center;
   pointer-events: auto;
-}
-
-.hero-copy h1 {
-  margin: 10px 0 18px;
-  font-size: clamp(1.35rem, 2.8vw, 1.95rem);
-  line-height: 1.04;
-  letter-spacing: -0.05em;
-  max-width: 10ch;
-  margin-inline: auto;
 }
 
 .hero-copy p,
@@ -182,7 +197,7 @@ a {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 0;
   justify-content: center;
 }
 
@@ -190,7 +205,7 @@ a {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .hero-metric-card,
@@ -846,9 +861,13 @@ a {
     padding-top: 72px;
   }
 
+  .hero-header {
+    top: 20px;
+  }
+
   .hero-copy--orbital {
-    width: min(340px, calc(100vw - 48px));
-    min-height: 340px;
+    width: min(290px, calc(100vw - 48px));
+    min-height: 290px;
   }
 
   .hero-node-ring {
@@ -879,14 +898,20 @@ a {
     padding-bottom: 28px;
   }
 
-  .hero-copy--orbital {
-    width: min(100%, 300px);
-    min-height: 300px;
-    padding: 22px;
+  .hero-header {
+    position: absolute;
+    top: 14px;
+    width: min(100% - 12px, 520px);
   }
 
-  .hero-copy h1 {
-    font-size: clamp(1.2rem, 5vw, 1.7rem);
+  .hero-header h1 {
+    font-size: clamp(1.6rem, 7vw, 2.4rem);
+  }
+
+  .hero-copy--orbital {
+    width: min(100%, 250px);
+    min-height: 250px;
+    padding: 18px;
   }
 
   .hero-metrics,

@@ -75,15 +75,17 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
       </div>
 
       <div className="hero-grid">
+        <header className="hero-header">
+          <div className="eyebrow">Solar Trust Map</div>
+          <h1>TrustStack turns the landing page into a living universe.</h1>
+          <p>
+            Each subsystem now occupies a real planetary role. Select a world to lock the camera onto its orbit, or
+            click open space to return to the full system view.
+          </p>
+        </header>
+
         <div className="hero-copy hero-copy--orbital">
           <div className="hero-copy-core">
-            <div className="eyebrow">Solar Trust Map</div>
-            <h1>TrustStack turns the landing page into a living universe.</h1>
-            <p>
-              Each subsystem now occupies a real planetary role. Select a world to lock the camera onto its orbit, or
-              click open space to return to the full system view.
-            </p>
-
             <div className="hero-actions">
               <button className="primary primary--glow" onClick={onRunEvaluation}>
                 Run Evaluation
