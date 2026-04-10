@@ -1,5 +1,5 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Line, OrbitControls, Sparkles, Stars, useTexture } from '@react-three/drei'
+import { Line, OrbitControls, Stars, useTexture } from '@react-three/drei'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -393,40 +393,6 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
 
 function DeepField() {
   const sunVisualDiameter = getSunVisualDiameter()
-  const nebulaClouds = useMemo(
-    () =>
-      Array.from({ length: 12 }, (_, index) => ({
-        position: [
-          (Math.random() - 0.5) * 120,
-          6 + Math.sin(index * 0.7) * 16 + (Math.random() - 0.5) * 10,
-          -30 - Math.random() * 38,
-        ] as [number, number, number],
-        scale: [6 + Math.random() * 14, 1.4 + Math.random() * 3.6, 6 + Math.random() * 12] as [number, number, number],
-        color: ['#dbeafe', '#e0f2fe', '#bfdbfe', '#fde68a'][Math.floor(Math.random() * 4)],
-        opacity: 0.025 + Math.random() * 0.03,
-      })),
-    [],
-  )
-  const galaxies = useMemo(
-    () =>
-      Array.from({ length: 18 }, (_, index) => ({
-        position: [
-          (Math.random() - 0.5) * 140,
-          (Math.sin(index * 0.38) * 9 + (Math.random() - 0.5) * 10),
-          -24 - Math.random() * 26,
-        ] as [
-          number,
-          number,
-          number,
-        ],
-        scale: [2.8 + Math.random() * 5.2, 2.8 + Math.random() * 5.2, 1] as [number, number, number],
-        rotation: (Math.random() - 0.5) * 0.8,
-        color: ['#dbeafe', '#f8fafc', '#fde68a', '#bfdbfe', '#e0f2fe'][Math.floor(Math.random() * 5)],
-        opacity: 0.035 + Math.random() * 0.04,
-      })),
-    [],
-  )
-
   const stars = useMemo<StellarBody[]>(
     () =>
       Array.from({ length: 72 }, () => ({
@@ -456,18 +422,6 @@ function DeepField() {
 
   return (
     <group>
-      {nebulaClouds.map((cloud, index) => (
-        <mesh key={`cloud-${index}`} position={cloud.position} scale={cloud.scale}>
-          <sphereGeometry args={[1, 24, 24]} />
-          <meshBasicMaterial color={cloud.color} transparent opacity={cloud.opacity} depthWrite={false} />
-        </mesh>
-      ))}
-      {galaxies.map((galaxy, index) => (
-        <mesh key={index} position={galaxy.position} rotation={[0, 0, galaxy.rotation]} scale={galaxy.scale}>
-          <circleGeometry args={[1, 40]} />
-          <meshBasicMaterial color={galaxy.color} transparent opacity={galaxy.opacity} depthWrite={false} side={THREE.DoubleSide} />
-        </mesh>
-      ))}
       {stars.map((star, index) => (
         <mesh key={index} position={star.distance}>
           <sphereGeometry args={[(sunVisualDiameter * star.diameterRatioSun) / 2, 10, 10]} />
@@ -480,8 +434,6 @@ function DeepField() {
           <meshBasicMaterial color={star.color} transparent opacity={0.88} />
         </mesh>
       ))}
-      <Sparkles count={120} scale={[84, 34, 26]} size={3.2} speed={0.16} opacity={0.58} color="#f8fbff" />
-      <Sparkles count={150} scale={[118, 42, 28]} position={[0, 18, -18]} size={2.6} speed={0.12} opacity={0.46} color="#eaf4ff" />
     </group>
   )
 }
@@ -695,44 +647,6 @@ function ISSOrbit() {
         <boxGeometry args={[issPanelLength, issPanelHeight, issPanelWidth]} />
         <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
       </mesh>
-    </group>
-  )
-}
-
-function Comets() {
-  const groupRef = useRef<THREE.Group>(null)
-  const comets = useMemo(
-    () => [
-      { offset: 0, radius: 16, speed: 0.045, tail: '#dbeafe' },
-      { offset: Math.PI, radius: 20, speed: 0.032, tail: '#e0f2fe' },
-    ],
-    [],
-  )
-
-  useFrame((state) => {
-    if (!groupRef.current) return
-    groupRef.current.children.forEach((child, index) => {
-      const comet = comets[index]
-      const t = state.clock.getElapsedTime() * comet.speed + comet.offset
-      child.position.set(Math.cos(t) * comet.radius, Math.sin(t * 0.7) * 4.2, Math.sin(t) * comet.radius * 0.42 - 14)
-      child.lookAt(child.position.clone().add(new THREE.Vector3(-Math.sin(t), 0, Math.cos(t))))
-    })
-  })
-
-  return (
-    <group ref={groupRef}>
-      {comets.map((comet, index) => (
-        <group key={index}>
-          <mesh>
-            <sphereGeometry args={[0.11, 16, 16]} />
-            <meshBasicMaterial color="#ffffff" transparent opacity={0.92} />
-          </mesh>
-          <mesh position={[-0.75, 0, 0]} scale={[2.8, 0.12, 0.12]}>
-            <sphereGeometry args={[1, 24, 24]} />
-            <meshBasicMaterial color={comet.tail} transparent opacity={0.18} />
-          </mesh>
-        </group>
-      ))}
     </group>
   )
 }
@@ -1187,7 +1101,6 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
       <Stars radius={170} depth={120} count={7800} factor={6.4} saturation={0.1} fade speed={0.42} />
       <DeepField />
-      <Comets />
       <Suspense fallback={null}>
         <SolarCore activeIndex={activeIndex} selectedIndex={selectedIndex} onSelectPlanet={onSelectPlanet} />
       </Suspense>
