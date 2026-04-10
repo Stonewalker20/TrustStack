@@ -705,7 +705,7 @@ function MoonSystem({ planet }: { planet: SubsystemPlanet }) {
   return (
     <group ref={groupRef}>
       {moons.map((moon, index) => (
-        <mesh key={index}>
+        <mesh key={index} castShadow receiveShadow>
           <sphereGeometry args={[moon.size, 10, 10]} />
           <meshStandardMaterial color={planet.moon} emissive={planet.moon} emissiveIntensity={0.08} roughness={0.58} metalness={0.01} />
         </mesh>
@@ -733,6 +733,7 @@ function PlanetBody({
   const bandRef = useRef<THREE.Mesh>(null)
   const cloudRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
+  const haloRef = useRef<THREE.Mesh>(null)
   const active = activeIndex !== null && index === activeIndex
   const selected = index === selectedIndex
   const planetSize = getPlanetVisualSize(planet)
@@ -769,6 +770,11 @@ function PlanetBody({
       cloudRef.current.rotation.y = -t * 0.22
     }
 
+    if (haloRef.current) {
+      haloRef.current.rotation.y = -t * 0.08
+      haloRef.current.scale.setScalar(selected ? 1.04 : active ? 1.03 : 1.02)
+    }
+
     if (ringRef.current) {
       ringRef.current.rotation.set(Math.PI / 2, t * 0.1, 0)
     }
@@ -783,6 +789,10 @@ function PlanetBody({
     <>
       {showOrbit ? <OrbitPath planet={planet} active={active || selected} /> : null}
       <group ref={groupRef} onPointerDown={handleClick}>
+        <mesh ref={haloRef} scale={[1.028, 1.028, 1.028]}>
+          <sphereGeometry args={[planetSize, 40, 40]} />
+          <meshBasicMaterial color={planet.halo} transparent opacity={planet.planet === 'Earth' ? 0.15 : 0.08} />
+        </mesh>
         <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
           <sphereGeometry args={[planetSize * 1.01, 48, 48]} />
           <meshStandardMaterial
@@ -796,7 +806,7 @@ function PlanetBody({
           />
         </mesh>
         {planet.cloud ? (
-          <mesh ref={cloudRef} scale={[1.035, 1.035, 1.035]}>
+          <mesh ref={cloudRef} scale={[1.035, 1.035, 1.035]} castShadow receiveShadow>
             <sphereGeometry args={[planetSize, 48, 48]} />
             <meshStandardMaterial
               color={planet.cloud}
@@ -809,7 +819,7 @@ function PlanetBody({
             />
           </mesh>
         ) : null}
-        <mesh>
+        <mesh castShadow receiveShadow>
           <sphereGeometry args={[planetSize, 56, 56]} />
           <meshStandardMaterial
             color={planet.color}
@@ -822,7 +832,7 @@ function PlanetBody({
         {earthLandMasses.map((landMass, landIndex) => {
           const position = latLonToVector3(planetSize * 1.006, landMass.lat, landMass.lon)
           return (
-            <mesh key={landIndex} position={position} scale={landMass.scale}>
+            <mesh key={landIndex} position={position} scale={landMass.scale} castShadow receiveShadow>
               <sphereGeometry args={[planetSize * 0.32, 18, 18]} />
               <meshStandardMaterial
                 color={landMass.color}
@@ -836,18 +846,18 @@ function PlanetBody({
         })}
         {planet.poles ? (
           <>
-            <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
+            <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
               <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
               <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.1} />
             </mesh>
-            <mesh position={[0, -planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
+            <mesh position={[0, -planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]} castShadow receiveShadow>
               <sphereGeometry args={[planetSize * 0.34, 24, 24]} />
               <meshStandardMaterial color={planet.poles} emissive={planet.poles} emissiveIntensity={0.08} />
             </mesh>
           </>
         ) : null}
         {planet.rings ? (
-          <mesh ref={ringRef}>
+          <mesh ref={ringRef} receiveShadow>
             <torusGeometry args={[planetSize * 1.72, planetSize * 0.12, 20, 140]} />
             <meshStandardMaterial
               color={planet.rings}
@@ -900,6 +910,14 @@ function SolarCore({
             <sphereGeometry args={[sunRadius, 48, 48]} />
             <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
           </mesh>
+          <mesh position={SUN_POSITION} scale={0.72}>
+            <sphereGeometry args={[sunRadius, 40, 40]} />
+            <meshBasicMaterial color="#ffcf7a" transparent opacity={0.11} />
+          </mesh>
+          <mesh position={SUN_POSITION} scale={0.92}>
+            <sphereGeometry args={[sunRadius, 32, 32]} />
+            <meshBasicMaterial color="#ff9c45" transparent opacity={0.06} />
+          </mesh>
         </>
       ) : null}
       <ISSOrbit />
@@ -928,13 +946,23 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
   return (
     <Canvas
       className="hero-canvas"
+      shadows
+      gl={{ antialias: true }}
       camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34, near: 0.001, far: 500 }}
       onPointerMissed={onClearSelection}
     >
       <color attach="background" args={['#102033']} />
       <fog attach="fog" args={['#102033', 20, 68]} />
-      <ambientLight intensity={0.34} />
-      <pointLight position={[0, 0, 0]} intensity={125} color="#ffb84d" />
+      <ambientLight intensity={0.22} />
+      <pointLight
+        position={[0, 0, 0]}
+        intensity={135}
+        color="#ffb84d"
+        castShadow
+        shadow-bias={-0.00008}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
