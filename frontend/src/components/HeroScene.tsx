@@ -289,6 +289,18 @@ function getSunVisualDiameter() {
   return SUN_DIAMETER_RATIO_EARTH * EARTH_VISUAL_DIAMETER
 }
 
+function latLonToVector3(radius: number, latitudeDeg: number, longitudeDeg: number) {
+  const latitude = toRadians(latitudeDeg)
+  const longitude = toRadians(longitudeDeg)
+  const cosLatitude = Math.cos(latitude)
+
+  return new THREE.Vector3(
+    radius * cosLatitude * Math.cos(longitude),
+    radius * Math.sin(latitude),
+    radius * cosLatitude * Math.sin(longitude),
+  )
+}
+
 function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolean }) {
   const points = useMemo(() => {
     const sampleCount = 320
@@ -607,7 +619,11 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       const planetSize = getPlanetVisualSize(planet)
       const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
       const fovRadians = (((camera as THREE.PerspectiveCamera).fov ?? 34) * Math.PI) / 180
-      const focusDistance = planetSize / (focusCoverage * Math.tan(fovRadians / 2))
+      const focusDistance = Math.max(
+        planetSize / (focusCoverage * Math.tan(fovRadians / 2)),
+        planetSize * 6.8,
+        0.08,
+      )
       const antiSunDirection = position
         .clone()
         .sub(SUN_POSITION)
@@ -720,6 +736,20 @@ function PlanetBody({
   const active = activeIndex !== null && index === activeIndex
   const selected = index === selectedIndex
   const planetSize = getPlanetVisualSize(planet)
+  const earthLandMasses = useMemo(
+    () =>
+      planet.planet === 'Earth'
+        ? [
+            { lat: 12, lon: -102, scale: [0.32, 0.15, 0.2] as [number, number, number], color: '#4f9f4d' },
+            { lat: 2, lon: -62, scale: [0.18, 0.12, 0.12] as [number, number, number], color: '#5faa56' },
+            { lat: 18, lon: 20, scale: [0.24, 0.17, 0.16] as [number, number, number], color: '#6aae4f' },
+            { lat: 42, lon: 78, scale: [0.44, 0.18, 0.22] as [number, number, number], color: '#5c9b4c' },
+            { lat: -24, lon: 134, scale: [0.18, 0.1, 0.11] as [number, number, number], color: '#6fb45f' },
+            { lat: 72, lon: -42, scale: [0.13, 0.08, 0.09] as [number, number, number], color: '#84bf74' },
+          ]
+        : [],
+    [planet.planet],
+  )
 
   useFrame((state) => {
     const position = getOrbitalPosition(planet, getSimulationDays(planet.siderealDays, state.clock.getElapsedTime()))
@@ -740,7 +770,7 @@ function PlanetBody({
     }
 
     if (ringRef.current) {
-      ringRef.current.rotation.set(Math.PI * 0.42, t * 0.14, Math.PI * 0.14)
+      ringRef.current.rotation.set(Math.PI / 2, t * 0.1, 0)
     }
   })
 
@@ -789,6 +819,21 @@ function PlanetBody({
             metalness={planet.planet === 'Mercury' ? 0.12 : 0.04}
           />
         </mesh>
+        {earthLandMasses.map((landMass, landIndex) => {
+          const position = latLonToVector3(planetSize * 1.006, landMass.lat, landMass.lon)
+          return (
+            <mesh key={landIndex} position={position} scale={landMass.scale}>
+              <sphereGeometry args={[planetSize * 0.32, 18, 18]} />
+              <meshStandardMaterial
+                color={landMass.color}
+                emissive={landMass.color}
+                emissiveIntensity={0.09}
+                roughness={0.72}
+                metalness={0.01}
+              />
+            </mesh>
+          )
+        })}
         {planet.poles ? (
           <>
             <mesh position={[0, planetSize * 0.82, 0]} scale={[0.78, 0.2, 0.78]}>
@@ -881,7 +926,11 @@ function SolarCore({
 
 export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearSelection }: HeroSceneProps) {
   return (
-    <Canvas className="hero-canvas" camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34 }} onPointerMissed={onClearSelection}>
+    <Canvas
+      className="hero-canvas"
+      camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34, near: 0.001, far: 500 }}
+      onPointerMissed={onClearSelection}
+    >
       <color attach="background" args={['#102033']} />
       <fog attach="fog" args={['#102033', 20, 68]} />
       <ambientLight intensity={0.34} />
