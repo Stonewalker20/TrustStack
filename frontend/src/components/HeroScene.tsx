@@ -214,28 +214,40 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
 function DeepField() {
   const galaxies = useMemo(
     () =>
-      Array.from({ length: 18 }, () => ({
-        position: [(Math.random() - 0.5) * 120, (Math.random() - 0.5) * 72, -28 - Math.random() * 36] as [
+      Array.from({ length: 36 }, (_, index) => ({
+        position: [
+          (Math.random() - 0.5) * 140,
+          (Math.sin(index * 0.38) * 9 + (Math.random() - 0.5) * 10),
+          -24 - Math.random() * 26,
+        ] as [
           number,
           number,
           number,
         ],
-        scale: [1.2 + Math.random() * 2.6, 0.25 + Math.random() * 0.45, 1] as [number, number, number],
-        rotation: Math.random() * Math.PI,
-        color: ['#dbeafe', '#f8fafc', '#fde68a', '#bfdbfe'][Math.floor(Math.random() * 4)],
+        scale: [3.2 + Math.random() * 7.2, 0.32 + Math.random() * 0.74, 1] as [number, number, number],
+        rotation: (Math.random() - 0.5) * 0.55,
+        color: ['#dbeafe', '#f8fafc', '#fde68a', '#bfdbfe', '#e0f2fe'][Math.floor(Math.random() * 5)],
       })),
     [],
   )
 
   return (
     <group>
+      <mesh position={[0, 1.2, -26]} rotation={[0, 0, -0.18]} scale={[120, 18, 1]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial color="#edf6ff" transparent opacity={0.05} />
+      </mesh>
+      <mesh position={[0, 1.2, -24]} rotation={[0, 0, -0.18]} scale={[128, 8, 1]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial color="#fff4c2" transparent opacity={0.06} />
+      </mesh>
       {galaxies.map((galaxy, index) => (
         <mesh key={index} position={galaxy.position} rotation={[0, 0, galaxy.rotation]} scale={galaxy.scale}>
           <planeGeometry args={[1, 1]} />
-          <meshBasicMaterial color={galaxy.color} transparent opacity={0.08} />
+          <meshBasicMaterial color={galaxy.color} transparent opacity={0.12} />
         </mesh>
       ))}
-      <Sparkles count={64} scale={[48, 28, 18]} size={2.8} speed={0.12} opacity={0.35} color="#f8fbff" />
+      <Sparkles count={180} scale={[84, 34, 26]} size={3.2} speed={0.16} opacity={0.58} color="#f8fbff" />
     </group>
   )
 }
@@ -457,10 +469,6 @@ function PlanetBody({
     <>
       <OrbitPath planet={planet} active={active || selected} />
       <group ref={groupRef} onPointerDown={handleClick}>
-        <mesh scale={selected ? 1.65 : 1.28}>
-          <sphereGeometry args={[planet.size * 1.2, 32, 32]} />
-          <meshBasicMaterial color={planet.halo} transparent opacity={selected ? 0.16 : 0.08} />
-        </mesh>
         <mesh ref={bandRef} scale={[1.02, 1.02, 1.02]}>
           <sphereGeometry args={[planet.size * 1.01, 48, 48]} />
           <meshStandardMaterial
@@ -609,14 +617,14 @@ function SolarCore({
 export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearSelection }: HeroSceneProps) {
   return (
     <Canvas className="hero-canvas" camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34 }} onPointerMissed={onClearSelection}>
-      <color attach="background" args={['#020611']} />
-      <fog attach="fog" args={['#020611', 12, 46]} />
-      <ambientLight intensity={0.24} />
+      <color attach="background" args={['#08111d']} />
+      <fog attach="fog" args={['#08111d', 20, 64]} />
+      <ambientLight intensity={0.34} />
       <pointLight position={[0, 0, 0]} intensity={125} color="#ffb84d" />
       <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
       <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
       <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
-      <Stars radius={140} depth={92} count={9000} factor={5.8} saturation={0.06} fade speed={0.5} />
+      <Stars radius={160} depth={110} count={16000} factor={6.6} saturation={0.08} fade speed={0.42} />
       <DeepField />
       <Comets />
       <Suspense fallback={null}>
