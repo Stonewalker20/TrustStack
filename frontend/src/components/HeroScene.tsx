@@ -60,8 +60,8 @@ const SUN_DIAMETER_KM = 1392700
 const SUN_DIAMETER_RATIO_EARTH = SUN_DIAMETER_KM / EARTH_DIAMETER_KM
 const EARTH_VISUAL_DIAMETER = 0.01
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 12.2, 20.8)
-const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(-24.5, 15.2, 1.4)
+const DEFAULT_CAMERA_TARGET = new THREE.Vector3(4.2, 0, 0)
 
 const PLANETS: SubsystemPlanet[] = [
   {
@@ -720,7 +720,7 @@ function CameraRig({ selectedIndex }: { selectedIndex: number | null }) {
       enablePan={false}
       enableRotate={false}
       autoRotate={selectedIndex === null}
-      autoRotateSpeed={0.08}
+      autoRotateSpeed={0.035}
     />
   )
 }
@@ -1086,7 +1086,7 @@ export function HeroScene({ activeIndex, selectedIndex, onSelectPlanet, onClearS
       shadows={false}
       gl={{ antialias: true }}
       dpr={1}
-      camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 34, near: 0.001, far: 500 }}
+      camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 40, near: 0.001, far: 500 }}
       onPointerMissed={onClearSelection}
       onCreated={({ gl }) => {
         canvasRef.current = gl.domElement
