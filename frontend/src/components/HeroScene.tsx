@@ -60,7 +60,7 @@ const SUN_DIAMETER_KM = 1392700
 const SUN_DIAMETER_RATIO_EARTH = SUN_DIAMETER_KM / EARTH_DIAMETER_KM
 const EARTH_VISUAL_DIAMETER = 0.01
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 16.6, 28.8)
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 14.2, 24.6)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0)
 
 const PLANETS: SubsystemPlanet[] = [
@@ -1017,23 +1017,27 @@ function SolarCore({
             <meshStandardMaterial
               color="#ffffff"
               map={sunTexture}
-              emissive="#ff8f3a"
-              emissiveIntensity={1.8}
-              roughness={0.16}
+              emissive="#ff9b47"
+              emissiveIntensity={2.35}
+              roughness={0.1}
               metalness={0.02}
             />
           </mesh>
-          <mesh position={SUN_POSITION} scale={0.52}>
+          <mesh position={SUN_POSITION} scale={0.38}>
             <sphereGeometry args={[sunRadius, 48, 48]} />
-            <meshBasicMaterial color="#fff7cf" transparent opacity={0.22} />
+            <meshBasicMaterial color="#fff4c7" transparent opacity={0.28} blending={THREE.AdditiveBlending} depthWrite={false} />
           </mesh>
-          <mesh position={SUN_POSITION} scale={0.72}>
+          <mesh position={SUN_POSITION} scale={0.56}>
             <sphereGeometry args={[sunRadius, 40, 40]} />
-            <meshBasicMaterial color="#ffcf7a" transparent opacity={0.11} />
+            <meshBasicMaterial color="#ffd07a" transparent opacity={0.16} blending={THREE.AdditiveBlending} depthWrite={false} />
           </mesh>
-          <mesh position={SUN_POSITION} scale={0.92}>
+          <mesh position={SUN_POSITION} scale={0.78}>
             <sphereGeometry args={[sunRadius, 32, 32]} />
-            <meshBasicMaterial color="#ff9c45" transparent opacity={0.06} />
+            <meshBasicMaterial color="#ff9a42" transparent opacity={0.1} blending={THREE.AdditiveBlending} depthWrite={false} />
+          </mesh>
+          <mesh position={SUN_POSITION} scale={1.02}>
+            <sphereGeometry args={[sunRadius, 28, 28]} />
+            <meshBasicMaterial color="#ff7a1f" transparent opacity={0.045} blending={THREE.AdditiveBlending} depthWrite={false} />
           </mesh>
         </>
       ) : null}
