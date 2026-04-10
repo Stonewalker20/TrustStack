@@ -5,12 +5,16 @@ import * as THREE from 'three'
 
 type HeroSceneProps = { activeIndex: number }
 
-type PlanetConfig = {
-  label: string
-  radius: number
-  speed: number
-  phase: number
-  tilt: [number, number, number]
+type SubsystemPlanet = {
+  subsystem: string
+  planet: string
+  siderealDays: number
+  semimajorAxisAu: number
+  eccentricity: number
+  inclinationDeg: number
+  ascendingNodeDeg: number
+  longitudeOfPerihelionDeg: number
+  meanLongitudeDeg: number
   size: number
   color: string
   emissive: string
@@ -20,98 +24,172 @@ type PlanetConfig = {
   moon?: string
 }
 
-const PLANETS: PlanetConfig[] = [
+const J2000_UNIX_MS = Date.UTC(2000, 0, 1, 12, 0, 0, 0)
+const ORBIT_SCALE = 1.12
+
+const PLANETS: SubsystemPlanet[] = [
   {
-    label: 'Safety',
-    radius: 4.8,
-    speed: 0.42,
-    phase: 0.4,
-    tilt: [0.22, 0.1, 0.35],
-    size: 0.34,
-    color: '#8ae7ff',
-    emissive: '#0f5b76',
-    band: '#d8fbff',
-    halo: '#7de8ff',
+    subsystem: 'Safety',
+    planet: 'Mercury',
+    siderealDays: 87.969,
+    semimajorAxisAu: 0.38709893,
+    eccentricity: 0.20563069,
+    inclinationDeg: 7.00487,
+    ascendingNodeDeg: 48.33167,
+    longitudeOfPerihelionDeg: 77.45645,
+    meanLongitudeDeg: 252.25084,
+    size: 0.2,
+    color: '#b8c1cf',
+    emissive: '#30394a',
+    band: '#dbe3f0',
+    halo: '#b6c0d7',
   },
   {
-    label: 'Robustness',
-    radius: 6.1,
-    speed: 0.3,
-    phase: 2.1,
-    tilt: [-0.28, 0.18, -0.22],
-    size: 0.42,
-    color: '#f7d17a',
-    emissive: '#6d4314',
-    band: '#fff1bf',
-    halo: '#ffd27d',
-    rings: '#d8b068',
-  },
-  {
-    label: 'Hallucination',
-    radius: 7.5,
-    speed: 0.22,
-    phase: 3.4,
-    tilt: [0.3, -0.14, 0.18],
-    size: 0.38,
-    color: '#b7a6ff',
-    emissive: '#372a82',
-    band: '#d9d2ff',
-    halo: '#b7a6ff',
-  },
-  {
-    label: 'Bias',
-    radius: 5.5,
-    speed: 0.36,
-    phase: 4.6,
-    tilt: [-0.24, 0.22, 0.3],
+    subsystem: 'Robustness',
+    planet: 'Venus',
+    siderealDays: 224.701,
+    semimajorAxisAu: 0.72333199,
+    eccentricity: 0.00677323,
+    inclinationDeg: 3.39471,
+    ascendingNodeDeg: 76.68069,
+    longitudeOfPerihelionDeg: 131.53298,
+    meanLongitudeDeg: 181.97973,
     size: 0.31,
-    color: '#ff9ba9',
-    emissive: '#6f1d3b',
-    band: '#ffd0d7',
-    halo: '#ff9ba9',
-    moon: '#ffe4ea',
+    color: '#e4c88d',
+    emissive: '#6f4d21',
+    band: '#fff0cc',
+    halo: '#ffd99f',
   },
   {
-    label: 'Privacy',
-    radius: 8.6,
-    speed: 0.18,
-    phase: 1.2,
-    tilt: [0.16, -0.3, -0.24],
-    size: 0.47,
-    color: '#91f2c5',
-    emissive: '#145b43',
-    band: '#d5ffe8',
-    halo: '#91f2c5',
+    subsystem: 'Privacy',
+    planet: 'Earth',
+    siderealDays: 365.256,
+    semimajorAxisAu: 1.00000011,
+    eccentricity: 0.01671022,
+    inclinationDeg: 0.00005,
+    ascendingNodeDeg: -11.26064,
+    longitudeOfPerihelionDeg: 102.94719,
+    meanLongitudeDeg: 100.46435,
+    size: 0.34,
+    color: '#6aa2ff',
+    emissive: '#173f77',
+    band: '#d8ebff',
+    halo: '#7fb3ff',
+    moon: '#d8dce6',
   },
   {
-    label: 'Monitoring',
-    radius: 6.8,
-    speed: 0.27,
-    phase: 5.3,
-    tilt: [0.12, 0.28, -0.33],
-    size: 0.36,
-    color: '#7bb2ff',
-    emissive: '#1b3e86',
-    band: '#d5e6ff',
-    halo: '#7bb2ff',
-    moon: '#c5d9ff',
+    subsystem: 'Bias',
+    planet: 'Mars',
+    siderealDays: 686.980,
+    semimajorAxisAu: 1.52366231,
+    eccentricity: 0.09341233,
+    inclinationDeg: 1.85061,
+    ascendingNodeDeg: 49.57854,
+    longitudeOfPerihelionDeg: 336.04084,
+    meanLongitudeDeg: 355.45332,
+    size: 0.28,
+    color: '#d9835f',
+    emissive: '#6d2719',
+    band: '#ffd6c2',
+    halo: '#f3a07e',
+    moon: '#f2e7dc',
+  },
+  {
+    subsystem: 'Monitoring',
+    planet: 'Jupiter',
+    siderealDays: 4332.589,
+    semimajorAxisAu: 5.20336301,
+    eccentricity: 0.04839266,
+    inclinationDeg: 1.30530,
+    ascendingNodeDeg: 100.55615,
+    longitudeOfPerihelionDeg: 14.75385,
+    meanLongitudeDeg: 34.40438,
+    size: 0.62,
+    color: '#d3ae7e',
+    emissive: '#6a4822',
+    band: '#fff0d4',
+    halo: '#e8bf8d',
+  },
+  {
+    subsystem: 'Hallucination',
+    planet: 'Saturn',
+    siderealDays: 10759.22,
+    semimajorAxisAu: 9.53707032,
+    eccentricity: 0.05415060,
+    inclinationDeg: 2.48446,
+    ascendingNodeDeg: 113.71504,
+    longitudeOfPerihelionDeg: 92.43194,
+    meanLongitudeDeg: 49.94432,
+    size: 0.56,
+    color: '#d9c58e',
+    emissive: '#5b4721',
+    band: '#fef1c4',
+    halo: '#f0d7a0',
+    rings: '#ccb27a',
   },
 ]
 
-function OrbitPlane({ radius, rotation, active }: { radius: number; rotation: [number, number, number]; active: boolean }) {
-  const orbitRef = useRef<THREE.Mesh>(null)
+function toRadians(value: number) {
+  return (value * Math.PI) / 180
+}
 
-  useFrame((state) => {
-    if (!orbitRef.current) return
-    const material = orbitRef.current.material as THREE.MeshBasicMaterial
-    material.opacity = active ? 0.78 + Math.sin(state.clock.elapsedTime * 2) * 0.05 : 0.22
-  })
+function normalizeAngle(angle: number) {
+  return ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+}
+
+function solveEccentricAnomaly(meanAnomaly: number, eccentricity: number) {
+  let eccentricAnomaly = meanAnomaly
+  for (let iteration = 0; iteration < 6; iteration += 1) {
+    eccentricAnomaly -=
+      (eccentricAnomaly - eccentricity * Math.sin(eccentricAnomaly) - meanAnomaly) /
+      (1 - eccentricity * Math.cos(eccentricAnomaly))
+  }
+  return eccentricAnomaly
+}
+
+function getOrbitalPosition(planet: SubsystemPlanet, elapsedDaysSinceJ2000: number) {
+  const semimajor = planet.semimajorAxisAu * ORBIT_SCALE
+  const eccentricity = planet.eccentricity
+  const inclination = toRadians(planet.inclinationDeg)
+  const ascendingNode = toRadians(planet.ascendingNodeDeg)
+  const longitudeOfPerihelion = toRadians(planet.longitudeOfPerihelionDeg)
+  const argumentOfPerihelion = longitudeOfPerihelion - ascendingNode
+  const initialMeanAnomaly = normalizeAngle(toRadians(planet.meanLongitudeDeg - planet.longitudeOfPerihelionDeg))
+  const meanMotion = (Math.PI * 2) / planet.siderealDays
+  const meanAnomaly = normalizeAngle(initialMeanAnomaly + elapsedDaysSinceJ2000 * meanMotion)
+  const eccentricAnomaly = solveEccentricAnomaly(meanAnomaly, eccentricity)
+
+  const xPrime = semimajor * (Math.cos(eccentricAnomaly) - eccentricity)
+  const zPrime = semimajor * Math.sqrt(1 - eccentricity * eccentricity) * Math.sin(eccentricAnomaly)
+  const position = new THREE.Vector3(xPrime, 0, zPrime)
+
+  position.applyAxisAngle(new THREE.Vector3(0, 1, 0), argumentOfPerihelion)
+  position.applyAxisAngle(new THREE.Vector3(0, 0, 1), inclination)
+  position.applyAxisAngle(new THREE.Vector3(0, 1, 0), ascendingNode)
+
+  return position
+}
+
+function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolean }) {
+  const points = useMemo(() => {
+    const sampleCount = 240
+    return Array.from({ length: sampleCount + 1 }, (_, index) => {
+      const elapsedDays = (planet.siderealDays * index) / sampleCount
+      const point = getOrbitalPosition(planet, elapsedDays)
+      return [point.x, point.y, point.z] as [number, number, number]
+    })
+  }, [planet])
+
+  const geometry = useMemo(() => {
+    const orbitGeometry = new THREE.BufferGeometry()
+    orbitGeometry.setFromPoints(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)))
+    return orbitGeometry
+  }, [points])
 
   return (
-    <mesh ref={orbitRef} rotation={rotation}>
-      <torusGeometry args={[radius, 0.024, 16, 260]} />
-      <meshBasicMaterial color={active ? '#d5efff' : '#304355'} transparent opacity={active ? 0.78 : 0.22} />
-    </mesh>
+    <line geometry={geometry}>
+      <lineBasicMaterial color={active ? '#d5efff' : '#324555'} transparent opacity={active ? 0.8 : 0.26} />
+    </line>
   )
 }
 
@@ -121,9 +199,9 @@ function AsteroidBelt() {
     () =>
       Array.from({ length: 180 }, (_, index) => {
         const angle = (index / 180) * Math.PI * 2
-        const radius = 9.6 + Math.random() * 1.6
-        const y = (Math.random() - 0.5) * 0.35
-        const size = 0.03 + Math.random() * 0.08
+        const radius = 3.2 + Math.random() * 0.75
+        const y = (Math.random() - 0.5) * 0.22
+        const size = 0.02 + Math.random() * 0.05
         return {
           position: [Math.cos(angle) * radius, y, Math.sin(angle) * radius] as [number, number, number],
           rotation: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [
@@ -139,9 +217,9 @@ function AsteroidBelt() {
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.x = 0.62
-      groupRef.current.rotation.z = 0.16
-      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.028
+      groupRef.current.rotation.x = 0.36
+      groupRef.current.rotation.z = 0.08
+      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.018
     }
   })
 
@@ -158,36 +236,33 @@ function AsteroidBelt() {
 }
 
 function ISSOrbit() {
-  const orbitRef = useRef<THREE.Group>(null)
+  const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
-    if (!orbitRef.current) return
+    const earth = PLANETS.find((planet) => planet.planet === 'Earth')
+    if (!groupRef.current || !earth) return
+    const elapsedDays = (Date.now() - J2000_UNIX_MS) / 86400000
+    const earthPosition = getOrbitalPosition(earth, elapsedDays)
     const t = state.clock.getElapsedTime()
-    orbitRef.current.rotation.x = 0.46
-    orbitRef.current.rotation.z = -0.34
-    orbitRef.current.rotation.y = t * 0.74
+    groupRef.current.position.copy(earthPosition)
+    groupRef.current.rotation.y = t * 1.8
+    groupRef.current.rotation.x = 0.44
   })
 
   return (
-    <group ref={orbitRef}>
-      <group position={[3.2, 0.08, 0]}>
-        <mesh>
-          <boxGeometry args={[0.18, 0.08, 0.08]} />
-          <meshStandardMaterial color="#cfd7e3" emissive="#293241" metalness={0.65} roughness={0.34} />
-        </mesh>
-        <mesh position={[-0.2, 0, 0]}>
-          <boxGeometry args={[0.18, 0.03, 0.16]} />
-          <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
-        </mesh>
-        <mesh position={[0.2, 0, 0]}>
-          <boxGeometry args={[0.18, 0.03, 0.16]} />
-          <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
-        </mesh>
-        <mesh position={[0, 0.07, 0]}>
-          <boxGeometry args={[0.06, 0.04, 0.04]} />
-          <meshStandardMaterial color="#eef5ff" emissive="#40556d" metalness={0.55} roughness={0.2} />
-        </mesh>
-      </group>
+    <group ref={groupRef}>
+      <mesh position={[0.24, 0.02, 0]}>
+        <boxGeometry args={[0.08, 0.035, 0.035]} />
+        <meshStandardMaterial color="#d4dde8" emissive="#2d3948" metalness={0.66} roughness={0.3} />
+      </mesh>
+      <mesh position={[0.12, 0.02, 0]}>
+        <boxGeometry args={[0.1, 0.012, 0.072]} />
+        <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
+      </mesh>
+      <mesh position={[0.36, 0.02, 0]}>
+        <boxGeometry args={[0.1, 0.012, 0.072]} />
+        <meshStandardMaterial color="#5ea3ff" emissive="#173f77" metalness={0.4} roughness={0.28} />
+      </mesh>
     </group>
   )
 }
@@ -196,11 +271,11 @@ function BackgroundStars() {
   const starsRef = useRef<THREE.Group>(null)
   const stars = useMemo(
     () =>
-      Array.from({ length: 70 }, () => ({
+      Array.from({ length: 80 }, () => ({
         position: new THREE.Vector3(
-          (Math.random() - 0.5) * 80,
-          (Math.random() - 0.5) * 46,
-          -12 - Math.random() * 24,
+          (Math.random() - 0.5) * 96,
+          (Math.random() - 0.5) * 56,
+          -14 - Math.random() * 28,
         ),
         scale: 0.04 + Math.random() * 0.08,
       })),
@@ -218,16 +293,15 @@ function BackgroundStars() {
       {stars.map((star, index) => (
         <mesh key={index} position={star.position}>
           <sphereGeometry args={[star.scale, 12, 12]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.85} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.82} />
         </mesh>
       ))}
     </group>
   )
 }
 
-function Planet({ planet, index, activeIndex }: { planet: PlanetConfig; index: number; activeIndex: number }) {
-  const orbitRef = useRef<THREE.Group>(null)
-  const planetRef = useRef<THREE.Mesh>(null)
+function PlanetBody({ planet, index, activeIndex }: { planet: SubsystemPlanet; index: number; activeIndex: number }) {
+  const groupRef = useRef<THREE.Group>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const bandRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
@@ -235,39 +309,29 @@ function Planet({ planet, index, activeIndex }: { planet: PlanetConfig; index: n
   const active = index === activeIndex
 
   useFrame((state) => {
+    const elapsedDays = (Date.now() - J2000_UNIX_MS) / 86400000
+    const position = getOrbitalPosition(planet, elapsedDays)
     const t = state.clock.getElapsedTime()
-    if (orbitRef.current) {
-      orbitRef.current.rotation.x = planet.tilt[0]
-      orbitRef.current.rotation.y = planet.tilt[1] + t * planet.speed
-      orbitRef.current.rotation.z = planet.tilt[2]
+
+    if (groupRef.current) {
+      groupRef.current.position.copy(position)
+      groupRef.current.rotation.y = t * 0.35
+      groupRef.current.scale.setScalar(active ? 1.15 : 1)
     }
 
-    if (planetRef.current) {
-      planetRef.current.position.set(planet.radius, Math.sin(t * planet.speed * 1.8 + planet.phase) * 0.18, 0)
-      planetRef.current.rotation.y = t * 1.3
-      planetRef.current.rotation.z = 0.2
-      planetRef.current.scale.setScalar(active ? 1.18 : 1)
+    if (glowRef.current) {
+      glowRef.current.scale.setScalar(active ? 1.56 : 1.18)
     }
 
-    if (glowRef.current && planetRef.current) {
-      glowRef.current.position.copy(planetRef.current.position)
-      glowRef.current.scale.setScalar(active ? 1.5 : 1.12)
+    if (bandRef.current) {
+      bandRef.current.rotation.y = t * 0.4
     }
 
-    if (bandRef.current && planetRef.current) {
-      bandRef.current.position.copy(planetRef.current.position)
-      bandRef.current.rotation.copy(planetRef.current.rotation)
-      bandRef.current.scale.setScalar(active ? 1.16 : 1)
+    if (ringRef.current) {
+      ringRef.current.rotation.set(Math.PI * 0.42, t * 0.16, Math.PI * 0.14)
     }
 
-    if (ringRef.current && planetRef.current) {
-      ringRef.current.position.copy(planetRef.current.position)
-      ringRef.current.rotation.set(Math.PI * 0.4, t * 0.3, Math.PI * 0.15)
-      ringRef.current.scale.setScalar(active ? 1.08 : 1)
-    }
-
-    if (moonOrbitRef.current && planetRef.current) {
-      moonOrbitRef.current.position.copy(planetRef.current.position)
+    if (moonOrbitRef.current) {
       moonOrbitRef.current.rotation.y = t * 1.6
       moonOrbitRef.current.rotation.x = 0.5
     }
@@ -275,8 +339,8 @@ function Planet({ planet, index, activeIndex }: { planet: PlanetConfig; index: n
 
   return (
     <>
-      <OrbitPlane radius={planet.radius} rotation={planet.tilt} active={active} />
-      <group ref={orbitRef} rotation={planet.tilt}>
+      <OrbitPath planet={planet} active={active} />
+      <group ref={groupRef}>
         <mesh ref={glowRef}>
           <sphereGeometry args={[planet.size * 1.78, 32, 32]} />
           <meshBasicMaterial color={planet.halo} transparent opacity={active ? 0.16 : 0.08} />
@@ -293,22 +357,24 @@ function Planet({ planet, index, activeIndex }: { planet: PlanetConfig; index: n
             metalness={0.04}
           />
         </mesh>
-        <mesh ref={planetRef}>
+        <mesh>
           <sphereGeometry args={[planet.size, 48, 48]} />
           <meshStandardMaterial
             color={planet.color}
             emissive={planet.emissive}
             emissiveIntensity={active ? 1.2 : 0.72}
-            roughness={0.3}
+            roughness={0.32}
             metalness={0.08}
           />
           <Html distanceFactor={10} center>
-            <div className={`scene-label ${active ? 'scene-label--active' : ''}`}>{planet.label}</div>
+            <div className={`scene-label ${active ? 'scene-label--active' : ''}`}>
+              {planet.subsystem} · {planet.planet}
+            </div>
           </Html>
         </mesh>
         {planet.rings ? (
           <mesh ref={ringRef}>
-            <torusGeometry args={[planet.size * 1.56, planet.size * 0.12, 20, 120]} />
+            <torusGeometry args={[planet.size * 1.62, planet.size * 0.12, 20, 120]} />
             <meshStandardMaterial
               color={planet.rings}
               emissive={planet.rings}
@@ -322,13 +388,13 @@ function Planet({ planet, index, activeIndex }: { planet: PlanetConfig; index: n
         ) : null}
         {planet.moon ? (
           <group ref={moonOrbitRef}>
-            <mesh position={[planet.size * 1.85, 0, 0]}>
-              <sphereGeometry args={[planet.size * 0.22, 24, 24]} />
+            <mesh position={[planet.size * 1.9, 0, 0]}>
+              <sphereGeometry args={[planet.size * 0.2, 24, 24]} />
               <meshStandardMaterial
                 color={planet.moon}
                 emissive={planet.moon}
-                emissiveIntensity={active ? 0.26 : 0.12}
-                roughness={0.4}
+                emissiveIntensity={active ? 0.22 : 0.12}
+                roughness={0.42}
                 metalness={0.04}
               />
             </mesh>
@@ -346,38 +412,38 @@ function SolarCore({ activeIndex }: { activeIndex: number }) {
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
-    const pointerX = state.pointer.x * 0.4
-    const pointerY = state.pointer.y * 0.2
+    const pointerX = state.pointer.x * 0.28
+    const pointerY = state.pointer.y * 0.14
 
     if (systemRef.current) {
-      systemRef.current.rotation.y = t * 0.05 + pointerX
+      systemRef.current.rotation.y = pointerX
       systemRef.current.rotation.x = pointerY
     }
 
     if (sunRef.current) {
-      const pulse = 1 + Math.sin(t * 1.4) * 0.035
+      const pulse = 1 + Math.sin(t * 1.4) * 0.03
       sunRef.current.scale.setScalar(pulse)
-      sunRef.current.rotation.y = t * 0.25
+      sunRef.current.rotation.y = t * 0.22
     }
 
     if (coronaRef.current) {
-      coronaRef.current.scale.setScalar(1.26 + Math.sin(t * 0.9) * 0.05)
-      coronaRef.current.rotation.y = -t * 0.18
+      coronaRef.current.scale.setScalar(1.24 + Math.sin(t * 0.8) * 0.05)
+      coronaRef.current.rotation.y = -t * 0.15
     }
   })
 
   return (
     <group ref={systemRef}>
       <mesh ref={coronaRef}>
-        <sphereGeometry args={[2.7, 56, 56]} />
+        <sphereGeometry args={[1.7, 56, 56]} />
         <meshBasicMaterial color="#79d7ff" transparent opacity={0.08} />
       </mesh>
       <mesh>
-        <sphereGeometry args={[3.7, 56, 56]} />
+        <sphereGeometry args={[2.4, 56, 56]} />
         <meshBasicMaterial color="#ffba59" transparent opacity={0.05} />
       </mesh>
       <mesh ref={sunRef}>
-        <sphereGeometry args={[2.12, 64, 64]} />
+        <sphereGeometry args={[1.35, 64, 64]} />
         <meshStandardMaterial
           color={activeIndex % 2 === 0 ? '#fbd38d' : '#ffe79a'}
           emissive={activeIndex % 2 === 0 ? '#ff8f3a' : '#ffb347'}
@@ -387,12 +453,12 @@ function SolarCore({ activeIndex }: { activeIndex: number }) {
         />
       </mesh>
       <mesh scale={0.52}>
-        <sphereGeometry args={[2.12, 48, 48]} />
+        <sphereGeometry args={[1.35, 48, 48]} />
         <meshBasicMaterial color="#fff7cf" transparent opacity={0.38} />
       </mesh>
       <ISSOrbit />
       {PLANETS.map((planet, index) => (
-        <Planet key={planet.label} planet={planet} index={index} activeIndex={activeIndex} />
+        <PlanetBody key={planet.planet} planet={planet} index={index} activeIndex={activeIndex} />
       ))}
       <AsteroidBelt />
     </group>
@@ -401,21 +467,21 @@ function SolarCore({ activeIndex }: { activeIndex: number }) {
 
 export function HeroScene({ activeIndex }: HeroSceneProps) {
   return (
-    <Canvas className="hero-canvas" dpr={[1, 1.5]} camera={{ position: [0, 0, 15.5], fov: 34 }}>
+    <Canvas className="hero-canvas" dpr={[1, 1.5]} camera={{ position: [0, 7, 20], fov: 34 }}>
       <color attach="background" args={['#020611']} />
-      <fog attach="fog" args={['#020611', 11, 34]} />
-      <ambientLight intensity={0.26} />
+      <fog attach="fog" args={['#020611', 12, 40]} />
+      <ambientLight intensity={0.24} />
       <pointLight position={[0, 0, 0]} intensity={120} color="#ffb84d" />
-      <pointLight position={[8, 5, 7]} intensity={28} color="#76dcff" />
-      <pointLight position={[-8, -4, 8]} intensity={14} color="#6ca7ff" />
-      <spotLight position={[0, 10, 10]} angle={0.4} penumbra={1} intensity={28} color="#ffffff" />
-      <Stars radius={110} depth={84} count={5200} factor={4.8} saturation={0.06} fade speed={0.55} />
-      <Sparkles count={42} scale={[34, 18, 12]} size={2.4} speed={0.18} opacity={0.32} color="#f8fbff" />
+      <pointLight position={[8, 5, 7]} intensity={26} color="#76dcff" />
+      <pointLight position={[-8, -4, 8]} intensity={12} color="#6ca7ff" />
+      <spotLight position={[0, 12, 10]} angle={0.42} penumbra={1} intensity={26} color="#ffffff" />
+      <Stars radius={120} depth={86} count={5200} factor={4.8} saturation={0.06} fade speed={0.55} />
+      <Sparkles count={42} scale={[38, 22, 14]} size={2.4} speed={0.18} opacity={0.32} color="#f8fbff" />
       <BackgroundStars />
       <Suspense fallback={null}>
         <SolarCore activeIndex={activeIndex} />
       </Suspense>
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.14} />
+      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.05} maxPolarAngle={1.4} minPolarAngle={1.1} />
     </Canvas>
   )
 }

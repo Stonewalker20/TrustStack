@@ -3,7 +3,14 @@ import { motion, useMotionValue, useSpring, useTransform } from 'motion/react'
 
 const HeroScene = lazy(() => import('./HeroScene').then((module) => ({ default: module.HeroScene })))
 
-const NODES = ['Safety', 'Robustness', 'Hallucination', 'Bias', 'Privacy', 'Monitoring']
+const NODES = [
+  { subsystem: 'Safety', planet: 'Mercury' },
+  { subsystem: 'Robustness', planet: 'Venus' },
+  { subsystem: 'Privacy', planet: 'Earth' },
+  { subsystem: 'Bias', planet: 'Mars' },
+  { subsystem: 'Monitoring', planet: 'Jupiter' },
+  { subsystem: 'Hallucination', planet: 'Saturn' },
+]
 
 type TrustHeroProps = {
   onRunEvaluation: () => void
@@ -97,7 +104,7 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
         <div className="hero-node-rail">
           {NODES.map((node, index) => (
             <button
-              key={node}
+              key={node.subsystem}
               type="button"
               className={`hero-node ${index === activeIndex ? 'hero-node--active' : ''}`}
               onMouseEnter={() => setActiveIndex(index)}
@@ -105,8 +112,8 @@ export function TrustHero({ onRunEvaluation, onExploreFramework }: TrustHeroProp
             >
               <span className="hero-node-dot" />
               <div>
-                <strong>{node}</strong>
-                <small>{index === activeIndex ? 'Orbit in focus' : 'Inspect orbit'}</small>
+                <strong>{node.subsystem}</strong>
+                <small>{node.planet} orbit {index === activeIndex ? 'in focus' : 'tracked live'}</small>
               </div>
             </button>
           ))}
