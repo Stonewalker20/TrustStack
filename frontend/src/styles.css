@@ -657,6 +657,30 @@ a {
   line-height: 1.55;
 }
 
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.overview-card {
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  background: rgba(8, 18, 32, 0.78);
+}
+
+.overview-card h3 {
+  margin: 8px 0 6px;
+  font-size: 0.98rem;
+}
+
+.overview-card p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
 .signal-panel h4,
 .framework-evidence h4 {
   margin: 0 0 8px;

@@ -98,35 +98,44 @@ const TOUR_NODES: TourNode[] = [
   },
   {
     id: 'author-pluto',
-    subsystem: 'Author Recognition',
+    subsystem: 'System Overview',
     planet: 'Pluto',
-    title: 'Meet the builder behind TrustStack',
-    summary: 'Close the journey with the project author, product vision, and the intent behind the broader TrustStack experience.',
-    guideTitle: 'Land on Pluto',
-    guideMessage: 'Pluto is the closing page of the journey, reserved for the builder and the vision behind TrustStack.',
+    title: 'View the full TrustStack workflow at once',
+    summary: 'Use Pluto as a consolidated overview page for anyone who prefers to scan every subsystem in one place.',
+    guideTitle: 'Survey Pluto',
+    guideMessage: 'Pluto combines the full TrustStack journey into one page for users who want a direct, non-cinematic overview.',
   },
 ]
 
-function AuthorRecognitionCard() {
+function SystemOverviewCard({ nodes }: { nodes: TourNode[] }) {
   return (
     <div className="panel panel--glass stack">
       <div className="panel-header">
         <div>
-          <div className="eyebrow">Author Recognition</div>
-          <h2>Pluto is reserved for the builder behind TrustStack.</h2>
+          <div className="eyebrow">System Overview</div>
+          <h2>See every TrustStack subsystem on one page.</h2>
         </div>
       </div>
       <p className="muted">
-        TrustStack was assembled as a full trust-evaluation experience rather than a simple chatbot shell: evidence grounding, risk signaling, subsystem mapping, and cinematic presentation are all part of the same thesis.
+        Pluto now acts as the practical overview mode. It summarizes the full TrustStack workflow for users who want a
+        direct map of the platform without stepping through each planet individually.
       </p>
-      <div className="framework-note">
-        <strong>Author</strong>
-        <div>Cordell Stonecipher</div>
+      <div className="overview-grid">
+        {nodes.map((node, index) => (
+          <article key={node.id} className="overview-card">
+            <div className="framework-node-topline">
+              <span>{node.planet}</span>
+              <strong>{String(index + 1).padStart(2, '0')}</strong>
+            </div>
+            <h3>{node.subsystem}</h3>
+            <p className="muted">{node.summary}</p>
+          </article>
+        ))}
       </div>
       <div className="pill-grid">
-        <span className="data-pill">Trust evaluation</span>
-        <span className="data-pill">RAG evidence review</span>
-        <span className="data-pill">Interactive solar-system interface</span>
+        <span className="data-pill">Full subsystem scan</span>
+        <span className="data-pill">Low-friction overview mode</span>
+        <span className="data-pill">TrustStack at a glance</span>
       </div>
     </div>
   )
@@ -233,7 +242,7 @@ export default function App() {
       case 7:
         return <MethodologySection />
       case 8:
-        return <AuthorRecognitionCard />
+        return <SystemOverviewCard nodes={TOUR_NODES.slice(0, -1)} />
       default:
         return null
     }
