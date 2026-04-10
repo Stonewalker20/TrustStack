@@ -161,15 +161,15 @@ a {
 .hero-stage-panel {
   position: absolute;
   right: 24px;
-  top: 224px;
+  top: 210px;
   bottom: 108px;
   z-index: 4;
-  width: min(430px, calc(100vw - 48px));
+  width: min(640px, calc(100vw - 360px));
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100vh - 332px);
-  padding: 16px 16px 14px;
+  max-height: calc(100vh - 318px);
+  padding: 15px 15px 13px;
   border-radius: 28px;
   border: 1px solid rgba(125, 211, 252, 0.16);
   background: linear-gradient(180deg, rgba(6, 12, 22, 0.94), rgba(7, 14, 25, 0.86));
@@ -177,7 +177,7 @@ a {
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 24px 80px rgba(2, 8, 18, 0.34);
   backdrop-filter: blur(22px);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .hero-stage-panel-head {
@@ -190,13 +190,13 @@ a {
 
 .hero-stage-panel-head h2 {
   margin: 8px 0 0;
-  font-size: clamp(1.4rem, 2vw, 2rem);
+  font-size: clamp(1.24rem, 1.8vw, 1.72rem);
 }
 
 .hero-stage-panel-body {
   min-height: 0;
-  overflow: auto;
-  padding-right: 6px;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .stage-stack {
@@ -207,15 +207,16 @@ a {
 .hero-journey-card {
   position: absolute;
   left: 24px;
-  top: 238px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 4;
-  width: min(332px, calc(100vw - 48px));
-  padding: 18px 16px;
+  width: min(260px, calc(100vw - 48px));
+  padding: 14px 14px 13px;
 }
 
 .hero-journey-card h3 {
-  margin: 12px 0 10px;
-  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  margin: 10px 0 8px;
+  font-size: clamp(1rem, 1.5vw, 1.28rem);
 }
 
 .hero-author-card {
@@ -302,10 +303,10 @@ a {
 .hero-guide-popup {
   position: absolute;
   left: 24px;
-  top: 396px;
+  top: calc(50% + 150px);
   z-index: 4;
-  width: min(320px, calc(100vw - 48px));
-  padding: 18px 16px 16px;
+  width: min(280px, calc(100vw - 48px));
+  padding: 16px 14px 14px;
 }
 
 .hero-guide-popup h3 {
@@ -577,19 +578,20 @@ a {
 
 .framework-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 1.06fr);
+  gap: 14px;
   align-items: start;
 }
 
 .framework-track {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .framework-node {
-  min-height: 210px;
+  min-height: 154px;
+  padding: 12px;
 }
 
 .framework-node-topline,
@@ -616,20 +618,31 @@ a {
   margin: 12px 0 10px;
 }
 
+.framework-node h3 {
+  margin: 9px 0 7px;
+  font-size: 1rem;
+}
+
+.framework-node p {
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .framework-detail {
   min-height: 100%;
+  padding: 14px;
 }
 
 .framework-grid {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 18px;
-  margin-top: 22px;
+  grid-template-columns: 1fr 0.96fr;
+  gap: 14px;
+  margin-top: 16px;
 }
 
 .framework-note {
-  margin-top: 18px;
-  padding: 14px;
+  margin-top: 12px;
+  padding: 12px;
   border-radius: 16px;
   background: rgba(5, 12, 22, 0.7);
   border: 1px solid var(--line);
@@ -639,15 +652,15 @@ a {
 
 .signal-panel h4,
 .framework-evidence h4 {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
 
 .signal-row {
   display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) 36px;
-  gap: 10px;
+  grid-template-columns: 76px minmax(0, 1fr) 32px;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .signal-bar {
@@ -680,9 +693,9 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   border: 1px solid rgba(125, 211, 252, 0.16);
 }
 
@@ -727,7 +740,7 @@ a {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.025),
     0 18px 60px rgba(2, 8, 18, 0.28);
-  padding: 18px;
+  padding: 16px;
 }
 
 .panel--glass {
@@ -1051,6 +1064,7 @@ a {
     position: relative;
     left: auto;
     top: auto;
+    transform: none;
     width: min(100%, 520px);
     margin: 20px auto 0;
   }
@@ -1071,6 +1085,13 @@ a {
     top: 244px;
     width: auto;
     max-height: calc(100vh - 348px);
+  }
+
+  .hero-guide-popup {
+    left: 20px;
+    top: auto;
+    bottom: 210px;
+    width: min(320px, calc(100vw - 40px));
   }
 
   .framework-track {
@@ -1105,6 +1126,7 @@ a {
   .hero-journey-card {
     width: min(100%, 520px);
     margin: 182px auto 0;
+    transform: none;
   }
 
   .hero-header h1 {
@@ -1126,6 +1148,13 @@ a {
     left: 10px;
     right: 10px;
     max-height: calc(100vh - 342px);
+  }
+
+  .hero-guide-popup {
+    left: 10px;
+    right: 10px;
+    bottom: 188px;
+    width: auto;
   }
 
   .metric-grid,

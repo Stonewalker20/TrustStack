@@ -103,11 +103,11 @@ export function TrustHero({
 
       <div className="hero-grid hero-grid--guided">
         <header className={`hero-header hero-header--guided ${overviewMode ? '' : 'hero-header--hidden'}`}>
-          <div className="eyebrow">Solar Trust Map</div>
-          <h1>Start in full-system view, then enter the TrustStack planetary tour when you are ready.</h1>
+          <div className="eyebrow">TrustStack Mission Control</div>
+          <h1>Launch trustworthy AI reviews through a cinematic control room built for evidence, risk, and confidence.</h1>
           <p>
-            The landing page stays in a solar-system overview until you focus a planet. Each world hosts one TrustStack
-            stage, and Pluto remains reserved for author recognition.
+            TrustStack turns evaluation into a guided experience. Move from planet to planet to ingest evidence, test
+            model behavior, inspect trust signals, and close with a polished executive view.
           </p>
         </header>
 
