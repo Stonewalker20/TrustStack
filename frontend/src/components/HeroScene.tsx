@@ -393,6 +393,20 @@ function OrbitPath({ planet, active }: { planet: SubsystemPlanet; active: boolea
 
 function DeepField() {
   const sunVisualDiameter = getSunVisualDiameter()
+  const nebulaClouds = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => ({
+        position: [
+          (Math.random() - 0.5) * 120,
+          6 + Math.sin(index * 0.7) * 16 + (Math.random() - 0.5) * 10,
+          -30 - Math.random() * 38,
+        ] as [number, number, number],
+        scale: [6 + Math.random() * 14, 1.4 + Math.random() * 3.6, 6 + Math.random() * 12] as [number, number, number],
+        color: ['#dbeafe', '#e0f2fe', '#bfdbfe', '#fde68a'][Math.floor(Math.random() * 4)],
+        opacity: 0.025 + Math.random() * 0.03,
+      })),
+    [],
+  )
   const galaxies = useMemo(
     () =>
       Array.from({ length: 18 }, (_, index) => ({
@@ -405,9 +419,10 @@ function DeepField() {
           number,
           number,
         ],
-        scale: [3.2 + Math.random() * 7.2, 0.32 + Math.random() * 0.74, 1] as [number, number, number],
-        rotation: (Math.random() - 0.5) * 0.55,
+        scale: [2.8 + Math.random() * 5.2, 2.8 + Math.random() * 5.2, 1] as [number, number, number],
+        rotation: (Math.random() - 0.5) * 0.8,
         color: ['#dbeafe', '#f8fafc', '#fde68a', '#bfdbfe', '#e0f2fe'][Math.floor(Math.random() * 5)],
+        opacity: 0.035 + Math.random() * 0.04,
       })),
     [],
   )
@@ -441,22 +456,16 @@ function DeepField() {
 
   return (
     <group>
-      <mesh position={[0, 4.6, -28]} rotation={[0, 0, -0.16]} scale={[120, 18, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#dbeafe" transparent opacity={0.022} depthWrite={false} />
-      </mesh>
-      <mesh position={[0, 2.4, -24]} rotation={[0, 0, -0.16]} scale={[132, 8, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#fff4c2" transparent opacity={0.018} depthWrite={false} />
-      </mesh>
-      <mesh position={[0, 19, -32]} rotation={[0, 0, -0.06]} scale={[144, 28, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#dbeafe" transparent opacity={0.02} depthWrite={false} />
-      </mesh>
+      {nebulaClouds.map((cloud, index) => (
+        <mesh key={`cloud-${index}`} position={cloud.position} scale={cloud.scale}>
+          <sphereGeometry args={[1, 24, 24]} />
+          <meshBasicMaterial color={cloud.color} transparent opacity={cloud.opacity} depthWrite={false} />
+        </mesh>
+      ))}
       {galaxies.map((galaxy, index) => (
         <mesh key={index} position={galaxy.position} rotation={[0, 0, galaxy.rotation]} scale={galaxy.scale}>
-          <planeGeometry args={[1, 1]} />
-          <meshBasicMaterial color={galaxy.color} transparent opacity={0.12} depthWrite={false} />
+          <circleGeometry args={[1, 40]} />
+          <meshBasicMaterial color={galaxy.color} transparent opacity={galaxy.opacity} depthWrite={false} side={THREE.DoubleSide} />
         </mesh>
       ))}
       {stars.map((star, index) => (
