@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AnswerCard } from './components/AnswerCard'
 import { DocumentList } from './components/DocumentList'
-import { EvidencePanel } from './components/EvidencePanel'
-import { FrameworkExplorer } from './components/FrameworkExplorer'
-import { MethodologySection } from './components/MethodologySection'
 import { QueryBox } from './components/QueryBox'
-import { ResultsSection } from './components/ResultsSection'
-import { RiskPanel } from './components/RiskPanel'
-import { RunHistoryTable } from './components/RunHistoryTable'
 import { TrustHero } from './components/TrustHero'
 import { UploadPanel } from './components/UploadPanel'
 import { api } from './lib/api'
@@ -22,10 +15,15 @@ import type {
 
 type PlanetSlide = {
   id: string
-  subsystem: string
+  eyebrow: string
   planet: string
   title: string
   summary: string
+  problem: string
+  solution: string
+  keyPoints: string[]
+  proofLabel: string
+  proofValue: string
   reportSection: string
   reportFigureCaption: string
 }
@@ -33,82 +31,163 @@ type PlanetSlide = {
 const PLANET_SLIDES: PlanetSlide[] = [
   {
     id: 'intro-mercury',
-    subsystem: 'Evidence Intake',
+    eyebrow: 'Slide 1 · Problem',
     planet: 'Mercury',
-    title: 'Problem framing and corpus intake',
-    summary: 'Mercury introduces the evidence-first premise of TrustStack: ingest source material, normalize it, and make every later score traceable to a real corpus.',
+    title: 'AI systems answer quickly, but they rarely prove why they should be trusted.',
+    summary: 'TrustStack starts from the core failure mode: most model interfaces optimize for fluency while leaving operators blind to evidence quality, scope, and risk.',
+    problem: 'Teams are asked to act on AI outputs before they can inspect whether the answer is actually grounded in source material.',
+    solution: 'TrustStack reframes trust as an evidence problem. Before we score anything, we ingest the corpus and make every later judgment traceable to specific supporting passages.',
+    keyPoints: [
+      'Ground the system in uploaded evidence rather than model confidence alone.',
+      'Normalize documents into indexed chunks so later claims remain auditable.',
+      'Turn trust review into a repeatable workflow instead of an intuition call.',
+    ],
+    proofLabel: 'Presentation goal',
+    proofValue: 'Show the audience the problem before showing the product.',
     reportSection: 'Problem Statement and Evidence Intake',
     reportFigureCaption: 'Evidence ingestion flow used to ground the TrustStack evaluation stack.',
   },
   {
     id: 'design-venus',
-    subsystem: 'Evaluation Architecture',
+    eyebrow: 'Slide 2 · System',
     planet: 'Venus',
-    title: 'TrustStack evaluation architecture',
-    summary: 'Venus presents the system design: indexing, retrieval, scoring, risk labeling, explanation generation, and operator-facing review layers.',
+    title: 'TrustStack is a layered evaluation system, not a single trust score.',
+    summary: 'Venus introduces the architecture that turns documents, retrieval, scoring, and explanation into one coherent operator workflow.',
+    problem: 'A raw score is not enough if the audience cannot see what produced it or where the answer broke down.',
+    solution: 'TrustStack separates ingestion, retrieval, grounded response generation, evaluation, risk labeling, and review so each layer can be inspected on its own.',
+    keyPoints: [
+      'Each subsystem has a distinct responsibility in the trust pipeline.',
+      'The architecture is local-first, auditable, and designed for demonstrations and real review work.',
+      'The UI maps directly onto the backend evaluation flow and the final report structure.',
+    ],
+    proofLabel: 'System promise',
+    proofValue: 'Every trust signal has a visible pipeline behind it.',
     reportSection: 'System Architecture',
     reportFigureCaption: 'Evaluation architecture slide showing the layered TrustStack pipeline.',
   },
   {
     id: 'query-earth',
-    subsystem: 'Live Evaluation',
+    eyebrow: 'Slide 3 · Runtime',
     planet: 'Earth',
-    title: 'Live evidence-grounded querying',
-    summary: 'Earth demonstrates the runtime loop: a user question, a retrieved evidence set, and a grounded response scored under the TrustStack standard.',
+    title: 'Users interact with TrustStack through grounded evaluation, not a blind chatbot.',
+    summary: 'Earth explains the main runtime loop: question, retrieval, answer, score, and explanation all happen against the active evidence set.',
+    problem: 'Standard chat UX makes it hard to tell whether the answer came from evidence or from model interpolation.',
+    solution: 'TrustStack ties each live evaluation to retrieved context, formal scoring, and evidence-backed outputs that can be reviewed immediately.',
+    keyPoints: [
+      'The question is evaluated against indexed evidence, not treated as open-ended chat.',
+      'Sample prompts lower the barrier to trying grounded evaluation on a fresh corpus.',
+      'The same runtime loop powers demos, experiments, and analyst review.',
+    ],
+    proofLabel: 'Runtime focus',
+    proofValue: 'Ask, retrieve, evaluate, explain.',
     reportSection: 'Interactive Evaluation Flow',
     reportFigureCaption: 'Live query interface showing how TrustStack turns a user question into a grounded answer.',
   },
   {
     id: 'evidence-mars',
-    subsystem: 'Evidence Review',
+    eyebrow: 'Slide 4 · Explainability',
     planet: 'Mars',
-    title: 'Evidence review and explanation',
-    summary: 'Mars is the explainability slide: the answer, the evidence, the claim coverage, and the places where support is weak or missing.',
+    title: 'A trustworthy answer has to expose its support, not just sound plausible.',
+    summary: 'Mars is the explainability slide: answer, citations, supporting excerpts, and weak spots all sit in the same review surface.',
+    problem: 'Users cannot meaningfully trust an answer they cannot audit claim by claim.',
+    solution: 'TrustStack surfaces the answer with its evidence, confidence rationale, and unsupported or weakly grounded claims so the user can verify before acting.',
+    keyPoints: [
+      'Citations point back to concrete retrieved evidence.',
+      'Claim support and contradiction risk are part of the evaluation, not afterthoughts.',
+      'The system teaches the user what to review next instead of hiding uncertainty.',
+    ],
+    proofLabel: 'Operator question',
+    proofValue: 'Can I see exactly why this answer should be trusted?',
     reportSection: 'Evidence Review and Explainability',
     reportFigureCaption: 'Answer and evidence review interface used to audit retrieval support.',
   },
   {
     id: 'scores-jupiter',
-    subsystem: 'Score Breakdown',
+    eyebrow: 'Slide 5 · Results',
     planet: 'Jupiter',
-    title: 'Standardized score breakdown',
-    summary: 'Jupiter translates raw evaluation data into a decision-grade trust posture with weighted category scores, verdict bands, and risk signals.',
+    title: 'TrustStack turns evidence quality into a decision-grade trust posture.',
+    summary: 'Jupiter is the main results slide: weighted category scores, verdict bands, and risk signals translate diagnostics into an executive readout.',
+    problem: 'Review teams need a compact verdict, but that verdict has to stay anchored to defensible evaluation logic.',
+    solution: 'The TrustStack Evaluation Standard converts retrieval, support, citations, contradiction risk, and calibration into a weighted breakdown the audience can explain.',
+    keyPoints: [
+      'Weighted categories prevent the product from collapsing into one opaque confidence number.',
+      'Verdict bands make it clear when a result passes, needs review, or fails.',
+      'Risk signals communicate why human oversight is still necessary.',
+    ],
+    proofLabel: 'Outcome',
+    proofValue: 'Scores become explainable decisions, not decorative metrics.',
     reportSection: 'Evaluation Results',
     reportFigureCaption: 'Category-level score breakdown under the TrustStack Evaluation Standard.',
   },
   {
     id: 'history-saturn',
-    subsystem: 'Historical Runs',
+    eyebrow: 'Slide 6 · Benchmarking',
     planet: 'Saturn',
-    title: 'Historical consistency and benchmarking',
-    summary: 'Saturn shows how TrustStack supports repeated evaluation, cross-run comparison, and traceable run history for review and benchmarking.',
+    title: 'One good answer is not enough. Trust has to hold across time and repeated runs.',
+    summary: 'Saturn reframes TrustStack as a benchmarking product by showing historical evaluations, consistency checks, and cross-run tracking.',
+    problem: 'Single-run demos hide drift, instability, and repeated failure modes.',
+    solution: 'TrustStack keeps run history and standardized benchmark output so teams can compare how the system behaves over time and across datasets.',
+    keyPoints: [
+      'Repeated runs expose drift and unstable behavior that a single demo misses.',
+      'Benchmark-friendly history makes the system useful for governance, not just demos.',
+      'Historical context helps distinguish isolated misses from systemic weaknesses.',
+    ],
+    proofLabel: 'Trust lens',
+    proofValue: 'Consistency is part of trustworthiness.',
     reportSection: 'Benchmarking and Historical Analysis',
     reportFigureCaption: 'Historical run tracking interface used for longitudinal review.',
   },
   {
     id: 'blueprint-uranus',
-    subsystem: 'System Blueprint',
+    eyebrow: 'Slide 7 · Integration',
     planet: 'Uranus',
-    title: 'Blueprint of the full TrustStack stack',
-    summary: 'Uranus zooms out into the full blueprint so the audience can map ingestion, retrieval, scoring, explanation, and operator review to one coherent system.',
+    title: 'The full stack matters because trust breaks when any one layer disappears.',
+    summary: 'Uranus zooms out and reconnects the whole system: ingestion, retrieval, evaluation, explanation, report export, and operator review.',
+    problem: 'Tools that solve only one part of trust review still leave the analyst stitching everything together by hand.',
+    solution: 'TrustStack packages the full evaluation lifecycle into a unified stack so the interface, backend, benchmark, and report all speak the same language.',
+    keyPoints: [
+      'The planet narrative maps directly onto the actual system architecture.',
+      'The same backend powers live queries, scoring, benchmarks, and report exports.',
+      'This coherence is what makes the product presentation-ready instead of a disconnected prototype.',
+    ],
+    proofLabel: 'Blueprint value',
+    proofValue: 'One system, one standard, one review workflow.',
     reportSection: 'System Blueprint',
     reportFigureCaption: 'Top-level blueprint of the TrustStack system and its evaluation stages.',
   },
   {
     id: 'method-neptune',
-    subsystem: 'Methodology',
+    eyebrow: 'Slide 8 · Method',
     planet: 'Neptune',
-    title: 'Methodology and evaluation standard',
-    summary: 'Neptune grounds the presentation in a defensible research method: weighted dimensions, failure modes, diagnostics, and report-ready evidence.',
+    title: 'TrustStack is backed by a formal methodology, not a vague notion of trust.',
+    summary: 'Neptune is the research slide: weighted dimensions, diagnostics, failure modes, claim support, and reproducibility metadata anchor the system in a defensible method.',
+    problem: 'A trust product without a formal method is difficult to defend in technical review or conference settings.',
+    solution: 'TrustStack Evaluation Standard v2.0 defines weighted dimensions, structured checks, diagnostics, and metadata so results can be reproduced and critiqued.',
+    keyPoints: [
+      'Groundedness, citations, contradiction risk, completeness, and calibration are all explicit dimensions.',
+      'Per-case metrics and metadata make results reportable instead of anecdotal.',
+      'The methodology is designed to support both live demos and formal writeups.',
+    ],
+    proofLabel: 'Research value',
+    proofValue: 'Defensible method, reproducible output.',
     reportSection: 'Methodology',
     reportFigureCaption: 'Methodology view connecting the UI narrative to the formal TrustStack standard.',
   },
   {
     id: 'standard-pluto',
-    subsystem: 'TrustStack Standard',
+    eyebrow: 'Slide 9 · Close',
     planet: 'Pluto',
-    title: 'TrustStack standard and report export',
-    summary: 'Pluto summarizes the formal standard, the report structure, and the final artifacts that Mission Control can generate for presentations and papers.',
+    title: 'TrustStack ends with reusable artifacts, not just an interactive demo.',
+    summary: 'Pluto closes the walkthrough by connecting the standard, batch benchmark, and report-export path to what an audience or analyst can take away after the demo.',
+    problem: 'Too many AI demos stop at the interface and leave no durable artifact behind.',
+    solution: 'Mission Control can execute the standardized suite and generate report-ready outputs, so the presentation, benchmark, and paper all stay aligned.',
+    keyPoints: [
+      'The same standardized suite produces live results, final scores, and exportable report artifacts.',
+      'Batch benchmarking extends the product beyond a single corpus or one-off demo.',
+      'The product itself becomes the presentation, while the outputs become the paper trail.',
+    ],
+    proofLabel: 'Final takeaway',
+    proofValue: 'TrustStack is a trust workflow, not just a UI.',
     reportSection: 'Conclusion and Standard Export',
     reportFigureCaption: 'Summary slide aligning TrustStack outputs with presentation and report artifacts.',
   },
@@ -164,22 +243,64 @@ function ScoreBreakdownPanel({
 function StandardSlidePanel({
   slide,
   suiteResult,
+  documents,
+  runs,
 }: {
   slide: PlanetSlide
   suiteResult: StandardTestRunResponse | null
+  documents: DocumentItem[]
+  runs: RunItem[]
 }) {
+  const proofValue =
+    slide.planet === 'Mercury'
+      ? `${documents.length} document${documents.length === 1 ? '' : 's'} ready for evaluation`
+      : slide.planet === 'Jupiter' && suiteResult
+        ? `${suiteResult.final_score}/100 ${suiteResult.verdict.toUpperCase()}`
+        : slide.planet === 'Saturn'
+          ? `${runs.length} recorded evaluation run${runs.length === 1 ? '' : 's'}`
+          : slide.proofValue
+
   return (
-    <div className="stage-stack">
-      <div className="panel panel--glass">
-        <div className="panel-header">
-          <div>
-            <div className="eyebrow">Presentation Alignment</div>
-            <h3>{slide.reportSection}</h3>
-          </div>
-        </div>
-        <p className="muted">{slide.reportFigureCaption}</p>
+    <div className="presentation-slide">
+      <div className="presentation-slide__lead">
+        <div className="eyebrow">{slide.eyebrow}</div>
+        <h2>{slide.title}</h2>
+        <p>{slide.summary}</p>
       </div>
-      <ScoreBreakdownPanel suiteResult={suiteResult} />
+
+      <div className="presentation-slide__grid">
+        <div className="presentation-slide__panel">
+          <div className="eyebrow">Issue</div>
+          <h3>What breaks without TrustStack?</h3>
+          <p>{slide.problem}</p>
+        </div>
+
+        <div className="presentation-slide__panel">
+          <div className="eyebrow">Response</div>
+          <h3>How TrustStack answers it</h3>
+          <p>{slide.solution}</p>
+        </div>
+      </div>
+
+      <div className="presentation-slide__notes">
+        <div className="presentation-slide__panel">
+          <div className="eyebrow">Talking Points</div>
+          <ul className="presentation-slide__list">
+            {slide.keyPoints.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="presentation-slide__panel presentation-slide__panel--accent">
+          <div>
+            <div className="eyebrow">{slide.proofLabel}</div>
+            <h3>{proofValue}</h3>
+          </div>
+          <p>{slide.reportSection}</p>
+          <div className="presentation-slide__caption">{slide.reportFigureCaption}</div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -411,50 +532,8 @@ export default function App() {
 
   const activePanel = useMemo<ReactNode>(() => {
     const slide = PLANET_SLIDES[activePlanetIndex]
-    switch (activePlanetIndex) {
-      case 0:
-        return (
-          <div className="stage-stack">
-            <UploadPanel
-              onUploaded={() => {
-                refreshDocuments().catch(console.error)
-                refreshSampleQuestions().catch(console.error)
-              }}
-            />
-            <DocumentList items={documents} />
-          </div>
-        )
-      case 1:
-        return <FrameworkExplorer signals={trustSignals} latestResult={result} />
-      case 2:
-        return <QueryBox onSubmit={handleSubmit} loading={loading} sampleQuestions={sampleQuestions} />
-      case 3:
-        return (
-          <div className="stage-stack">
-            <AnswerCard result={result} />
-            <EvidencePanel result={result} />
-          </div>
-        )
-      case 4:
-        return (
-          <div className="stage-stack">
-            <RiskPanel result={result} />
-            <ResultsSection result={result} runs={runs} signals={trustSignals} minimal />
-            <ScoreBreakdownPanel suiteResult={suiteResult} />
-          </div>
-        )
-      case 5:
-        return <RunHistoryTable items={runs} />
-      case 6:
-        return <FrameworkExplorer signals={trustSignals} latestResult={result} />
-      case 7:
-        return <MethodologySection />
-      case 8:
-        return <StandardSlidePanel slide={slide} suiteResult={suiteResult} />
-      default:
-        return null
-    }
-  }, [activePlanetIndex, documents, loading, result, runs, sampleQuestions, suiteResult, trustSignals])
+    return <StandardSlidePanel slide={slide} suiteResult={suiteResult} documents={documents} runs={runs} />
+  }, [activePlanetIndex, documents, runs, suiteResult])
 
   return (
     <div className="app-root app-root--fixed">

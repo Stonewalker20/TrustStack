@@ -4,7 +4,7 @@ const HeroScene = lazy(() => import('./HeroScene').then((module) => ({ default: 
 
 type TourNode = {
   id: string
-  subsystem: string
+  eyebrow: string
   planet: string
   title: string
   summary: string
@@ -37,10 +37,8 @@ export function TrustHero({
   const [sceneUnavailable, setSceneUnavailable] = useState(false)
   const [sceneSelectedIndex, setSceneSelectedIndex] = useState<number | null>(null)
   const activeNode = nodes[activeIndex]
-  const isPlutoView = activeNode?.planet === 'Pluto'
   const overviewMode = sceneSelectedIndex === null
   const showMissionControlOverlay = missionControlOpen && Boolean(missionControlPanel)
-  const missionControlLabel = overviewMode ? 'Open Mission Control' : 'Open standard suite'
 
   const setFocusedPlanet = (index: number) => {
     setSceneSelectedIndex(index)
@@ -101,51 +99,40 @@ export function TrustHero({
       <div className="hero-grid hero-grid--presentation">
         <header className={`hero-header hero-header--presentation ${overviewMode ? '' : 'hero-header--hidden'}`}>
           <div className="eyebrow">TrustStack Mission Control</div>
-          <h1>Turn evidence into conference-ready AI trust signals.</h1>
+          <h1>TrustStack, presented as a guided walkthrough of trustworthy AI evaluation.</h1>
           <p>
-            TrustStack packages ingestion, evaluation, score breakdowns, and report-ready methodology into a
-            presentation-first system for grounded AI review.
+            Start from the full solar-system overview, then open any planet to move through the problem, system,
+            methodology, results, and report artifacts behind TrustStack.
           </p>
         </header>
 
         <button
           type="button"
           data-testid="mission-control-open"
-          className={`hero-mission-cta panel panel--glass ${overviewMode ? 'hero-mission-cta--visible' : ''}`}
+          className="hero-mission-cta"
           onClick={() => onMissionControlOpenChange?.(true)}
         >
-          <div className="eyebrow">Mission Control</div>
-          <strong>{missionControlLabel}</strong>
-          <span>Open the full evaluation console, final score, and breakdown overlay.</span>
+          <span className="hero-mission-cta__dot" />
+          <span>Mission Control</span>
         </button>
 
-        <div className={`hero-journey-card ${overviewMode || isPlutoView ? 'hero-journey-card--hidden' : ''}`}>
-          <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
-          <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
-          <p className="muted muted--large">
-            {activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}
-          </p>
-          <div className="hero-journey-meta">
-            <span>{activeNode?.subsystem ?? 'TrustStack'}</span>
-            <strong>
-              {activeIndex + 1} / {nodes.length}
-            </strong>
+        <div className={`hero-journey-card ${overviewMode ? 'hero-journey-card--hidden' : ''}`}>
+          <div className="hero-journey-shell">
+            <div className="hero-journey-topline">
+              <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
+              <div className="hero-journey-meta">
+                <span>{activeNode?.eyebrow ?? 'TrustStack walkthrough'}</span>
+                <strong>
+                  {activeIndex + 1} / {nodes.length}
+                </strong>
+              </div>
+            </div>
+            <div className="hero-journey-body">{detailPanel}</div>
           </div>
         </div>
 
-        <div className={`hero-stage-cluster ${isPlutoView ? 'hero-stage-cluster--pluto' : ''} ${overviewMode ? 'hero-stage-cluster--hidden' : ''}`}>
-          <div className={`hero-stage-panel ${isPlutoView ? 'hero-stage-panel--pluto' : ''}`}>
-            <div className="hero-stage-panel-head">
-              <div>
-                <div className="eyebrow">{activeNode?.subsystem ?? 'TrustStack'}</div>
-                <h2>{activeNode ? activeNode.title : 'TrustStack journey'}</h2>
-              </div>
-              <div className="badge badge--bright">
-                {activeIndex + 1} / {nodes.length}
-              </div>
-            </div>
-            <div className="hero-stage-panel-body">{detailPanel}</div>
-          </div>
+        <div className={`hero-stage-cluster ${overviewMode ? 'hero-stage-cluster--hidden' : ''}`}>
+          <div className="hero-stage-panel" />
         </div>
 
         <div className="hero-node-ring" aria-label="Subsystem planets">
@@ -160,10 +147,7 @@ export function TrustHero({
               <span className="hero-node-dot" />
               <div>
                 <strong>{node.planet}</strong>
-                <small>
-                  {node.subsystem}
-                  {activeIndex === index ? ' selected' : ''}
-                </small>
+                <small>{index + 1}</small>
               </div>
             </button>
           ))}
