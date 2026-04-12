@@ -1,5 +1,5 @@
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #e8eef8;
   background:
     radial-gradient(circle at top, rgba(37, 99, 235, 0.18), transparent 30%),
@@ -208,8 +208,8 @@ a {
 }
 
 .hero-header--guided {
-  top: 20px;
-  width: min(720px, calc(100vw - 48px));
+  top: 74px;
+  width: min(820px, calc(100vw - 56px));
 }
 
 .hero-tour-bar {
@@ -227,8 +227,8 @@ a {
 .hero-stage-cluster {
   position: absolute;
   right: 24px;
-  top: 150px;
-  bottom: 102px;
+  top: 136px;
+  bottom: 96px;
   z-index: 4;
   display: flex;
   align-items: flex-start;
@@ -238,8 +238,8 @@ a {
 .hero-stage-cluster--pluto {
   left: 24px;
   right: 24px;
-  top: 118px;
-  bottom: 104px;
+  top: 108px;
+  bottom: 96px;
   display: block;
 }
 
@@ -250,25 +250,26 @@ a {
 }
 
 .hero-stage-panel {
-  width: min(430px, calc(100vw - 392px));
+  width: min(468px, calc(100vw - 372px));
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100vh - 270px);
-  padding: 14px 18px 18px;
-  border-radius: 26px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: linear-gradient(180deg, rgba(9, 17, 30, 0.6), rgba(7, 12, 22, 0.42));
+  max-height: calc(100vh - 232px);
+  padding: 12px 14px 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(10, 17, 30, 0.54), rgba(6, 11, 20, 0.34));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 20px 56px rgba(2, 8, 18, 0.2);
-  backdrop-filter: blur(18px);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 52px rgba(2, 8, 18, 0.16),
+    0 0 24px rgba(34, 211, 238, 0.04);
+  backdrop-filter: blur(24px);
   overflow: hidden;
 }
 
 .hero-stage-panel--pluto {
   width: min(1100px, calc(100vw - 48px));
-  max-height: calc(100vh - 212px);
+  max-height: calc(100vh - 188px);
 }
 
 .hero-stage-panel-head {
@@ -276,35 +277,36 @@ a {
   justify-content: space-between;
   gap: 14px;
   align-items: start;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .hero-stage-panel-head h2 {
   margin: 6px 0 0;
-  font-size: clamp(1.16rem, 1.7vw, 1.54rem);
-  line-height: 1.04;
+  font-size: clamp(1.08rem, 1.45vw, 1.34rem);
+  line-height: 1.08;
   text-shadow: 0 10px 30px rgba(2, 8, 18, 0.72);
 }
 
 .hero-stage-panel-copy {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   max-width: 34ch;
   color: rgba(232, 238, 248, 0.78);
-  font-size: 0.84rem;
-  line-height: 1.56;
+  font-size: 0.78rem;
+  line-height: 1.48;
 }
 
 .hero-stage-panel-body {
   min-height: 0;
-  overflow: visible;
+  overflow: auto;
   padding-right: 0;
   padding-top: 4px;
+  scrollbar-width: thin;
 }
 
 .stage-stack {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 12px;
   align-items: start;
 }
 
@@ -314,8 +316,8 @@ a {
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
-  width: min(280px, calc(100vw - 48px));
-  max-width: 280px;
+  width: min(240px, calc(100vw - 48px));
+  max-width: 240px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -344,8 +346,8 @@ a {
 
 .hero-journey-card h3 {
   margin: 8px 0 10px;
-  font-size: clamp(1.24rem, 1.9vw, 1.72rem);
-  line-height: 1.02;
+  font-size: clamp(1.05rem, 1.45vw, 1.34rem);
+  line-height: 1.08;
   letter-spacing: -0.04em;
   text-shadow: 0 8px 28px rgba(2, 8, 18, 0.65);
 }
@@ -353,7 +355,8 @@ a {
 .hero-journey-card p {
   margin: 0;
   color: rgba(232, 238, 248, 0.92);
-  line-height: 1.58;
+  font-size: 0.86rem;
+  line-height: 1.52;
   text-shadow: 0 8px 24px rgba(2, 8, 18, 0.6);
 }
 
@@ -403,7 +406,7 @@ a {
 .panel,
 .card,
 .framework-node {
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(14px);
 }
 
 .hero-copy,
@@ -413,13 +416,13 @@ a {
 .framework-node {
   position: relative;
   z-index: 2;
-  padding: 32px 28px;
-  border-radius: 34px;
-  border: 1px solid rgba(125, 211, 252, 0.14);
-  background: linear-gradient(180deg, rgba(7, 14, 25, 0.84), rgba(7, 14, 25, 0.4));
+  padding: 18px 16px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(8, 15, 27, 0.56), rgba(7, 14, 25, 0.28));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 24px 80px rgba(2, 8, 18, 0.3);
+    0 18px 54px rgba(2, 8, 18, 0.18);
 }
 
 .hero-copy p,
@@ -435,9 +438,9 @@ a {
   align-items: center;
   gap: 8px;
   color: var(--cyan);
-  font-size: 12px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.2em;
   font-weight: 700;
 }
 
@@ -461,10 +464,11 @@ a {
 }
 
 .query-suggestions-label {
-  color: var(--text-soft);
-  font-size: 0.84rem;
+  color: var(--hud-text-primary);
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .query-suggestion {
@@ -505,9 +509,9 @@ a {
 .hero-guide-popup {
   position: relative;
   z-index: 4;
-  width: 250px;
-  max-width: 250px;
-  padding: 14px 14px 13px;
+  width: 230px;
+  max-width: 230px;
+  padding: 12px 12px 12px;
 }
 
 .hero-guide-popup h3 {
@@ -538,7 +542,7 @@ a {
   left: 24px;
   bottom: 112px;
   z-index: 4;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 20px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: linear-gradient(180deg, rgba(9, 17, 30, 0.56), rgba(7, 12, 22, 0.38));
@@ -683,8 +687,8 @@ a {
 
 .hero-stage-panel .panel-header h2,
 .hero-stage-panel .panel-header h3 {
-  font-size: 1.02rem;
-  line-height: 1.1;
+  font-size: 0.96rem;
+  line-height: 1.12;
 }
 
 .hero-node,
@@ -788,16 +792,16 @@ a {
 
 .section-heading h2 {
   margin: 8px 0 0;
-  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
-  line-height: 1.08;
+  font-size: clamp(1.18rem, 1.8vw, 1.6rem);
+  line-height: 1.12;
   max-width: 18ch;
 }
 
 .section-heading p {
   max-width: 50ch;
   margin: 0;
-  font-size: 0.94rem;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  line-height: 1.48;
 }
 
 .framework-shell {
@@ -814,8 +818,8 @@ a {
 
 .framework-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 1.06fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(240px, 1fr);
+  gap: 10px;
   align-items: start;
 }
 
@@ -826,9 +830,9 @@ a {
 }
 
 .framework-node {
-  min-height: 138px;
-  padding: 10px;
-  border-radius: 20px;
+  min-height: 116px;
+  padding: 9px;
+  border-radius: 18px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: linear-gradient(180deg, rgba(10, 18, 31, 0.7), rgba(8, 14, 24, 0.44));
   box-shadow:
@@ -862,24 +866,24 @@ a {
 
 .framework-node h3 {
   margin: 8px 0 6px;
-  font-size: 0.94rem;
+  font-size: 0.84rem;
 }
 
 .framework-node p {
-  font-size: 0.81rem;
-  line-height: 1.38;
+  font-size: 0.74rem;
+  line-height: 1.34;
 }
 
 .framework-detail {
   min-height: 100%;
-  padding: 12px;
+  padding: 10px;
 }
 
 .framework-grid {
   display: grid;
   grid-template-columns: 1fr 0.96fr;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .framework-note {
@@ -899,7 +903,7 @@ a {
 .control-center-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .hero-stage-panel--pluto .control-center {
@@ -938,10 +942,10 @@ a {
 }
 
 .overview-card {
-  padding: 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(125, 211, 252, 0.14);
-  background: rgba(8, 18, 32, 0.78);
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(10, 18, 31, 0.5), rgba(8, 14, 24, 0.34));
 }
 
 .overview-card h3 {
@@ -1042,8 +1046,8 @@ a {
 .hero-stage-panel .panel h3,
 .hero-stage-panel .method-card h3 {
   margin: 6px 0 6px;
-  font-size: clamp(1.04rem, 1.45vw, 1.42rem);
-  line-height: 1.08;
+  font-size: clamp(0.96rem, 1.2vw, 1.18rem);
+  line-height: 1.12;
   max-width: none;
 }
 
@@ -1051,8 +1055,8 @@ a {
 .hero-stage-panel .muted--large,
 .hero-stage-panel .framework-node p,
 .hero-stage-panel .overview-card p {
-  font-size: 0.84rem;
-  line-height: 1.42;
+  font-size: 0.76rem;
+  line-height: 1.4;
 }
 
 .hero-stage-panel .framework-layout,
@@ -1062,7 +1066,7 @@ a {
 }
 
 .hero-stage-panel .framework-layout {
-  grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+  grid-template-columns: minmax(0, 0.88fr) minmax(220px, 1fr);
 }
 
 .hero-stage-panel .framework-detail {
@@ -1087,17 +1091,17 @@ a {
 .hero-stage-panel .answer-box--hero,
 .hero-stage-panel .run-stage,
 .hero-stage-panel .comparison-row {
-  padding: 10px 12px;
-  border-radius: 14px;
+  padding: 9px 10px;
+  border-radius: 12px;
 }
 
 .hero-stage-panel .framework-node {
-  min-height: 122px;
-  padding: 8px;
+  min-height: 102px;
+  padding: 7px;
 }
 
 .hero-stage-panel .framework-node h3 {
-  font-size: 0.88rem;
+  font-size: 0.8rem;
 }
 
 .hero-stage-panel .score-ring {
@@ -1109,13 +1113,13 @@ a {
 }
 
 .hero-stage-panel .score-ring-svg {
-  width: 102px;
-  height: 102px;
+  width: 84px;
+  height: 84px;
 }
 
 .hero-stage-panel .confidence-gauge-ring {
-  width: 148px;
-  height: 148px;
+  width: 124px;
+  height: 124px;
 }
 
 .hero-stage-panel .comparison-row,
@@ -1124,7 +1128,7 @@ a {
 }
 
 .hero-stage-panel .overview-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .hero-stage-panel--pluto .control-center-grid {
@@ -1141,7 +1145,7 @@ a {
 }
 
 .hero-stage-panel .textarea {
-  min-height: 132px;
+  min-height: 110px;
 }
 
 .badge {
@@ -1179,14 +1183,14 @@ a {
 
 .panel,
 .card {
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid var(--hud-border);
   background: linear-gradient(180deg, rgba(11, 18, 31, 0.74), rgba(8, 14, 24, 0.5));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     0 18px 60px rgba(2, 8, 18, 0.2);
-  padding: 16px;
-  backdrop-filter: blur(14px);
+  padding: 12px;
+  backdrop-filter: blur(16px);
 }
 
 .panel--glass {
@@ -1196,8 +1200,8 @@ a {
 }
 
 .card {
-  border-radius: 18px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 10px;
 }
 
 .card--elevated {
@@ -1205,7 +1209,7 @@ a {
 }
 
 .hud-module {
-  border-radius: 22px;
+  border-radius: 20px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: linear-gradient(180deg, rgba(13, 21, 36, 0.6), rgba(8, 14, 24, 0.42));
   box-shadow:
@@ -1223,7 +1227,7 @@ a {
 }
 
 .hud-module--compact {
-  padding: 14px;
+  padding: 10px;
 }
 
 .hud-list-item,
@@ -1244,20 +1248,20 @@ a {
 .results-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .upload-dropzone {
   display: grid;
   gap: 6px;
-  padding: 20px;
-  border-radius: 20px;
+  padding: 14px;
+  border-radius: 16px;
   border: 1px dashed rgba(125, 211, 252, 0.32);
   background: rgba(6, 13, 23, 0.8);
   color: var(--text-soft);
@@ -1280,8 +1284,8 @@ a {
 .input,
 .textarea {
   width: 100%;
-  padding: 14px 16px;
-  border-radius: 18px;
+  padding: 11px 12px;
+  border-radius: 16px;
   border: 1px solid rgba(125, 211, 252, 0.18);
   background: rgba(6, 12, 21, 0.92);
   color: #e6eefc;
@@ -1296,7 +1300,7 @@ a {
 }
 
 .textarea {
-  min-height: 150px;
+  min-height: 118px;
   resize: vertical;
 }
 
@@ -1304,13 +1308,16 @@ a {
 .secondary {
   border: none;
   border-radius: 999px;
-  padding: 12px 18px;
+  padding: 10px 15px;
   color: white;
-  min-height: 46px;
+  min-height: 40px;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
 }
 
 .primary {
-  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.92), rgba(59, 130, 246, 0.92));
+  color: #03111c;
 }
 
 .primary--glow {
@@ -1318,9 +1325,9 @@ a {
 }
 
 .secondary {
-  background: rgba(10, 18, 32, 0.76);
-  border: 1px solid rgba(125, 211, 252, 0.16);
-  color: #d7e7ff;
+  background: rgba(10, 18, 32, 0.46);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: #e8f1ff;
 }
 
 .primary:disabled {
@@ -1335,16 +1342,16 @@ a {
 }
 
 .answer-box--hero {
-  font-size: 1.02rem;
-  padding: 16px 18px;
-  border-radius: 22px;
+  font-size: 0.9rem;
+  padding: 12px 14px;
+  border-radius: 18px;
   background: linear-gradient(180deg, rgba(11, 18, 31, 0.64), rgba(8, 14, 24, 0.42));
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .muted--large {
-  font-size: 0.97rem;
-  line-height: 1.58;
+  font-size: 0.84rem;
+  line-height: 1.46;
 }
 
 .flag {
@@ -1374,8 +1381,8 @@ a {
 
 .confidence-gauge-ring {
   --gauge-number: calc(var(--gauge, 76) * 1%);
-  width: 164px;
-  height: 164px;
+  width: 136px;
+  height: 136px;
   border-radius: 999px;
   background:
     radial-gradient(circle at center, rgba(7, 12, 20, 1) 56%, transparent 57%),
@@ -1391,7 +1398,7 @@ a {
 }
 
 .confidence-gauge-center strong {
-  font-size: 2.6rem;
+  font-size: 2.1rem;
   line-height: 1;
 }
 
@@ -1405,16 +1412,16 @@ a {
 .run-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .run-stage {
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 16px;
+  padding: 9px 10px;
+  border-radius: 14px;
   background: rgba(6, 12, 21, 0.78);
   border: 1px solid rgba(125, 211, 252, 0.08);
 }
@@ -1422,14 +1429,14 @@ a {
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .score-orbit {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .score-orbit--minimal {
@@ -1440,8 +1447,8 @@ a {
   position: relative;
   display: grid;
   place-items: center;
-  padding: 12px;
-  border-radius: 18px;
+  padding: 8px;
+  border-radius: 16px;
   background: rgba(6, 12, 21, 0.78);
   border: 1px solid rgba(125, 211, 252, 0.08);
 }
@@ -1455,8 +1462,8 @@ a {
 }
 
 .score-ring-svg {
-  width: 112px;
-  height: 112px;
+  width: 92px;
+  height: 92px;
   transform: rotate(-90deg);
 }
 
@@ -1485,12 +1492,12 @@ a {
 }
 
 .score-ring-center strong {
-  font-size: 1.65rem;
+  font-size: 1.38rem;
 }
 
 .score-ring-center span {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .comparison-table {
@@ -1503,8 +1510,8 @@ a {
   grid-template-columns: 1.15fr 1fr 60px;
   gap: 12px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 16px;
+  padding: 9px 10px;
+  border-radius: 14px;
   background: rgba(6, 12, 21, 0.8);
   border: 1px solid rgba(125, 211, 252, 0.08);
 }
