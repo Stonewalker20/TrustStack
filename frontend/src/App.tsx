@@ -19,8 +19,10 @@ type PlanetSlide = {
   planet: string
   title: string
   summary: string
+  background: string
   problem: string
   solution: string
+  whyItMatters: string
   keyPoints: string[]
   proofLabel: string
   proofValue: string
@@ -35,8 +37,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Mercury',
     title: 'AI systems answer quickly, but they rarely prove why they should be trusted.',
     summary: 'TrustStack starts from the core failure mode: most model interfaces optimize for fluency while leaving operators blind to evidence quality, scope, and risk.',
+    background: 'In practical settings, the cost of a wrong answer is rarely just cosmetic. A weak response can trigger bad decisions, wasted analyst time, or false confidence in a model that was never actually grounded in the available evidence.',
     problem: 'Teams are asked to act on AI outputs before they can inspect whether the answer is actually grounded in source material.',
     solution: 'TrustStack reframes trust as an evidence problem. Before we score anything, we ingest the corpus and make every later judgment traceable to specific supporting passages.',
+    whyItMatters: 'This opening slide establishes that TrustStack is not trying to make models sound smarter. It is trying to make their outputs safer to inspect, challenge, and operationalize.',
     keyPoints: [
       'Ground the system in uploaded evidence rather than model confidence alone.',
       'Normalize documents into indexed chunks so later claims remain auditable.',
@@ -53,8 +57,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Venus',
     title: 'TrustStack is a layered evaluation system, not a single trust score.',
     summary: 'Venus introduces the architecture that turns documents, retrieval, scoring, and explanation into one coherent operator workflow.',
+    background: 'Many trust tools stop at a dashboard metric or a retrieval view. TrustStack instead connects ingestion, retrieval, scoring, explanation, and export into one system so each stage reinforces the others.',
     problem: 'A raw score is not enough if the audience cannot see what produced it or where the answer broke down.',
     solution: 'TrustStack separates ingestion, retrieval, grounded response generation, evaluation, risk labeling, and review so each layer can be inspected on its own.',
+    whyItMatters: 'The architecture slide makes the project legible. It shows that TrustStack is a system with explicit responsibilities, not a UI skin over a single prompt.',
     keyPoints: [
       'Each subsystem has a distinct responsibility in the trust pipeline.',
       'The architecture is local-first, auditable, and designed for demonstrations and real review work.',
@@ -71,8 +77,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Earth',
     title: 'Users interact with TrustStack through grounded evaluation, not a blind chatbot.',
     summary: 'Earth explains the main runtime loop: question, retrieval, answer, score, and explanation all happen against the active evidence set.',
+    background: 'This is the live operational view of the system. It is where a user moves from abstract architecture into a concrete question that can be answered, scored, and reviewed in one pass.',
     problem: 'Standard chat UX makes it hard to tell whether the answer came from evidence or from model interpolation.',
     solution: 'TrustStack ties each live evaluation to retrieved context, formal scoring, and evidence-backed outputs that can be reviewed immediately.',
+    whyItMatters: 'This slide demonstrates the core product behavior. It shows that TrustStack is usable in real time while still preserving rigorous evaluation logic.',
     keyPoints: [
       'The question is evaluated against indexed evidence, not treated as open-ended chat.',
       'Sample prompts lower the barrier to trying grounded evaluation on a fresh corpus.',
@@ -89,8 +97,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Mars',
     title: 'A trustworthy answer has to expose its support, not just sound plausible.',
     summary: 'Mars is the explainability slide: answer, citations, supporting excerpts, and weak spots all sit in the same review surface.',
+    background: 'Most model interfaces stop once they have produced fluent text. TrustStack keeps going by exposing the evidence base and making unsupported reasoning visible to the operator.',
     problem: 'Users cannot meaningfully trust an answer they cannot audit claim by claim.',
     solution: 'TrustStack surfaces the answer with its evidence, confidence rationale, and unsupported or weakly grounded claims so the user can verify before acting.',
+    whyItMatters: 'This is where TrustStack shifts from a convenience tool into an accountability tool. The system does not ask for trust; it gives the user material to judge whether trust is earned.',
     keyPoints: [
       'Citations point back to concrete retrieved evidence.',
       'Claim support and contradiction risk are part of the evaluation, not afterthoughts.',
@@ -107,8 +117,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Jupiter',
     title: 'TrustStack turns evidence quality into a decision-grade trust posture.',
     summary: 'Jupiter is the main results slide: weighted category scores, verdict bands, and risk signals translate diagnostics into an executive readout.',
+    background: 'A useful trust layer has to compress technical evidence into something decision makers can quickly understand without losing the reasoning underneath it.',
     problem: 'Review teams need a compact verdict, but that verdict has to stay anchored to defensible evaluation logic.',
     solution: 'The TrustStack Evaluation Standard converts retrieval, support, citations, contradiction risk, and calibration into a weighted breakdown the audience can explain.',
+    whyItMatters: 'This slide is the payoff. It shows how TrustStack turns messy evidence and model behavior into a structured, defensible trust judgment.',
     keyPoints: [
       'Weighted categories prevent the product from collapsing into one opaque confidence number.',
       'Verdict bands make it clear when a result passes, needs review, or fails.',
@@ -125,8 +137,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Saturn',
     title: 'One good answer is not enough. Trust has to hold across time and repeated runs.',
     summary: 'Saturn reframes TrustStack as a benchmarking product by showing historical evaluations, consistency checks, and cross-run tracking.',
+    background: 'Operational trust is temporal. A system that performs well once but drifts over time is still risky, especially in environments where the evidence base and user behavior evolve.',
     problem: 'Single-run demos hide drift, instability, and repeated failure modes.',
     solution: 'TrustStack keeps run history and standardized benchmark output so teams can compare how the system behaves over time and across datasets.',
+    whyItMatters: 'This slide extends TrustStack from a live evaluator into a benchmarking and governance tool. It makes clear that trust must be measured longitudinally, not just locally.',
     keyPoints: [
       'Repeated runs expose drift and unstable behavior that a single demo misses.',
       'Benchmark-friendly history makes the system useful for governance, not just demos.',
@@ -143,8 +157,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Uranus',
     title: 'The full stack matters because trust breaks when any one layer disappears.',
     summary: 'Uranus zooms out and reconnects the whole system: ingestion, retrieval, evaluation, explanation, report export, and operator review.',
+    background: 'By this point in the presentation, the audience has seen each major function separately. The next step is to reconnect them into one coherent product and one coherent systems story.',
     problem: 'Tools that solve only one part of trust review still leave the analyst stitching everything together by hand.',
     solution: 'TrustStack packages the full evaluation lifecycle into a unified stack so the interface, backend, benchmark, and report all speak the same language.',
+    whyItMatters: 'This slide reinforces system coherence. It argues that the product is stronger because its architecture, evaluation standard, and reporting workflow are aligned rather than fragmented.',
     keyPoints: [
       'The planet narrative maps directly onto the actual system architecture.',
       'The same backend powers live queries, scoring, benchmarks, and report exports.',
@@ -161,8 +177,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Neptune',
     title: 'TrustStack is backed by a formal methodology, not a vague notion of trust.',
     summary: 'Neptune is the research slide: weighted dimensions, diagnostics, failure modes, claim support, and reproducibility metadata anchor the system in a defensible method.',
+    background: 'For an evaluation system to be credible in research or high-stakes review, it needs more than persuasive language. It needs a formal method that someone else can inspect, critique, and reproduce.',
     problem: 'A trust product without a formal method is difficult to defend in technical review or conference settings.',
     solution: 'TrustStack Evaluation Standard v2.0 defines weighted dimensions, structured checks, diagnostics, and metadata so results can be reproduced and critiqued.',
+    whyItMatters: 'This slide justifies the project academically. It shows that TrustStack is not merely packaging model outputs; it is defining a concrete methodology for evaluating grounded trust.',
     keyPoints: [
       'Groundedness, citations, contradiction risk, completeness, and calibration are all explicit dimensions.',
       'Per-case metrics and metadata make results reportable instead of anecdotal.',
@@ -179,8 +197,10 @@ const PLANET_SLIDES: PlanetSlide[] = [
     planet: 'Pluto',
     title: 'TrustStack ends with reusable artifacts, not just an interactive demo.',
     summary: 'Pluto closes the walkthrough by connecting the standard, batch benchmark, and report-export path to what an audience or analyst can take away after the demo.',
+    background: 'A strong systems project should leave behind more than a live interaction. It should generate outputs that can be discussed in class, reused in reports, and carried into later evaluation cycles.',
     problem: 'Too many AI demos stop at the interface and leave no durable artifact behind.',
     solution: 'Mission Control can execute the standardized suite and generate report-ready outputs, so the presentation, benchmark, and paper all stay aligned.',
+    whyItMatters: 'The closing slide ties the project together. TrustStack becomes a workflow for grounded evaluation, benchmarking, and reporting rather than a one-off demonstration.',
     keyPoints: [
       'The same standardized suite produces live results, final scores, and exportable report artifacts.',
       'Batch benchmarking extends the product beyond a single corpus or one-off demo.',
@@ -270,6 +290,12 @@ function StandardSlidePanel({
 
       <div className="presentation-slide__grid">
         <div className="presentation-slide__panel">
+          <div className="eyebrow">Background</div>
+          <h3>Why this part of the story matters</h3>
+          <p>{slide.background}</p>
+        </div>
+
+        <div className="presentation-slide__panel">
           <div className="eyebrow">Issue</div>
           <h3>What breaks without TrustStack?</h3>
           <p>{slide.problem}</p>
@@ -279,6 +305,12 @@ function StandardSlidePanel({
           <div className="eyebrow">Response</div>
           <h3>How TrustStack answers it</h3>
           <p>{slide.solution}</p>
+        </div>
+
+        <div className="presentation-slide__panel">
+          <div className="eyebrow">Presentation Framing</div>
+          <h3>What the audience should take away</h3>
+          <p>{slide.whyItMatters}</p>
         </div>
       </div>
 
