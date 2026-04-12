@@ -19,6 +19,15 @@
   --danger: #fda4af;
   --warn: #fcd34d;
   --ok: #86efac;
+  --hud-glass: rgba(15, 23, 42, 0.6);
+  --hud-border: rgba(148, 163, 184, 0.2);
+  --hud-glow: rgba(56, 189, 248, 0.3);
+  --hud-cyan: #22d3ee;
+  --hud-blue: #60a5fa;
+  --hud-amber: #fbbf24;
+  --hud-text-primary: #f8fafc;
+  --hud-text-secondary: #cbd5e1;
+  --hud-text-muted: #64748b;
 }
 
 * {
@@ -162,12 +171,12 @@ a {
 .hero-stage-cluster {
   position: absolute;
   right: 24px;
-  top: 188px;
+  top: 176px;
   bottom: 98px;
   z-index: 4;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 16px;
 }
 
 .hero-stage-cluster--pluto {
@@ -185,7 +194,7 @@ a {
 }
 
 .hero-stage-panel {
-  width: min(860px, calc(100vw - 344px));
+  width: min(820px, calc(100vw - 352px));
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -209,12 +218,13 @@ a {
   justify-content: space-between;
   gap: 14px;
   align-items: start;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .hero-stage-panel-head h2 {
-  margin: 8px 0 0;
-  font-size: clamp(1.24rem, 1.8vw, 1.72rem);
+  margin: 6px 0 0;
+  font-size: clamp(1.16rem, 1.7vw, 1.54rem);
+  line-height: 1.04;
   text-shadow: 0 10px 30px rgba(2, 8, 18, 0.72);
 }
 
@@ -237,8 +247,8 @@ a {
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
-  width: min(280px, calc(100vw - 48px));
-  max-width: 280px;
+  width: min(300px, calc(100vw - 48px));
+  max-width: 300px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -253,18 +263,22 @@ a {
 }
 
 .hero-journey-card h3 {
-  margin: 8px 0 8px;
-  font-size: clamp(1.18rem, 1.7vw, 1.54rem);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  margin: 8px 0 10px;
+  font-size: clamp(1.24rem, 1.9vw, 1.72rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
   text-shadow: 0 8px 28px rgba(2, 8, 18, 0.65);
 }
 
 .hero-journey-card p {
   margin: 0;
-  color: rgba(232, 238, 248, 0.88);
-  line-height: 1.52;
+  color: rgba(232, 238, 248, 0.92);
+  line-height: 1.58;
   text-shadow: 0 8px 24px rgba(2, 8, 18, 0.6);
+}
+
+.hero-journey-card .eyebrow {
+  color: var(--hud-cyan);
 }
 
 .hero-journey-meta {
@@ -612,24 +626,36 @@ a {
 }
 
 .hero-node--orbital {
-  min-width: 172px;
+  min-width: 176px;
   pointer-events: auto;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(8, 15, 27, 0.76), rgba(7, 12, 22, 0.5));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 12px 34px rgba(2, 8, 18, 0.16);
+  backdrop-filter: blur(14px);
+  padding: 12px 14px;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .hero-node--selected {
-  border-color: transparent;
-  box-shadow: none;
+  border-color: rgba(34, 211, 238, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 42px rgba(2, 8, 18, 0.2),
+    0 0 0 1px rgba(34, 211, 238, 0.08);
 }
 
 .hero-node--orbital:hover,
 .hero-node--orbital.hero-node--active {
-  background: rgba(7, 13, 24, 0.22);
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(10, 19, 33, 0.9), rgba(8, 15, 27, 0.64));
+  border-color: rgba(34, 211, 238, 0.24);
+  transform: translateY(-2px);
 }
 
 .hero-node-dot,
@@ -655,11 +681,12 @@ a {
 .hero-node strong {
   display: block;
   font-size: 0.95rem;
+  color: var(--hud-text-primary);
   text-shadow: 0 8px 20px rgba(2, 8, 18, 0.7);
 }
 
 .hero-node small {
-  color: var(--text-dim);
+  color: var(--hud-text-secondary);
   text-shadow: 0 6px 18px rgba(2, 8, 18, 0.56);
 }
 
@@ -667,7 +694,7 @@ a {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   align-items: end;
 }
 
@@ -713,6 +740,12 @@ a {
 .framework-node {
   min-height: 138px;
   padding: 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(10, 18, 31, 0.7), rgba(8, 14, 24, 0.44));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 14px 36px rgba(2, 8, 18, 0.12);
 }
 
 .framework-node-topline,
@@ -763,11 +796,11 @@ a {
 
 .framework-note {
   margin-top: 10px;
-  padding: 10px;
-  border-radius: 16px;
-  background: rgba(5, 12, 22, 0.7);
-  border: 1px solid var(--line);
-  color: var(--text-soft);
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(11, 18, 31, 0.66), rgba(8, 14, 24, 0.5));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  color: var(--hud-text-secondary);
   line-height: 1.55;
 }
 
@@ -880,13 +913,13 @@ a {
   padding: 5px 9px;
   border-radius: 999px;
   font-size: 10px;
-  border: 1px solid rgba(125, 211, 252, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .data-pill--button {
   cursor: pointer;
-  background: rgba(8, 18, 32, 0.92);
-  color: #d8e6ff;
+  background: rgba(9, 17, 30, 0.68);
+  color: var(--hud-text-primary);
 }
 
 .hero-stage-panel .panel,
@@ -1024,20 +1057,20 @@ a {
 }
 
 .badge {
-  background: rgba(10, 18, 32, 0.75);
-  color: var(--text-soft);
+  background: rgba(9, 16, 28, 0.58);
+  color: var(--hud-text-secondary);
 }
 
 .badge--bright {
-  background: rgba(37, 99, 235, 0.16);
-  border-color: rgba(96, 165, 250, 0.35);
-  color: #cfe2ff;
+  background: rgba(34, 211, 238, 0.1);
+  border-color: rgba(34, 211, 238, 0.24);
+  color: #d9f8ff;
 }
 
 .data-pill,
 .citation-chip {
-  background: rgba(8, 18, 32, 0.9);
-  color: #d8e6ff;
+  background: rgba(9, 17, 30, 0.6);
+  color: var(--hud-text-secondary);
 }
 
 .console-shell {
@@ -1059,18 +1092,19 @@ a {
 .panel,
 .card {
   border-radius: 24px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(7, 14, 24, 0.98), rgba(8, 14, 24, 0.88));
+  border: 1px solid var(--hud-border);
+  background: linear-gradient(180deg, rgba(11, 18, 31, 0.74), rgba(8, 14, 24, 0.5));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.025),
-    0 18px 60px rgba(2, 8, 18, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 18px 60px rgba(2, 8, 18, 0.2);
   padding: 16px;
+  backdrop-filter: blur(14px);
 }
 
 .panel--glass {
   background:
-    linear-gradient(180deg, rgba(10, 19, 34, 0.92), rgba(7, 12, 22, 0.78)),
-    rgba(10, 18, 32, 0.82);
+    linear-gradient(180deg, rgba(13, 22, 38, 0.68), rgba(7, 12, 22, 0.48)),
+    rgba(10, 18, 32, 0.52);
 }
 
 .card {
@@ -1079,7 +1113,43 @@ a {
 }
 
 .card--elevated {
-  background: linear-gradient(180deg, rgba(9, 16, 28, 0.96), rgba(7, 12, 20, 0.92));
+  background: linear-gradient(180deg, rgba(13, 21, 36, 0.62), rgba(8, 14, 24, 0.44));
+}
+
+.hud-module {
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(13, 21, 36, 0.6), rgba(8, 14, 24, 0.42));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 16px 42px rgba(2, 8, 18, 0.16);
+  backdrop-filter: blur(16px);
+}
+
+.hud-module--primary {
+  border-color: rgba(34, 211, 238, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 56px rgba(2, 8, 18, 0.22),
+    0 0 26px rgba(34, 211, 238, 0.06);
+}
+
+.hud-module--compact {
+  padding: 14px;
+}
+
+.hud-list-item,
+.hud-evidence-item,
+.hud-history-item {
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(180deg, rgba(11, 18, 31, 0.56), rgba(8, 14, 24, 0.36));
+  backdrop-filter: blur(12px);
+}
+
+.hud-copy-block {
+  color: var(--hud-text-primary);
+  background: linear-gradient(180deg, rgba(10, 17, 29, 0.52), rgba(7, 12, 22, 0.34));
 }
 
 .list,
@@ -1178,10 +1248,10 @@ a {
 
 .answer-box--hero {
   font-size: 1.02rem;
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(7, 12, 20, 0.72);
-  border: 1px solid rgba(125, 211, 252, 0.1);
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(11, 18, 31, 0.64), rgba(8, 14, 24, 0.42));
+  border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .muted--large {
