@@ -4,8 +4,10 @@ from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Protocol
 
+from fastapi import HTTPException
 from pymongo import DESCENDING, MongoClient
 from pymongo.collection import Collection
+from pymongo.errors import PyMongoError
 
 from app.config import settings
 from app.services.bootstrap import migrate_sqlite_to_repository
@@ -14,6 +16,7 @@ from app.services.bootstrap import migrate_sqlite_to_repository
 class TrustRepository(Protocol):
     def create_document(self, *, filename: str, file_path: str) -> str: ...
     def create_chunks(self, *, document_id: str, filename: str, chunks: list[dict]) -> list[dict]: ...
+    def delete_document_tree(self, *, document_id: str) -> None: ...
     def create_run(
         self,
         *,
@@ -28,6 +31,7 @@ class TrustRepository(Protocol):
     def list_documents(self) -> list[dict]: ...
     def list_runs(self, limit: int = 100) -> list[dict]: ...
     def list_chunks(self) -> list[dict]: ...
+    def ping(self) -> None: ...
 
 
 def _serialize_id(value) -> str:
@@ -36,15 +40,21 @@ def _serialize_id(value) -> str:
 
 class MongoRepository:
     def __init__(self, uri: str, db_name: str):
-        self.client = MongoClient(uri, serverSelectionTimeoutMS=1500)
-        self.db = self.client[db_name]
-        self.documents: Collection = self.db["documents"]
-        self.chunks: Collection = self.db["chunks"]
-        self.runs: Collection = self.db["runs"]
-        self.documents.create_index("uploaded_at")
-        self.chunks.create_index("chunk_uid", unique=True)
-        self.chunks.create_index("document_id")
-        self.runs.create_index("created_at")
+        try:
+            self.client = MongoClient(uri, serverSelectionTimeoutMS=1500)
+            self.client.admin.command("ping")
+            self.db = self.client[db_name]
+            self.documents: Collection = self.db["documents"]
+            self.chunks: Collection = self.db["chunks"]
+            self.runs: Collection = self.db["runs"]
+            self.documents.create_index("uploaded_at")
+            self.chunks.create_index("chunk_uid", unique=True)
+            self.chunks.create_index("document_id")
+            self.runs.create_index("created_at")
+        except PyMongoError as exc:
+            raise RuntimeError(
+                f"MongoDB is unavailable at {uri}. Start MongoDB or update MONGO_URI."
+            ) from exc
 
     def create_document(self, *, filename: str, file_path: str) -> str:
         payload = {
@@ -73,6 +83,10 @@ class MongoRepository:
         if rows:
             self.chunks.insert_many(rows, ordered=True)
         return rows
+
+    def delete_document_tree(self, *, document_id: str) -> None:
+        self.chunks.delete_many({"document_id": document_id})
+        self.documents.delete_one({"_id": self._coerce_object_id(document_id)})
 
     def create_run(
         self,
@@ -142,9 +156,28 @@ class MongoRepository:
             )
         return rows
 
+    def ping(self) -> None:
+        self.client.admin.command("ping")
+
+    @staticmethod
+    def _coerce_object_id(document_id: str):
+        try:
+            from bson import ObjectId
+
+            return ObjectId(document_id)
+        except Exception:
+            return document_id
+
 
 @lru_cache(maxsize=1)
 def get_repository() -> TrustRepository:
     repo = MongoRepository(settings.mongo_uri, settings.mongo_db_name)
     migrate_sqlite_to_repository(repo)
     return repo
+
+
+def require_repository() -> TrustRepository:
+    try:
+        return get_repository()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc

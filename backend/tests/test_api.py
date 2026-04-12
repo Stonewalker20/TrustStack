@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.repository import get_repository
+from app.repository import require_repository
 from app.services.evaluation import build_evaluation_report
 
 
@@ -19,6 +19,7 @@ class FakeRepository:
         self.runs: list[dict] = []
         self.document_counter = 0
         self.run_counter = 0
+        self.fail_on_create_run = False
 
     def reset(self):
         self.documents.clear()
@@ -26,11 +27,19 @@ class FakeRepository:
         self.runs.clear()
         self.document_counter = 0
         self.run_counter = 0
+        self.fail_on_create_run = False
 
     def create_document(self, *, filename: str, file_path: str) -> str:
         self.document_counter += 1
         doc_id = f"doc-{self.document_counter}"
-        self.documents.append({"id": doc_id, "filename": filename, "file_path": file_path, "uploaded_at": "2026-04-10T00:00:00+00:00"})
+        self.documents.append(
+            {
+                "id": doc_id,
+                "filename": filename,
+                "file_path": file_path,
+                "uploaded_at": f"2026-04-10T00:00:{self.document_counter:02d}+00:00",
+            }
+        )
         return doc_id
 
     def create_chunks(self, *, document_id: str, filename: str, chunks: list[dict]) -> list[dict]:
@@ -47,6 +56,10 @@ class FakeRepository:
         self.chunks.extend(rows)
         return rows
 
+    def delete_document_tree(self, *, document_id: str) -> None:
+        self.documents = [row for row in self.documents if row["id"] != document_id]
+        self.chunks = [row for row in self.chunks if row["document_id"] != document_id]
+
     def create_run(
         self,
         *,
@@ -58,6 +71,8 @@ class FakeRepository:
         citations: list[str],
         evaluation: dict | None = None,
     ) -> str:
+        if self.fail_on_create_run:
+            raise RuntimeError("run persistence unavailable")
         self.run_counter += 1
         run_id = f"run-{self.run_counter}"
         self.runs.append(
@@ -76,7 +91,8 @@ class FakeRepository:
         return run_id
 
     def list_documents(self) -> list[dict]:
-        return [{"id": row["id"], "filename": row["filename"], "uploaded_at": row["uploaded_at"]} for row in self.documents]
+        ordered = sorted(self.documents, key=lambda row: row["uploaded_at"], reverse=True)
+        return [{"id": row["id"], "filename": row["filename"], "uploaded_at": row["uploaded_at"]} for row in ordered]
 
     def list_runs(self, limit: int = 100) -> list[dict]:
         return list(reversed(self.runs))[:limit]
@@ -84,12 +100,15 @@ class FakeRepository:
     def list_chunks(self) -> list[dict]:
         return list(self.chunks)
 
+    def ping(self) -> None:
+        return None
+
 
 class APITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.repo = FakeRepository()
-        app.dependency_overrides[get_repository] = lambda: cls.repo
+        app.dependency_overrides[require_repository] = lambda: cls.repo
         cls.client = TestClient(app)
 
     @classmethod
@@ -182,6 +201,15 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Unsupported file type", response.json()["detail"])
 
+    def test_query_endpoint_rejects_blank_question_and_invalid_top_k(self):
+        blank_response = self.client.post("/query", json={"question": "   "})
+        zero_top_k_response = self.client.post("/query", json={"question": "What happened?", "top_k": 0})
+        negative_top_k_response = self.client.post("/query", json={"question": "What happened?", "top_k": -3})
+
+        self.assertEqual(blank_response.status_code, 422)
+        self.assertEqual(zero_top_k_response.status_code, 422)
+        self.assertEqual(negative_top_k_response.status_code, 422)
+
     def test_ingest_indexes_text_file_and_lists_document(self):
         temp_dir = tempfile.TemporaryDirectory()
         temp_upload_dir = Path(temp_dir.name) / "uploads"
@@ -214,6 +242,74 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(documents_response.status_code, 200)
         self.assertEqual(len(documents_response.json()), 1)
 
+    def test_ingest_rolls_back_document_state_if_vector_indexing_fails(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        temp_upload_dir = Path(temp_dir.name) / "uploads"
+        temp_upload_dir.mkdir(parents=True, exist_ok=True)
+
+        fake_embedder = Mock()
+        fake_embedder.embed_texts.return_value = [[0.1, 0.2, 0.3]]
+        fake_store = Mock()
+        fake_store.upsert.side_effect = RuntimeError("vector store unavailable")
+
+        with patch("app.routers.ingest.settings.upload_dir", str(temp_upload_dir)), \
+             patch("app.routers.ingest.parse_uploaded_file", return_value=[{"page_num": None, "text": "Safety inspection before startup."}]), \
+             patch("app.routers.ingest.chunk_pages", return_value=[{"filename": "policy.txt", "page_num": None, "text": "Safety inspection before startup."}]), \
+             patch("app.routers.ingest.get_embedder", return_value=fake_embedder), \
+             patch("app.routers.ingest.get_vector_store", return_value=fake_store):
+            response = self.client.post(
+                "/ingest",
+                files={"file": ("policy.txt", b"Safety inspection before startup.", "text/plain")},
+            )
+
+        temp_dir.cleanup()
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(self.repo.documents, [])
+        self.assertEqual(self.repo.chunks, [])
+
+    def test_ingest_turns_parser_failures_into_bad_request_and_cleans_up(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        temp_upload_dir = Path(temp_dir.name) / "uploads"
+        temp_upload_dir.mkdir(parents=True, exist_ok=True)
+
+        with patch("app.routers.ingest.settings.upload_dir", str(temp_upload_dir)), \
+             patch("app.routers.ingest.parse_uploaded_file", side_effect=RuntimeError("corrupt pdf")):
+            response = self.client.post(
+                "/ingest",
+                files={"file": ("policy.pdf", b"%PDF-1.4 broken", "application/pdf")},
+            )
+
+        temp_dir.cleanup()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Failed to parse uploaded file", response.json()["detail"])
+        self.assertEqual(self.repo.documents, [])
+        self.assertEqual(self.repo.chunks, [])
+
+    def test_ingest_rolls_back_persisted_records_when_indexing_fails(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        temp_upload_dir = Path(temp_dir.name) / "uploads"
+        temp_upload_dir.mkdir(parents=True, exist_ok=True)
+
+        fake_embedder = Mock()
+        fake_embedder.embed_texts.return_value = [[0.1, 0.2, 0.3]]
+        fake_store = Mock()
+        fake_store.upsert.side_effect = RuntimeError("vector store is unavailable")
+
+        with patch("app.routers.ingest.settings.upload_dir", str(temp_upload_dir)), \
+             patch("app.routers.ingest.parse_uploaded_file", return_value=[{"page_num": None, "text": "Safety inspection before startup."}]), \
+             patch("app.routers.ingest.chunk_pages", return_value=[{"filename": "policy.txt", "page_num": None, "text": "Safety inspection before startup."}]), \
+             patch("app.routers.ingest.get_embedder", return_value=fake_embedder), \
+             patch("app.routers.ingest.get_vector_store", return_value=fake_store):
+            response = self.client.post(
+                "/ingest",
+                files={"file": ("policy.txt", b"Safety inspection before startup.", "text/plain")},
+            )
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(self.repo.documents, [])
+        self.assertEqual(self.repo.chunks, [])
+
     def test_runs_endpoint_returns_saved_runs(self):
         self.repo.create_run(
             question="What is the maintenance interval?",
@@ -233,7 +329,19 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(payload[0]["risk_flags"], ["LOW_RETRIEVAL_SUPPORT"])
         self.assertIsNone(payload[0]["evaluation"])
 
-    def test_sample_question_endpoint_uses_indexed_chunks(self):
+    def test_sample_question_endpoint_uses_most_recent_document(self):
+        older_document_id = self.repo.create_document(filename="older.txt", file_path="/tmp/older.txt")
+        self.repo.create_chunks(
+            document_id=older_document_id,
+            filename="older.txt",
+            chunks=[
+                {
+                    "page_num": None,
+                    "text": "Older source about maintenance intervals and lubrication schedules.",
+                }
+            ],
+        )
+
         document_id = self.repo.create_document(filename="policy.txt", file_path="/tmp/policy.txt")
         self.repo.create_chunks(
             document_id=document_id,
@@ -252,6 +360,74 @@ class APITestCase(unittest.TestCase):
         payload = response.json()
         self.assertGreaterEqual(len(payload), 1)
         self.assertIn("question", payload[0])
+        self.assertEqual(payload[0]["source"], "policy.txt")
+
+    def test_query_returns_result_even_if_run_persistence_fails(self):
+        self.repo.fail_on_create_run = True
+        evaluation = build_evaluation_report(
+            question="What does the SOP require before startup?",
+            answer="The SOP requires a documented pre-start safety inspection.",
+            evidence_scores=[0.91],
+            citations=["doc1_chunk0"],
+            evidence_ids=["doc1_chunk0"],
+            insufficient_evidence=False,
+            risk_flags=[],
+        )
+        fake_result = {
+            "question": "What does the SOP require before startup?",
+            "answer": "The SOP requires a documented pre-start safety inspection.",
+            "citations": ["doc1_chunk0"],
+            "evidence": [
+                {
+                    "source": "facility_safety_sop.txt",
+                    "page": None,
+                    "chunk_id": "doc1_chunk0",
+                    "score": 0.91,
+                    "text": "Perform a pre-start safety inspection before energizing the equipment.",
+                }
+            ],
+            "confidence_score": 88.4,
+            "risk_flags": [],
+            "trust_summary": "High confidence. The answer is directly supported by relevant evidence.",
+            "insufficient_evidence": False,
+            "latency_ms": 18,
+            "evaluation": evaluation,
+            "explanation": {
+                "overview": evaluation["summary"],
+                "teaching_points": evaluation["teaching_points"],
+                "review_recommendation": evaluation["next_step"],
+                "score_breakdown": [
+                    {
+                        "label": dimension["label"],
+                        "value": dimension["score"],
+                        "detail": dimension["rationale"],
+                    }
+                    for dimension in evaluation["dimensions"]
+                ],
+                "evidence_strength": "Retrieval alignment scored 91/100 across 1 evidence chunks, with 1 strong-support chunk(s).",
+                "citation_coverage": "TrustStack traced the answer through 1 citation(s), and the evaluation framework exposes citation traceability explicitly.",
+                "flagged_concerns": [],
+            },
+        }
+
+        with patch("app.routers.query.answer_question", return_value=fake_result):
+            response = self.client.post("/query", json={"question": "What does the SOP require before startup?", "top_k": 3})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["answer"], fake_result["answer"])
+        self.assertEqual(self.repo.runs, [])
+
+    def test_query_endpoint_rejects_blank_or_whitespace_questions(self):
+        for question in ("", "   ", "\t\n"):
+            with self.subTest(question=question):
+                response = self.client.post("/query", json={"question": question, "top_k": 3})
+                self.assertEqual(response.status_code, 422)
+
+    def test_query_endpoint_rejects_nonpositive_top_k_values(self):
+        for top_k in (0, -1, -10):
+            with self.subTest(top_k=top_k):
+                response = self.client.post("/query", json={"question": "What does the SOP require before startup?", "top_k": top_k})
+                self.assertEqual(response.status_code, 422)
 
 
 if __name__ == "__main__":
