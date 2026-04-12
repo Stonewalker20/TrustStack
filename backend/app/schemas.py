@@ -31,6 +31,51 @@ class ExplanationFactor(BaseModel):
     detail: str
 
 
+class EvaluationFrameworkDimension(BaseModel):
+    key: str
+    label: str
+    weight: float
+    purpose: str
+
+
+class EvaluationFramework(BaseModel):
+    name: str
+    version: str
+    description: str
+    score_range: str
+    pass_threshold: float
+    review_threshold: float
+    dimensions: list[EvaluationFrameworkDimension]
+
+
+class EvaluationDimension(BaseModel):
+    key: str
+    label: str
+    weight: float
+    score: float
+    status: str
+    rationale: str
+    signals: list[str]
+
+
+class EvaluationCheck(BaseModel):
+    key: str
+    label: str
+    status: str
+    detail: str
+
+
+class EvaluationReport(BaseModel):
+    framework: EvaluationFramework
+    overall_score: float
+    verdict: str
+    summary: str
+    teaching_points: list[str]
+    next_step: str
+    dimensions: list[EvaluationDimension]
+    checks: list[EvaluationCheck]
+
+
 class QueryExplanation(BaseModel):
     overview: str
     teaching_points: list[str]
@@ -51,6 +96,7 @@ class QueryResponse(BaseModel):
     trust_summary: str
     insufficient_evidence: bool = False
     latency_ms: int | None = None
+    evaluation: EvaluationReport
     explanation: QueryExplanation
 
 
@@ -63,9 +109,15 @@ class RunItem(BaseModel):
     risk_flags: list[str]
     citations: list[str]
     created_at: str
+    evaluation: EvaluationReport | None = None
 
 
 class DocumentItem(BaseModel):
     id: str
     filename: str
     uploaded_at: str
+
+
+class SampleQuestionItem(BaseModel):
+    question: str
+    source: str | None = None

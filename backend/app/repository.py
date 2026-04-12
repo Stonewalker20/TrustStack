@@ -14,7 +14,17 @@ from app.services.bootstrap import migrate_sqlite_to_repository
 class TrustRepository(Protocol):
     def create_document(self, *, filename: str, file_path: str) -> str: ...
     def create_chunks(self, *, document_id: str, filename: str, chunks: list[dict]) -> list[dict]: ...
-    def create_run(self, *, question: str, answer: str, confidence_score: float, trust_summary: str, risk_flags: list[str], citations: list[str]) -> str: ...
+    def create_run(
+        self,
+        *,
+        question: str,
+        answer: str,
+        confidence_score: float,
+        trust_summary: str,
+        risk_flags: list[str],
+        citations: list[str],
+        evaluation: dict | None = None,
+    ) -> str: ...
     def list_documents(self) -> list[dict]: ...
     def list_runs(self, limit: int = 100) -> list[dict]: ...
     def list_chunks(self) -> list[dict]: ...
@@ -73,6 +83,7 @@ class MongoRepository:
         trust_summary: str,
         risk_flags: list[str],
         citations: list[str],
+        evaluation: dict | None = None,
     ) -> str:
         payload = {
             "question": question,
@@ -81,6 +92,7 @@ class MongoRepository:
             "trust_summary": trust_summary,
             "risk_flags": risk_flags,
             "citations": citations,
+            "evaluation": evaluation,
             "created_at": datetime.now(UTC),
         }
         result = self.runs.insert_one(payload)
@@ -110,6 +122,7 @@ class MongoRepository:
                     "trust_summary": row["trust_summary"],
                     "risk_flags": row.get("risk_flags", []),
                     "citations": row.get("citations", []),
+                    "evaluation": row.get("evaluation"),
                     "created_at": row["created_at"].isoformat(),
                 }
             )

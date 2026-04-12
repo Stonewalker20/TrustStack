@@ -3,10 +3,12 @@ from __future__ import annotations
 import unittest
 from unittest.mock import Mock, patch
 
+from app.services.evaluation import build_evaluation_report
 from app.services.explanations import build_query_explanation
 from app.services.rag import _extract_hits, _rebuild_index_from_chunks
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
+from app.services.suggestions import build_sample_questions
 
 
 class ServiceBehaviorTests(unittest.TestCase):
@@ -53,6 +55,15 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertIn("Low confidence", summarize_trust(42, ["LOW_RETRIEVAL_SUPPORT"]))
 
     def test_build_query_explanation_teaches_user_how_score_was_formed(self):
+        evaluation = build_evaluation_report(
+            question="What does the SOP require before startup?",
+            answer="The source indicates inspections happen before startup and after maintenance.",
+            evidence_scores=[0.82, 0.7, 0.55],
+            citations=["doc1_chunk0", "doc1_chunk1"],
+            evidence_ids=["doc1_chunk0", "doc1_chunk1", "doc1_chunk2"],
+            insufficient_evidence=False,
+            risk_flags=["LOW_RETRIEVAL_SUPPORT"],
+        )
         explanation = build_query_explanation(
             confidence_score=74.5,
             evidence_scores=[0.82, 0.7, 0.55],
@@ -60,13 +71,32 @@ class ServiceBehaviorTests(unittest.TestCase):
             insufficient_evidence=False,
             risk_flags=["LOW_RETRIEVAL_SUPPORT"],
             answer="The source indicates inspections happen before startup and after maintenance.",
+            evaluation=evaluation,
         )
 
         self.assertIn("TrustStack scored this answer", explanation["overview"])
-        self.assertGreaterEqual(len(explanation["teaching_points"]), 3)
-        self.assertEqual(explanation["score_breakdown"][0]["label"], "Retrieval strength")
+        self.assertGreaterEqual(len(explanation["teaching_points"]), 4)
+        self.assertEqual(explanation["score_breakdown"][0]["label"], "Retrieval alignment")
         self.assertEqual(len(explanation["flagged_concerns"]), 1)
         self.assertIn("retrieved passages", explanation["flagged_concerns"][0].lower())
+
+    def test_build_evaluation_report_exposes_standardized_dimensions_and_checks(self):
+        report = build_evaluation_report(
+            question="What does the SOP require before startup?",
+            answer="The SOP requires a documented pre-start safety inspection.",
+            evidence_scores=[0.92, 0.84, 0.8],
+            citations=["doc1_chunk0", "doc1_chunk1"],
+            evidence_ids=["doc1_chunk0", "doc1_chunk1", "doc1_chunk2"],
+            insufficient_evidence=False,
+            risk_flags=[],
+        )
+
+        self.assertEqual(report["framework"]["name"], "TrustStack Evaluation Standard")
+        self.assertEqual(report["framework"]["version"], "1.0")
+        self.assertGreaterEqual(len(report["dimensions"]), 6)
+        self.assertGreaterEqual(len(report["checks"]), 6)
+        self.assertIn(report["verdict"], {"pass", "review", "fail"})
+        self.assertIn("teaching_points", report)
 
     def test_rebuild_index_from_repository_chunks(self):
         fake_repo = Mock()
@@ -88,6 +118,19 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertEqual(indexed, 1)
         fake_store.upsert.assert_called_once()
+
+    def test_build_sample_questions_returns_grounded_prompts(self):
+        questions = build_sample_questions(
+            [
+                {
+                    "filename": "policy.txt",
+                    "text": "Operators must complete a startup inspection before energizing the system. The procedure requires documenting every hazard and warning before restart.",
+                }
+            ]
+        )
+
+        self.assertGreaterEqual(len(questions), 1)
+        self.assertTrue(any("what" in question.lower() for question in questions))
 
 
 if __name__ == "__main__":

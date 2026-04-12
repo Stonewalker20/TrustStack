@@ -24,6 +24,7 @@ def query_docs(payload: QueryRequest, repo: TrustRepository = Depends(get_reposi
         trust_summary=result["trust_summary"],
         risk_flags=result["risk_flags"],
         citations=result["citations"],
+        evaluation=result.get("evaluation"),
     )
 
     return QueryResponse(**result)

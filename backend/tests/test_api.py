@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.repository import get_repository
+from app.services.evaluation import build_evaluation_report
 
 
 class FakeRepository:
@@ -46,7 +47,17 @@ class FakeRepository:
         self.chunks.extend(rows)
         return rows
 
-    def create_run(self, *, question: str, answer: str, confidence_score: float, trust_summary: str, risk_flags: list[str], citations: list[str]) -> str:
+    def create_run(
+        self,
+        *,
+        question: str,
+        answer: str,
+        confidence_score: float,
+        trust_summary: str,
+        risk_flags: list[str],
+        citations: list[str],
+        evaluation: dict | None = None,
+    ) -> str:
         self.run_counter += 1
         run_id = f"run-{self.run_counter}"
         self.runs.append(
@@ -58,6 +69,7 @@ class FakeRepository:
                 "trust_summary": trust_summary,
                 "risk_flags": risk_flags,
                 "citations": citations,
+                "evaluation": evaluation,
                 "created_at": "2026-04-10T00:00:00+00:00",
             }
         )
@@ -94,6 +106,15 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.json(), {"status": "ok"})
 
     def test_query_endpoint_returns_detailed_explanation_and_persists_run(self):
+        evaluation = build_evaluation_report(
+            question="What does the SOP require before startup?",
+            answer="The SOP requires a documented pre-start safety inspection.",
+            evidence_scores=[0.91],
+            citations=["doc1_chunk0", "doc1_chunk1"],
+            evidence_ids=["doc1_chunk0"],
+            insufficient_evidence=False,
+            risk_flags=[],
+        )
         fake_result = {
             "question": "What does the SOP require before startup?",
             "answer": "The SOP requires a documented pre-start safety inspection.",
@@ -112,21 +133,22 @@ class APITestCase(unittest.TestCase):
             "trust_summary": "High confidence. The answer is directly supported by relevant evidence.",
             "insufficient_evidence": False,
             "latency_ms": 18,
+            "evaluation": evaluation,
             "explanation": {
-                "overview": "TrustStack scored this answer at 88.4/100 by combining retrieval strength, citation coverage, and whether the model stayed honest about missing evidence.",
-                "teaching_points": [
-                    "Confidence rises when retrieval quality is strong, multiple chunks support the same answer, and the model cites those chunks clearly."
-                ],
-                "review_recommendation": "This result is strong enough for low-risk use, but the user should still read the cited material before acting on it.",
+                "overview": evaluation["summary"],
+                "teaching_points": evaluation["teaching_points"],
+                "review_recommendation": evaluation["next_step"],
                 "score_breakdown": [
                     {
-                        "label": "Retrieval strength",
-                        "value": 91.0,
-                        "detail": "Higher similarity between the question and retrieved chunks usually means the answer is grounded in more relevant evidence.",
+                        "label": dimension["label"],
+                        "value": dimension["score"],
+                        "detail": dimension["rationale"],
                     }
+                    for dimension in evaluation["dimensions"]
                 ],
-                "evidence_strength": "Average retrieval support is 91.0% across 1 evidence chunks, with 1 chunk(s) clearing the strong-support threshold.",
-                "citation_coverage": "The answer cites 2 chunk(s), which helps the user trace the claim back to the indexed source material.",
+                "evidence_strength": "Retrieval alignment scored "
+                f"{evaluation['dimensions'][0]['score']}/100 across 1 evidence chunks, with 1 strong-support chunk(s).",
+                "citation_coverage": "TrustStack traced the answer through 2 citation(s), and the evaluation framework exposes citation traceability explicitly.",
                 "flagged_concerns": [],
             },
         }
@@ -137,8 +159,10 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertIn("explanation", payload)
+        self.assertIn("evaluation", payload)
+        self.assertEqual(payload["evaluation"]["framework"]["name"], "TrustStack Evaluation Standard")
         self.assertIn("score_breakdown", payload["explanation"])
-        self.assertGreaterEqual(len(payload["explanation"]["teaching_points"]), 1)
+        self.assertGreaterEqual(len(payload["explanation"]["teaching_points"]), 3)
         self.assertEqual(len(self.repo.runs), 1)
         self.assertEqual(self.repo.runs[0]["question"], fake_result["question"])
 
@@ -198,6 +222,7 @@ class APITestCase(unittest.TestCase):
             trust_summary="Moderate confidence. Relevant evidence was found, but review the support before acting.",
             risk_flags=["LOW_RETRIEVAL_SUPPORT"],
             citations=["doc1_chunk0"],
+            evaluation=None,
         )
 
         response = self.client.get("/runs")
@@ -206,6 +231,27 @@ class APITestCase(unittest.TestCase):
         payload = response.json()
         self.assertEqual(len(payload), 1)
         self.assertEqual(payload[0]["risk_flags"], ["LOW_RETRIEVAL_SUPPORT"])
+        self.assertIsNone(payload[0]["evaluation"])
+
+    def test_sample_question_endpoint_uses_indexed_chunks(self):
+        document_id = self.repo.create_document(filename="policy.txt", file_path="/tmp/policy.txt")
+        self.repo.create_chunks(
+            document_id=document_id,
+            filename="policy.txt",
+            chunks=[
+                {
+                    "page_num": None,
+                    "text": "Operators must perform a full startup inspection before energizing the system. The procedure requires documenting any hazard before restart.",
+                }
+            ],
+        )
+
+        response = self.client.get("/documents/sample-questions")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertGreaterEqual(len(payload), 1)
+        self.assertIn("question", payload[0])
 
 
 if __name__ == "__main__":

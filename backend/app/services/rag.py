@@ -2,11 +2,11 @@ import time
 
 from app.config import settings
 from app.repository import get_repository
+from app.services.evaluation import build_evaluation_report
 from app.services.embeddings import get_embedder
 from app.services.explanations import build_query_explanation
 from app.services.llm import client as llm_client
 from app.services.risk import build_risk_flags, summarize_trust
-from app.services.scorer import compute_confidence
 from app.services.vector_store import get_vector_store
 
 
@@ -81,8 +81,17 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
     insufficient_evidence = bool(llm_output.get("insufficient_evidence", False))
 
     evidence_scores = [item["score"] for item in hits]
-    confidence_score = compute_confidence(evidence_scores, citations, insufficient_evidence, answer)
     risk_flags = build_risk_flags(evidence_scores, citations, insufficient_evidence, answer)
+    evaluation = build_evaluation_report(
+        question=question,
+        answer=answer,
+        evidence_scores=evidence_scores,
+        citations=citations,
+        evidence_ids=[item["chunk_id"] for item in hits],
+        insufficient_evidence=insufficient_evidence,
+        risk_flags=risk_flags,
+    )
+    confidence_score = evaluation["overall_score"]
     trust_summary = summarize_trust(confidence_score, risk_flags)
     explanation = build_query_explanation(
         confidence_score=confidence_score,
@@ -91,6 +100,7 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         insufficient_evidence=insufficient_evidence,
         risk_flags=risk_flags,
         answer=answer,
+        evaluation=evaluation,
     )
     latency_ms = int((time.perf_counter() - start) * 1000)
 
@@ -104,5 +114,6 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         "trust_summary": trust_summary,
         "insufficient_evidence": insufficient_evidence,
         "latency_ms": latency_ms,
+        "evaluation": evaluation,
         "explanation": explanation,
     }
