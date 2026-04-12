@@ -179,12 +179,29 @@ cd backend
 ./.venv/bin/python -m unittest discover -s tests -v
 ```
 
+Real Mongo integration test:
+
+```bash
+docker compose up -d mongo
+cd backend
+./.venv/bin/python -m unittest tests.test_integration_mongo -v
+```
+
+Project-level verification:
+
+```bash
+npm run verify:frontend
+npm run verify:backend:unit
+npm run verify:backend:integration
+```
+
 The backend suite currently covers:
 
 - health endpoint behavior
 - ingest validation
 - query success and failure paths
 - run history retrieval
+- real Mongo-backed ingest, query, document, and run-history integration
 - hit extraction
 - confidence scoring
 - risk flags
