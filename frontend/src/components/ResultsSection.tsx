@@ -3,4 +3,108 @@ import type { QueryResponse, RunItem } from '../types'
 type Signal = { label: string; value: number }
 type ResultsSectionProps = { result: QueryResponse | null; runs: RunItem[]; signals: Signal[]; minimal?: boolean }
 const MODEL_ROWS = [{ model: 'TrustStack / Primary', profile: 'local RAG + risk scoring' }, { model: 'Verifier Pass', profile: 'secondary review path' }, { model: 'Baseline', profile: 'answer-only reference' }]
-export function ResultsSection({ result, runs, signals, minimal = false }: ResultsSectionProps) { const latestConfidence = result?.confidence_score ?? 76; const failures = result?.risk_flags.length ?? 2; if (minimal) { return (<div className="score-orbit score-orbit--minimal">{signals.map((signal) => <motion.div key={signal.label} className="score-ring score-ring--minimal" initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }}><svg viewBox="0 0 120 120" className="score-ring-svg" aria-hidden="true"><circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-bg" /><circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-fill" style={{ strokeDashoffset: 100 - signal.value }} /></svg><div className="score-ring-center"><strong>{signal.value}</strong><span>{signal.label}</span></div></motion.div>)}</div>) } return (<div className="results-stack"><div className="panel panel--glass"><div className="panel-header"><div><div className="eyebrow">Live Run Demo</div><h3>Mission control state</h3></div><span className="badge badge--bright">{result ? 'Live data' : 'Demo preview'}</span></div><div className="run-strip">{['Queued', 'Retrieving', 'Scoring', 'Reporting'].map((stage, index) => <div className="run-stage" key={stage}><div className={`run-stage-dot ${index < 3 || result ? 'run-stage-dot--active' : ''}`} /><span>{stage}</span></div>)}</div><div className="metric-grid"><div className="metric-card"><span>Latest confidence</span><strong>{latestConfidence}</strong></div><div className="metric-card"><span>Tracked runs</span><strong>{runs.length}</strong></div><div className="metric-card"><span>Risk flags</span><strong>{failures}</strong></div></div></div><div className="panel"><div className="panel-header"><div><div className="eyebrow">Results</div><h3>Trust category snapshot</h3></div></div><div className="score-orbit">{signals.map((signal) => <motion.div key={signal.label} className="score-ring" initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }}><svg viewBox="0 0 120 120" className="score-ring-svg" aria-hidden="true"><circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-bg" /><circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-fill" style={{ strokeDashoffset: 100 - signal.value }} /></svg><div className="score-ring-center"><strong>{signal.value}</strong><span>{signal.label}</span></div></motion.div>)}</div></div><div className="panel"><div className="panel-header"><div><div className="eyebrow">Model comparison</div><h3>Result proof layer</h3></div></div><div className="comparison-table"><div className="comparison-row comparison-row--head"><span>Model</span><span>Profile</span><span>Trust</span></div>{MODEL_ROWS.map((row, index) => <div className="comparison-row" key={row.model}><strong>{row.model}</strong><span>{row.profile}</span><span>{Math.max(48, latestConfidence - index * 9)}</span></div>)}</div></div></div>) }
+export function ResultsSection({ result, runs, signals, minimal = false }: ResultsSectionProps) {
+  const latestConfidence = result?.confidence_score ?? 76
+  const failures = result?.risk_flags.length ?? 2
+
+  if (minimal) {
+    return (
+      <div className="score-orbit score-orbit--minimal">
+        {signals.map((signal) => (
+          <motion.div key={signal.label} className="score-ring score-ring--minimal" initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }}>
+            <svg viewBox="0 0 120 120" className="score-ring-svg" aria-hidden="true">
+              <circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-bg" />
+              <circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-fill" style={{ strokeDashoffset: 100 - signal.value }} />
+            </svg>
+            <div className="score-ring-center">
+              <strong>{signal.value}</strong>
+              <span>{signal.label}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="results-stack">
+      <div className="panel panel--glass hud-module hud-module--primary">
+        <div className="panel-header">
+          <div>
+            <div className="eyebrow">Live Run Demo</div>
+            <h3>Mission control state</h3>
+          </div>
+          <span className="badge badge--bright">{result ? 'Live data' : 'Demo preview'}</span>
+        </div>
+        <div className="run-strip">
+          {['Queued', 'Retrieving', 'Scoring', 'Reporting'].map((stage, index) => (
+            <div className="run-stage" key={stage}>
+              <div className={`run-stage-dot ${index < 3 || result ? 'run-stage-dot--active' : ''}`} />
+              <span>{stage}</span>
+            </div>
+          ))}
+        </div>
+        <div className="metric-grid">
+          <div className="metric-card">
+            <span>Latest confidence</span>
+            <strong>{latestConfidence}</strong>
+          </div>
+          <div className="metric-card">
+            <span>Tracked runs</span>
+            <strong>{runs.length}</strong>
+          </div>
+          <div className="metric-card">
+            <span>Risk flags</span>
+            <strong>{failures}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel hud-module">
+        <div className="panel-header">
+          <div>
+            <div className="eyebrow">Results</div>
+            <h3>Trust category snapshot</h3>
+          </div>
+        </div>
+        <div className="score-orbit">
+          {signals.map((signal) => (
+            <motion.div key={signal.label} className="score-ring" initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }}>
+              <svg viewBox="0 0 120 120" className="score-ring-svg" aria-hidden="true">
+                <circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-bg" />
+                <circle cx="60" cy="60" r="48" pathLength="100" className="score-ring-fill" style={{ strokeDashoffset: 100 - signal.value }} />
+              </svg>
+              <div className="score-ring-center">
+                <strong>{signal.value}</strong>
+                <span>{signal.label}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <div className="panel hud-module">
+        <div className="panel-header">
+          <div>
+            <div className="eyebrow">Model comparison</div>
+            <h3>Result proof layer</h3>
+          </div>
+        </div>
+        <div className="comparison-table">
+          <div className="comparison-row comparison-row--head">
+            <span>Model</span>
+            <span>Profile</span>
+            <span>Trust</span>
+          </div>
+          {MODEL_ROWS.map((row, index) => (
+            <div className="comparison-row" key={row.model}>
+              <strong>{row.model}</strong>
+              <span>{row.profile}</span>
+              <span>{Math.max(48, latestConfidence - index * 9)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

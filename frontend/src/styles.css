@@ -124,10 +124,10 @@ a {
 
 .hero-header {
   position: absolute;
-  top: 24px;
+  top: 76px;
   left: 50%;
   z-index: 4;
-  width: min(760px, calc(100vw - 48px));
+  width: min(860px, calc(100vw - 72px));
   transform: translateX(-50%);
   text-align: center;
 }
@@ -139,16 +139,72 @@ a {
 
 .hero-header h1 {
   margin: 10px 0 12px;
-  font-size: clamp(2.2rem, 5vw, 4rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
 }
 
 .hero-header p {
-  max-width: 58ch;
+  max-width: 70ch;
   margin: 0 auto;
-  color: var(--text-soft);
-  line-height: 1.6;
+  color: rgba(232, 238, 248, 0.86);
+  line-height: 1.68;
+}
+
+.hero-status-strip {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  right: 24px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(9, 17, 30, 0.58), rgba(7, 12, 22, 0.38));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 18px 48px rgba(2, 8, 18, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+.hero-status-strip__mission,
+.hero-status-strip__metrics {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero-status-strip__mission strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--hud-text-primary);
+}
+
+.hero-status-strip__mission small,
+.hero-status-strip__metrics span {
+  color: var(--hud-text-secondary);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-status-strip__metrics {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.hero-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #d7fbff 0%, var(--hud-cyan) 70%);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.48);
+  flex: 0 0 auto;
 }
 
 .hero-header--guided {
@@ -171,12 +227,12 @@ a {
 .hero-stage-cluster {
   position: absolute;
   right: 24px;
-  top: 176px;
-  bottom: 98px;
+  top: 150px;
+  bottom: 102px;
   z-index: 4;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 14px;
 }
 
 .hero-stage-cluster--pluto {
@@ -194,23 +250,25 @@ a {
 }
 
 .hero-stage-panel {
-  width: min(820px, calc(100vw - 352px));
+  width: min(430px, calc(100vw - 392px));
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100vh - 286px);
-  padding: 8px 0 0;
-  border-radius: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
+  max-height: calc(100vh - 270px);
+  padding: 14px 18px 18px;
+  border-radius: 26px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(9, 17, 30, 0.6), rgba(7, 12, 22, 0.42));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 20px 56px rgba(2, 8, 18, 0.2);
+  backdrop-filter: blur(18px);
   overflow: hidden;
 }
 
 .hero-stage-panel--pluto {
-  width: 100%;
-  max-height: calc(100vh - 222px);
+  width: min(1100px, calc(100vw - 48px));
+  max-height: calc(100vh - 212px);
 }
 
 .hero-stage-panel-head {
@@ -228,10 +286,19 @@ a {
   text-shadow: 0 10px 30px rgba(2, 8, 18, 0.72);
 }
 
+.hero-stage-panel-copy {
+  margin: 10px 0 0;
+  max-width: 34ch;
+  color: rgba(232, 238, 248, 0.78);
+  font-size: 0.84rem;
+  line-height: 1.56;
+}
+
 .hero-stage-panel-body {
   min-height: 0;
   overflow: visible;
   padding-right: 0;
+  padding-top: 4px;
 }
 
 .stage-stack {
@@ -247,14 +314,27 @@ a {
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
-  width: min(300px, calc(100vw - 48px));
-  max-width: 300px;
+  width: min(280px, calc(100vw - 48px));
+  max-width: 280px;
   padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
   pointer-events: none;
+}
+
+.hero-journey-kicker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-journey-kicker span {
+  color: var(--hud-text-secondary);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .hero-journey-card--hidden {
@@ -374,10 +454,10 @@ a {
 .query-suggestions {
   display: grid;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: rgba(8, 18, 32, 0.44);
-  border: 1px solid rgba(125, 211, 252, 0.1);
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(10, 18, 31, 0.54), rgba(8, 14, 24, 0.34));
+  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .query-suggestions-label {
@@ -392,16 +472,16 @@ a {
   gap: 3px;
   width: 100%;
   text-align: left;
-  border: 1px solid rgba(125, 211, 252, 0.12);
-  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 16px;
   padding: 10px 12px;
-  background: rgba(7, 14, 24, 0.74);
-  color: #e8eef8;
+  background: linear-gradient(180deg, rgba(10, 18, 31, 0.6), rgba(8, 14, 24, 0.38));
+  color: var(--hud-text-primary);
 }
 
 .query-suggestion:hover {
-  border-color: rgba(125, 211, 252, 0.34);
-  background: rgba(9, 18, 30, 0.9);
+  border-color: rgba(34, 211, 238, 0.24);
+  background: linear-gradient(180deg, rgba(12, 21, 36, 0.72), rgba(9, 16, 29, 0.46));
 }
 
 .query-suggestion-copy {
@@ -425,9 +505,9 @@ a {
 .hero-guide-popup {
   position: relative;
   z-index: 4;
-  width: 280px;
-  max-width: 280px;
-  padding: 14px 13px 13px;
+  width: 250px;
+  max-width: 250px;
+  padding: 14px 14px 13px;
 }
 
 .hero-guide-popup h3 {
@@ -460,6 +540,8 @@ a {
   z-index: 4;
   padding: 12px 14px;
   border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(9, 17, 30, 0.56), rgba(7, 12, 22, 0.38));
 }
 
 .guide-switch {
@@ -597,6 +679,12 @@ a {
   gap: 12px;
   flex-wrap: wrap;
   pointer-events: none;
+}
+
+.hero-stage-panel .panel-header h2,
+.hero-stage-panel .panel-header h3 {
+  font-size: 1.02rem;
+  line-height: 1.1;
 }
 
 .hero-node,

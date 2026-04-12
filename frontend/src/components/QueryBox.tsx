@@ -13,7 +13,7 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
   const suggestedQuestions = useMemo(() => sampleQuestions.slice(0, 4), [sampleQuestions])
 
   return (
-    <div className="panel panel--glass stack">
+    <div className="panel panel--glass stack hud-module hud-module--primary">
       <div className="panel-header">
         <div>
           <div className="eyebrow">Run Evaluation</div>
@@ -35,7 +35,7 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
         <div className="muted">Best demo pattern: ask one clearly supported question, then one weakly supported question.</div>
       </div>
 
-      <div className="query-suggestions">
+      <div className="query-suggestions hud-module hud-module--compact">
         <div className="query-suggestions-label">Suggested prompts from your evidence</div>
         <div className="pill-grid">
           {suggestedQuestions.length > 0 ? (
