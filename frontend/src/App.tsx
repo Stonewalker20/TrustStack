@@ -16,6 +16,7 @@ import type {
   QueryResponse,
   RunItem,
   SampleQuestionItem,
+  StandardReportArtifactsResponse,
   StandardTestRunResponse,
 } from './types'
 
@@ -192,6 +193,7 @@ function MissionControlOverlay({
   loading,
   suiteLoading,
   suiteResult,
+  reportArtifacts,
   onSubmit,
   onUploaded,
   onRunSuite,
@@ -204,6 +206,7 @@ function MissionControlOverlay({
   loading: boolean
   suiteLoading: boolean
   suiteResult: StandardTestRunResponse | null
+  reportArtifacts: StandardReportArtifactsResponse | null
   onSubmit: (question: string) => void
   onUploaded: () => void
   onRunSuite: () => void
@@ -262,6 +265,26 @@ function MissionControlOverlay({
           <div className="panel panel--glass">
             <div className="panel-header">
               <div>
+                <div className="eyebrow">Report Export</div>
+                <h3>Generate report-ready artifacts.</h3>
+              </div>
+            </div>
+            <p className="muted">
+              {reportArtifacts?.executive_summary ??
+                'Run the standardized suite to generate an executive summary, IEEE LaTeX table snippets, and an appendix-style benchmark export.'}
+            </p>
+            {reportArtifacts ? (
+              <div className="pill-grid">
+                <span className="data-pill">LaTeX category table ready</span>
+                <span className="data-pill">LaTeX case table ready</span>
+                <span className="data-pill">Appendix markdown ready</span>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="panel panel--glass">
+            <div className="panel-header">
+              <div>
                 <div className="eyebrow">Trust Signals</div>
                 <h3>Read the current posture instantly.</h3>
               </div>
@@ -313,6 +336,7 @@ export default function App() {
   const [missionControlOpen, setMissionControlOpen] = useState(false)
   const [sampleQuestions, setSampleQuestions] = useState<SampleQuestionItem[]>([])
   const [suiteResult, setSuiteResult] = useState<StandardTestRunResponse | null>(null)
+  const [reportArtifacts, setReportArtifacts] = useState<StandardReportArtifactsResponse | null>(null)
 
   const refreshDocuments = async () => {
     const res = await api.get<DocumentItem[]>('/documents')
@@ -351,8 +375,9 @@ export default function App() {
   const handleRunSuite = async () => {
     setSuiteLoading(true)
     try {
-      const res = await api.post<StandardTestRunResponse>('/evaluation/standard-run')
-      setSuiteResult(res.data)
+      const artifacts = await api.post<StandardReportArtifactsResponse>('/evaluation/standard-run/report-artifacts')
+      setReportArtifacts(artifacts.data)
+      setSuiteResult(artifacts.data.suite)
       setActivePlanetIndex(4)
     } catch (error) {
       console.error(error)
@@ -447,6 +472,7 @@ export default function App() {
             loading={loading}
             suiteLoading={suiteLoading}
             suiteResult={suiteResult}
+            reportArtifacts={reportArtifacts}
             onSubmit={handleSubmit}
             onUploaded={() => {
               refreshDocuments().catch(console.error)

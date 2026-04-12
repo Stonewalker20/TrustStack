@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import socket
 import tempfile
 import unittest
 import uuid
@@ -18,9 +19,18 @@ class MongoIntegrationAPITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
-            cls.repo = MongoRepository("mongodb://127.0.0.1:27018", f"truststack_integration_{uuid.uuid4().hex}")
-            cls.repo.ping()
+            with socket.create_connection(("127.0.0.1", 27018), timeout=1.0):
+                pass
+        except OSError as exc:  # pragma: no cover - environment-dependent
+            raise unittest.SkipTest("Mongo integration test skipped: MongoDB is unavailable at mongodb://127.0.0.1:27018. Start MongoDB or update MONGO_URI.") from exc
+        repo = None
+        try:
+            repo = MongoRepository("mongodb://127.0.0.1:27018", f"truststack_integration_{uuid.uuid4().hex}")
+            repo.ping()
+            cls.repo = repo
         except Exception as exc:  # pragma: no cover - environment-dependent
+            if repo is not None:
+                repo.client.close()
             raise unittest.SkipTest(f"Mongo integration test skipped: {exc}") from exc
         cls.client = TestClient(app)
 
@@ -97,6 +107,20 @@ class MongoIntegrationAPITestCase(unittest.TestCase):
             self.assertIn("final_score", suite_payload)
             self.assertGreaterEqual(len(suite_payload["score_breakdown"]), 1)
             self.assertGreaterEqual(len(suite_payload["cases"]), 1)
+            self.assertIn("metadata", suite_payload)
+
+            report_response = self.client.post("/evaluation/standard-run/report-artifacts")
+            self.assertEqual(report_response.status_code, 200, report_response.text)
+            report_payload = report_response.json()
+            self.assertIn("executive_summary", report_payload)
+            self.assertIn("latex_category_table", report_payload)
+            self.assertIn("appendix_markdown", report_payload)
+
+            batch_response = self.client.post("/evaluation/standard-run/batch")
+            self.assertEqual(batch_response.status_code, 200, batch_response.text)
+            batch_payload = batch_response.json()
+            self.assertGreaterEqual(len(batch_payload["dataset_runs"]), 1)
+            self.assertIn("aggregate_score", batch_payload)
 
             runs_response = self.client.get("/runs")
             self.assertEqual(runs_response.status_code, 200, runs_response.text)

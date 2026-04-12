@@ -445,6 +445,21 @@ class APITestCase(unittest.TestCase):
                     {"key": "retrieval_relevance", "label": "Retrieval relevance", "weight": 0.16, "purpose": "Measures retrieval quality."}
                 ],
             },
+            "metadata": {
+                "suite_id": "suite-123",
+                "generated_at": "2026-04-12T00:00:00+00:00",
+                "suite_label": "active-corpus",
+                "document_count": 1,
+                "chunk_count": 3,
+                "source_filenames": ["facility_safety_sop.txt"],
+                "retrieval_backend": "simple-vector-benchmark",
+                "embedding_provider": "lexical",
+                "embedding_model": "lexical",
+                "llm_provider": "disabled",
+                "llm_model": "disabled",
+                "top_k": 5,
+                "max_context_chunks": 5,
+            },
             "final_score": 84.2,
             "verdict": "pass",
             "summary": "TrustStack Standard Suite scored the system at 84.2/100.",
@@ -470,6 +485,8 @@ class APITestCase(unittest.TestCase):
                     "risk_flags": [],
                     "citations": ["doc-1-chunk-0"],
                     "evidence_count": 1,
+                    "supported_claim_ratio": 1.0,
+                    "citation_alignment_ratio": 1.0,
                 }
             ],
             "recommended_actions": ["Review weak categories before presenting the system as deployment-ready."],
@@ -484,6 +501,98 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(payload["verdict"], "pass")
         self.assertEqual(len(payload["score_breakdown"]), 1)
         self.assertEqual(len(payload["cases"]), 1)
+        self.assertIn("metadata", payload)
+
+    def test_report_artifacts_endpoint_returns_export_content(self):
+        fake_artifacts = {
+            "suite": {
+                "framework": {
+                    "name": "TrustStack Evaluation Standard",
+                    "version": "2.0",
+                    "description": "desc",
+                    "score_range": "0-100",
+                    "pass_threshold": 80.0,
+                    "review_threshold": 60.0,
+                    "dimensions": [
+                        {"key": "retrieval_relevance", "label": "Retrieval relevance", "weight": 0.16, "purpose": "Measures retrieval quality."}
+                    ],
+                },
+                "metadata": {
+                    "suite_id": "suite-123",
+                    "generated_at": "2026-04-12T00:00:00+00:00",
+                    "suite_label": "active-corpus",
+                    "document_count": 1,
+                    "chunk_count": 3,
+                    "source_filenames": ["facility_safety_sop.txt"],
+                    "retrieval_backend": "simple-vector-benchmark",
+                    "embedding_provider": "lexical",
+                    "embedding_model": "lexical",
+                    "llm_provider": "disabled",
+                    "llm_model": "disabled",
+                    "top_k": 5,
+                    "max_context_chunks": 5,
+                },
+                "final_score": 84.2,
+                "verdict": "pass",
+                "summary": "summary",
+                "score_breakdown": [
+                    {"key": "grounding", "label": "Grounding and retrieval", "weight": 0.22, "score": 86.0, "verdict": "pass", "summary": "Grounding performed strongly."}
+                ],
+                "cases": [
+                    {"id": "grounded-1", "label": "Direct evidence retrieval", "category": "grounding", "question": "What inspection is required before startup?", "score": 88.0, "verdict": "pass", "trust_summary": "High confidence.", "risk_flags": [], "citations": ["doc-1-chunk-0"], "evidence_count": 1, "supported_claim_ratio": 1.0, "citation_alignment_ratio": 1.0}
+                ],
+                "recommended_actions": ["Review weak categories before presenting the system as deployment-ready."],
+            },
+            "executive_summary": "TrustStack scored the active evaluation stack at 84.2/100.",
+            "latex_category_table": "\\begin{table*}[t]",
+            "latex_case_table": "\\begin{table*}[t]",
+            "appendix_markdown": "### Appendix: Standardized Case Results",
+        }
+
+        with patch("app.routers.evaluation.run_standard_suite", return_value=fake_artifacts["suite"]), \
+             patch("app.routers.evaluation.build_report_artifacts", return_value=fake_artifacts):
+            response = self.client.post("/evaluation/standard-run/report-artifacts")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("executive_summary", payload)
+        self.assertIn("latex_category_table", payload)
+        self.assertIn("appendix_markdown", payload)
+
+    def test_batch_benchmark_endpoint_returns_dataset_runs(self):
+        fake_batch = {
+            "framework": {
+                "name": "TrustStack Evaluation Standard",
+                "version": "2.0",
+                "description": "desc",
+                "score_range": "0-100",
+                "pass_threshold": 80.0,
+                "review_threshold": 60.0,
+                "dimensions": [],
+            },
+            "generated_at": "2026-04-12T00:00:00+00:00",
+            "dataset_runs": [
+                {
+                    "dataset_label": "facility_safety_sop.txt",
+                    "final_score": 84.2,
+                    "verdict": "pass",
+                    "document_count": 1,
+                    "chunk_count": 3,
+                    "source_filenames": ["facility_safety_sop.txt"],
+                }
+            ],
+            "aggregate_score": 84.2,
+            "verdict": "pass",
+            "recommended_actions": ["Compare lower-scoring datasets directly."],
+        }
+
+        with patch("app.routers.evaluation.run_standard_batch_benchmark", return_value=fake_batch):
+            response = self.client.post("/evaluation/standard-run/batch")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["dataset_runs"]), 1)
+        self.assertEqual(payload["aggregate_score"], 84.2)
 
 
 if __name__ == "__main__":

@@ -103,6 +103,24 @@ export type StandardTestCaseResult = {
   risk_flags: string[]
   citations: string[]
   evidence_count: number
+  supported_claim_ratio?: number
+  citation_alignment_ratio?: number
+}
+
+export type StandardTestMetadata = {
+  suite_id: string
+  generated_at: string
+  suite_label: string
+  document_count: number
+  chunk_count: number
+  source_filenames: string[]
+  retrieval_backend: string
+  embedding_provider: string
+  embedding_model: string
+  llm_provider: string
+  llm_model: string
+  top_k: number
+  max_context_chunks: number
 }
 
 export type StandardTestRunResponse = {
@@ -120,10 +138,19 @@ export type StandardTestRunResponse = {
       purpose: string
     }>
   }
+  metadata: StandardTestMetadata
   final_score: number
   verdict: string
   summary: string
   score_breakdown: StandardTestCategoryScore[]
   cases: StandardTestCaseResult[]
   recommended_actions: string[]
+}
+
+export type StandardReportArtifactsResponse = {
+  suite: StandardTestRunResponse
+  executive_summary: string
+  latex_category_table: string
+  latex_case_table: string
+  appendix_markdown: string
 }

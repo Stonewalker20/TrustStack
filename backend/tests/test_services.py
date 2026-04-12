@@ -6,9 +6,10 @@ from unittest.mock import Mock, patch
 from app.services.evaluation import build_evaluation_report
 from app.services.explanations import build_query_explanation
 from app.services.rag import _extract_hits, _rebuild_index_from_chunks
+from app.services.report_export import build_report_artifacts
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
-from app.services.standard_suite import run_standard_suite
+from app.services.standard_suite import run_standard_batch_benchmark, run_standard_suite
 from app.services.suggestions import build_sample_questions
 
 
@@ -148,40 +149,131 @@ class ServiceBehaviorTests(unittest.TestCase):
                 "text": "Operators must complete a startup inspection before energizing the system.",
             }
         ]
-        fake_response = {
-            "question": "What inspection is required before startup?",
-            "answer": "The evidence requires a startup inspection before energizing the system.",
-            "citations": ["doc-1-chunk-0"],
-            "evidence": [{"source": "policy.txt", "page": None, "chunk_id": "doc-1-chunk-0", "score": 0.91, "text": fake_chunks[0]["text"]}],
-            "confidence_score": 88.0,
-            "risk_flags": [],
-            "trust_summary": "High confidence.",
-            "insufficient_evidence": False,
-            "latency_ms": 10,
-            "evaluation": build_evaluation_report(
-                question="What inspection is required before startup?",
-                answer="The evidence requires a startup inspection before energizing the system.",
-                evidence_scores=[0.91],
-                citations=["doc-1-chunk-0"],
-                evidence_ids=["doc-1-chunk-0"],
-                insufficient_evidence=False,
-                risk_flags=[],
-                hits=[{"source": "policy.txt", "page": None, "chunk_id": "doc-1-chunk-0", "score": 0.91, "text": fake_chunks[0]["text"]}],
-            ),
-            "explanation": {},
-        }
-
         fake_repo = Mock()
         fake_repo.list_chunks.return_value = fake_chunks
 
         with patch("app.services.standard_suite.get_repository", return_value=fake_repo), \
-             patch("app.services.standard_suite.answer_question", return_value=fake_response):
+             patch("app.services.standard_suite.get_embedder") as get_embedder_mock, \
+             patch("app.services.standard_suite.retrieve_hits") as retrieve_hits_mock, \
+             patch("app.services.standard_suite._answer_from_hits") as answer_from_hits_mock:
+            fake_embedder = Mock()
+            fake_embedder.embed_texts.return_value = [[0.2, 0.3, 0.4]]
+            get_embedder_mock.return_value = fake_embedder
+            retrieve_hits_mock.return_value = [
+                {"source": "policy.txt", "page": None, "chunk_id": "doc-1-chunk-0", "score": 0.91, "text": fake_chunks[0]["text"]}
+            ]
+            answer_from_hits_mock.return_value = {
+                "question": "What inspection is required before startup?",
+                "answer": "The evidence requires a startup inspection before energizing the system.",
+                "citations": ["doc-1-chunk-0"],
+                "evidence": retrieve_hits_mock.return_value,
+                "confidence_score": 88.0,
+                "risk_flags": [],
+                "trust_summary": "High confidence.",
+                "insufficient_evidence": False,
+                "latency_ms": 10,
+                "evaluation": build_evaluation_report(
+                    question="What inspection is required before startup?",
+                    answer="The evidence requires a startup inspection before energizing the system.",
+                    evidence_scores=[0.91],
+                    citations=["doc-1-chunk-0"],
+                    evidence_ids=["doc-1-chunk-0"],
+                    insufficient_evidence=False,
+                    risk_flags=[],
+                    hits=retrieve_hits_mock.return_value,
+                ),
+                "explanation": {},
+            }
             result = run_standard_suite()
 
         self.assertGreaterEqual(len(result["cases"]), 4)
         self.assertGreaterEqual(len(result["score_breakdown"]), 4)
         self.assertIn(result["verdict"], {"pass", "review", "fail"})
         self.assertIn("final_score", result)
+        self.assertIn("metadata", result)
+
+    def test_build_report_artifacts_returns_exportable_content(self):
+        fake_suite = {
+            "framework": {
+                "name": "TrustStack Evaluation Standard",
+                "version": "2.0",
+                "description": "desc",
+                "score_range": "0-100",
+                "pass_threshold": 80.0,
+                "review_threshold": 60.0,
+                "dimensions": [],
+            },
+            "metadata": {
+                "suite_id": "suite-123",
+                "generated_at": "2026-04-12T00:00:00+00:00",
+                "suite_label": "active-corpus",
+                "document_count": 1,
+                "chunk_count": 3,
+                "source_filenames": ["facility_safety_sop.txt"],
+                "retrieval_backend": "simple-vector-benchmark",
+                "embedding_provider": "lexical",
+                "embedding_model": "lexical",
+                "llm_provider": "disabled",
+                "llm_model": "disabled",
+                "top_k": 5,
+                "max_context_chunks": 5,
+            },
+            "final_score": 84.2,
+            "verdict": "pass",
+            "summary": "summary",
+            "score_breakdown": [
+                {"key": "grounding", "label": "Grounding and retrieval", "weight": 0.22, "score": 86.0, "verdict": "pass", "summary": "Grounding performed strongly."}
+            ],
+            "cases": [
+                {"id": "case-1", "label": "Direct evidence retrieval", "category": "grounding", "question": "What is required?", "score": 88.0, "verdict": "pass", "trust_summary": "High confidence.", "risk_flags": [], "citations": ["c1"], "evidence_count": 2, "supported_claim_ratio": 1.0, "citation_alignment_ratio": 1.0}
+            ],
+            "recommended_actions": ["Review weak categories before presentation."],
+        }
+
+        artifacts = build_report_artifacts(fake_suite)
+
+        self.assertIn("executive_summary", artifacts)
+        self.assertIn(r"\begin{table*}", artifacts["latex_category_table"])
+        self.assertIn(r"\begin{table*}", artifacts["latex_case_table"])
+        self.assertIn("Appendix: Standardized Case Results", artifacts["appendix_markdown"])
+
+    def test_run_standard_batch_benchmark_returns_dataset_runs(self):
+        fake_chunks = [
+            {"chunk_uid": "a-1", "filename": "a.txt", "page_num": 1, "text": "Operators must inspect valves before startup."},
+            {"chunk_uid": "b-1", "filename": "b.txt", "page_num": 1, "text": "Supervisors review maintenance records after repairs."},
+        ]
+        fake_suite = {
+            "framework": {"name": "TrustStack Evaluation Standard", "version": "2.0", "description": "desc", "score_range": "0-100", "pass_threshold": 80.0, "review_threshold": 60.0, "dimensions": []},
+            "metadata": {
+                "suite_id": "suite-123",
+                "generated_at": "2026-04-12T00:00:00+00:00",
+                "suite_label": "a.txt",
+                "document_count": 1,
+                "chunk_count": 1,
+                "source_filenames": ["a.txt"],
+                "retrieval_backend": "simple-vector-benchmark",
+                "embedding_provider": "lexical",
+                "embedding_model": "lexical",
+                "llm_provider": "disabled",
+                "llm_model": "disabled",
+                "top_k": 5,
+                "max_context_chunks": 5,
+            },
+            "final_score": 82.0,
+            "verdict": "pass",
+            "summary": "summary",
+            "score_breakdown": [],
+            "cases": [],
+            "recommended_actions": [],
+        }
+
+        with patch("app.services.standard_suite.get_repository") as get_repository_mock, \
+             patch("app.services.standard_suite.run_standard_suite_for_chunks", return_value=fake_suite):
+            get_repository_mock.return_value.list_chunks.return_value = fake_chunks
+            result = run_standard_batch_benchmark()
+
+        self.assertEqual(len(result["dataset_runs"]), 2)
+        self.assertIn("aggregate_score", result)
 
 
 if __name__ == "__main__":

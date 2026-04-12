@@ -52,11 +52,10 @@ def _rebuild_index_from_chunks(vector_store, embedder) -> int:
     return len(ids)
 
 
-def answer_question(question: str, top_k: int | None = None) -> dict:
-    start = time.perf_counter()
+def retrieve_hits(question: str, *, top_k: int | None = None, vector_store=None, embedder=None) -> list[dict]:
     top_k = top_k or settings.top_k
-    embedder = get_embedder()
-    vector_store = get_vector_store()
+    embedder = embedder or get_embedder()
+    vector_store = vector_store or get_vector_store()
 
     collection_size = vector_store.count()
     if collection_size == 0:
@@ -69,7 +68,10 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
     hits = _extract_hits(raw_results)
     if not hits:
         raise ValueError("No evidence was retrieved for this question.")
+    return hits
 
+
+def _answer_from_hits(question: str, hits: list[dict], start_time: float | None = None) -> dict:
     context_chunks = hits[: settings.max_context_chunks]
     context = "\n\n".join(
         f"[{item['chunk_id']}] {item['source']} page={item['page']}\n{item['text']}" for item in context_chunks
@@ -103,7 +105,7 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         answer=answer,
         evaluation=evaluation,
     )
-    latency_ms = int((time.perf_counter() - start) * 1000)
+    latency_ms = int((time.perf_counter() - start_time) * 1000) if start_time is not None else 0
 
     return {
         "question": question,
@@ -118,3 +120,9 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         "evaluation": evaluation,
         "explanation": explanation,
     }
+
+
+def answer_question(question: str, top_k: int | None = None) -> dict:
+    start = time.perf_counter()
+    hits = retrieve_hits(question, top_k=top_k)
+    return _answer_from_hits(question, hits, start)

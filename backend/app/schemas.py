@@ -174,6 +174,8 @@ class StandardTestCaseResult(BaseModel):
     risk_flags: list[str]
     citations: list[str]
     evidence_count: int
+    supported_claim_ratio: float | None = None
+    citation_alignment_ratio: float | None = None
 
 
 class StandardTestCategoryScore(BaseModel):
@@ -185,11 +187,58 @@ class StandardTestCategoryScore(BaseModel):
     summary: str
 
 
+class StandardTestMetadata(BaseModel):
+    suite_id: str
+    generated_at: str
+    suite_label: str
+    document_count: int
+    chunk_count: int
+    source_filenames: list[str]
+    retrieval_backend: str
+    embedding_provider: str
+    embedding_model: str
+    llm_provider: str
+    llm_model: str
+    top_k: int
+    max_context_chunks: int
+
+
 class StandardTestRunResponse(BaseModel):
     framework: EvaluationFramework
+    metadata: StandardTestMetadata
     final_score: float
     verdict: str
     summary: str
     score_breakdown: list[StandardTestCategoryScore]
     cases: list[StandardTestCaseResult]
     recommended_actions: list[str]
+
+
+class StandardReportArtifactsRequest(BaseModel):
+    suite: StandardTestRunResponse
+
+
+class StandardBatchDatasetResult(BaseModel):
+    dataset_label: str
+    final_score: float
+    verdict: str
+    document_count: int
+    chunk_count: int
+    source_filenames: list[str]
+
+
+class StandardBatchBenchmarkResponse(BaseModel):
+    framework: EvaluationFramework
+    generated_at: str
+    dataset_runs: list[StandardBatchDatasetResult]
+    aggregate_score: float
+    verdict: str
+    recommended_actions: list[str]
+
+
+class StandardReportArtifactsResponse(BaseModel):
+    suite: StandardTestRunResponse
+    executive_summary: str
+    latex_category_table: str
+    latex_case_table: str
+    appendix_markdown: str

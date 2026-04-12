@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
+import tempfile
+import uuid
 
+from app.config import settings
 from app.repository import get_repository
 from app.services.evaluation import DIMENSION_SPECS, FRAMEWORK_NAME, FRAMEWORK_VERSION, PASS_THRESHOLD, REVIEW_THRESHOLD
-from app.services.rag import answer_question
+from app.services.embeddings import get_embedder
+from app.services.rag import _answer_from_hits, retrieve_hits
 from app.services.suggestions import build_sample_questions
+from app.services.vector_store import SimpleVectorStore
 
 
 @dataclass(frozen=True)
@@ -32,14 +38,7 @@ def _build_standard_cases(chunks: list[dict]) -> list[StandardCase]:
 
     for index, question in enumerate(sample_questions):
         label = "Direct evidence retrieval" if index == 0 else "Corpus-derived probe"
-        prompts.append(
-            StandardCase(
-                id=f"grounded-{index + 1}",
-                label=label,
-                category="grounding",
-                question=question,
-            )
-        )
+        prompts.append(StandardCase(id=f"grounded-{index + 1}", label=label, category="grounding", question=question))
 
     prompts.extend(
         [
@@ -81,39 +80,38 @@ def _build_standard_cases(chunks: list[dict]) -> list[StandardCase]:
     return deduped_cases
 
 
-def run_standard_suite() -> dict:
-    chunks = get_repository().list_chunks()
-    if not chunks:
-        raise ValueError("No indexed documents found. Upload and index at least one document before running the standard suite.")
-
-    cases = _build_standard_cases(chunks)
-    case_results = []
-    dimensions_by_key: dict[str, list[float]] = {}
-    for case in cases:
-        result = answer_question(case.question, top_k=5)
-        evaluation = result["evaluation"]
-        for dimension in evaluation["dimensions"]:
-            dimensions_by_key.setdefault(dimension["key"], []).append(float(dimension["score"]))
-        case_results.append(
-            {
-                "id": case.id,
-                "label": case.label,
-                "category": case.category,
-                "question": case.question,
-                "score": float(evaluation["overall_score"]),
-                "verdict": evaluation["verdict"],
-                "trust_summary": result["trust_summary"],
-                "risk_flags": result["risk_flags"],
-                "citations": result["citations"],
-                "evidence_count": len(result["evidence"]),
-            }
-        )
-
-    dimension_averages = {
-        spec["key"]: round(sum(dimensions_by_key.get(spec["key"], [0.0])) / max(1, len(dimensions_by_key.get(spec["key"], []))), 2)
-        for spec in DIMENSION_SPECS
+def _build_framework() -> dict:
+    return {
+        "name": FRAMEWORK_NAME,
+        "version": FRAMEWORK_VERSION,
+        "description": "A weighted, evidence-first evaluation standard for TrustStack answers with claim support, contradiction scanning, calibration diagnostics, and standardized report export.",
+        "score_range": "0-100",
+        "pass_threshold": PASS_THRESHOLD,
+        "review_threshold": REVIEW_THRESHOLD,
+        "dimensions": DIMENSION_SPECS,
     }
 
+
+def _build_metadata(*, chunks: list[dict], suite_label: str, suite_id: str | None = None, generated_at: str | None = None) -> dict:
+    source_filenames = sorted({chunk.get("filename", "unknown") for chunk in chunks})
+    return {
+        "suite_id": suite_id or f"suite-{uuid.uuid4().hex[:12]}",
+        "generated_at": generated_at or datetime.now(UTC).isoformat(),
+        "suite_label": suite_label,
+        "document_count": len(source_filenames),
+        "chunk_count": len(chunks),
+        "source_filenames": source_filenames,
+        "retrieval_backend": "simple-vector-benchmark",
+        "embedding_provider": settings.embedding_provider,
+        "embedding_model": settings.embedding_model,
+        "llm_provider": settings.llm_provider,
+        "llm_model": settings.llm_model,
+        "top_k": settings.top_k,
+        "max_context_chunks": settings.max_context_chunks,
+    }
+
+
+def _build_category_breakdown(dimension_averages: dict[str, float]) -> list[dict]:
     score_breakdown = []
     for category in CATEGORY_SPECS:
         scores = [dimension_averages[key] for key in category["dimensions"]]
@@ -129,33 +127,156 @@ def run_standard_suite() -> dict:
                 "summary": f"{category['label']} averaged {category_score}/100 across the TrustStack evaluation dimensions it governs.",
             }
         )
+    return score_breakdown
 
+
+def _build_recommended_actions(score_breakdown: list[dict]) -> list[str]:
+    weakest_categories = [item["label"] for item in score_breakdown if item["score"] < 80][:2]
+    actions = [
+        "Review any category below 80 before presenting the system as deployment-ready.",
+        "Inspect cases with weak claim support or contradiction warnings and compare them directly to the cited evidence.",
+        "Attach the exported LaTeX and appendix artifacts to analyst or conference reports instead of transcribing scores manually.",
+    ]
+    if weakest_categories:
+        actions.insert(0, f"Prioritize remediation in: {', '.join(weakest_categories)}.")
+    return actions
+
+
+def _build_benchmark_store(chunks: list[dict]):
+    embedder = get_embedder()
+    temp_dir = tempfile.TemporaryDirectory()
+    vector_store = SimpleVectorStore(temp_dir.name)
+    documents = [chunk["text"] for chunk in chunks]
+    embeddings = embedder.embed_texts(documents)
+    vector_store.upsert(
+        ids=[chunk["chunk_uid"] for chunk in chunks],
+        documents=documents,
+        embeddings=embeddings,
+        metadatas=[
+            {
+                "filename": chunk.get("filename", "unknown"),
+                "page_num": chunk.get("page_num"),
+                "chunk_uid": chunk["chunk_uid"],
+            }
+            for chunk in chunks
+        ],
+    )
+    return temp_dir, vector_store, embedder
+
+
+def _case_alignment_metrics(evaluation: dict, citations: list[str]) -> tuple[float, float]:
+    claims = list(evaluation.get("claims", []))
+    if not claims:
+        return 0.0, 0.0
+    supported_claims = [claim for claim in claims if claim.get("status") == "supported"]
+    supported_claim_ratio = round(len(supported_claims) / len(claims), 4)
+    if not citations:
+        return supported_claim_ratio, 0.0
+    citation_set = set(citations)
+    aligned_claims = sum(1 for claim in claims if citation_set & set(claim.get("supporting_chunk_ids", [])))
+    citation_alignment_ratio = round(aligned_claims / len(claims), 4)
+    return supported_claim_ratio, citation_alignment_ratio
+
+
+def run_standard_suite_for_chunks(chunks: list[dict], *, suite_label: str = "active-corpus") -> dict:
+    if not chunks:
+        raise ValueError("No indexed documents found. Upload and index at least one document before running the standard suite.")
+
+    cases = _build_standard_cases(chunks)
+    dimensions_by_key: dict[str, list[float]] = {}
+    case_results: list[dict] = []
+    metadata = _build_metadata(chunks=chunks, suite_label=suite_label)
+
+    temp_dir, vector_store, embedder = _build_benchmark_store(chunks)
+    try:
+        for case in cases:
+            hits = retrieve_hits(case.question, top_k=5, vector_store=vector_store, embedder=embedder)
+            result = _answer_from_hits(case.question, hits, 0.0)
+            evaluation = result["evaluation"]
+            for dimension in evaluation["dimensions"]:
+                dimensions_by_key.setdefault(dimension["key"], []).append(float(dimension["score"]))
+            supported_claim_ratio, citation_alignment_ratio = _case_alignment_metrics(evaluation, result["citations"])
+            case_results.append(
+                {
+                    "id": case.id,
+                    "label": case.label,
+                    "category": case.category,
+                    "question": case.question,
+                    "score": float(evaluation["overall_score"]),
+                    "verdict": evaluation["verdict"],
+                    "trust_summary": result["trust_summary"],
+                    "risk_flags": result["risk_flags"],
+                    "citations": result["citations"],
+                    "evidence_count": len(result["evidence"]),
+                    "supported_claim_ratio": supported_claim_ratio,
+                    "citation_alignment_ratio": citation_alignment_ratio,
+                }
+            )
+    finally:
+        temp_dir.cleanup()
+
+    dimension_averages = {
+        spec["key"]: round(sum(dimensions_by_key.get(spec["key"], [0.0])) / max(1, len(dimensions_by_key.get(spec["key"], []))), 2)
+        for spec in DIMENSION_SPECS
+    }
+    score_breakdown = _build_category_breakdown(dimension_averages)
     final_score = round(sum(item["score"] * item["weight"] for item in score_breakdown), 2)
     verdict = "pass" if final_score >= PASS_THRESHOLD else "review" if final_score >= REVIEW_THRESHOLD else "fail"
 
-    recommended_actions = [
-        "Review any category below 80 before presenting the system as deployment-ready.",
-        "Inspect cases with weak claim support or contradiction warnings and compare them directly to the cited evidence.",
-        "Use the category breakdown in the report to explain where TrustStack is strong and where human review still matters.",
-    ]
-
     return {
-        "framework": {
-            "name": FRAMEWORK_NAME,
-            "version": FRAMEWORK_VERSION,
-            "description": "A weighted, evidence-first evaluation standard for TrustStack answers with claim support, contradiction scanning, and calibration diagnostics.",
-            "score_range": "0-100",
-            "pass_threshold": PASS_THRESHOLD,
-            "review_threshold": REVIEW_THRESHOLD,
-            "dimensions": DIMENSION_SPECS,
-        },
+        "framework": _build_framework(),
+        "metadata": metadata,
         "final_score": final_score,
         "verdict": verdict,
         "summary": (
-            f"TrustStack Standard Suite scored the current corpus and evaluation stack at {final_score}/100 "
-            f"under {FRAMEWORK_NAME} v{FRAMEWORK_VERSION}, resulting in a {verdict.upper()} overall verdict."
+            f"TrustStack Standard Suite scored {suite_label} at {final_score}/100 under "
+            f"{FRAMEWORK_NAME} v{FRAMEWORK_VERSION}, resulting in a {verdict.upper()} overall verdict."
         ),
         "score_breakdown": score_breakdown,
         "cases": case_results,
-        "recommended_actions": recommended_actions,
+        "recommended_actions": _build_recommended_actions(score_breakdown),
+    }
+
+
+def run_standard_suite() -> dict:
+    return run_standard_suite_for_chunks(get_repository().list_chunks(), suite_label="active-corpus")
+
+
+def run_standard_batch_benchmark() -> dict:
+    chunks = get_repository().list_chunks()
+    if not chunks:
+        raise ValueError("No indexed documents found. Upload and index at least one document before running the batch benchmark.")
+
+    grouped: dict[str, list[dict]] = {}
+    for chunk in chunks:
+        grouped.setdefault(chunk.get("filename", "unknown"), []).append(chunk)
+
+    dataset_runs = []
+    for dataset_label, dataset_chunks in sorted(grouped.items()):
+        suite = run_standard_suite_for_chunks(dataset_chunks, suite_label=dataset_label)
+        metadata = suite["metadata"]
+        dataset_runs.append(
+            {
+                "dataset_label": dataset_label,
+                "final_score": suite["final_score"],
+                "verdict": suite["verdict"],
+                "document_count": metadata["document_count"],
+                "chunk_count": metadata["chunk_count"],
+                "source_filenames": metadata["source_filenames"],
+            }
+        )
+
+    aggregate_score = round(sum(item["final_score"] for item in dataset_runs) / max(1, len(dataset_runs)), 2)
+    verdict = "pass" if aggregate_score >= PASS_THRESHOLD else "review" if aggregate_score >= REVIEW_THRESHOLD else "fail"
+    return {
+        "framework": _build_framework(),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "dataset_runs": dataset_runs,
+        "aggregate_score": aggregate_score,
+        "verdict": verdict,
+        "recommended_actions": [
+            "Use the per-dataset batch benchmark to compare how TrustStack performs across distinct evidence sets.",
+            "Investigate datasets with lower scores for weak retrieval, sparse citations, or unsupported claims.",
+            "Include the reproducibility metadata and dataset labels in analyst reports so results can be regenerated later.",
+        ],
     }
