@@ -135,6 +135,11 @@ def build_query_explanation(
             for dimension in dimensions
         ]
 
+    strengths = list(evaluation.get("strengths", [])) if evaluation else []
+    weaknesses = list(evaluation.get("weaknesses", [])) if evaluation else []
+    failure_modes = list(evaluation.get("failure_modes", [])) if evaluation else []
+    recommended_followups = list(evaluation.get("recommended_followups", [])) if evaluation else []
+
     return {
         "overview": overview,
         "teaching_points": teaching_points,
@@ -143,4 +148,8 @@ def build_query_explanation(
         "evidence_strength": evidence_strength,
         "citation_coverage": citation_summary,
         "flagged_concerns": [FLAG_EXPLANATIONS.get(flag, flag) for flag in risk_flags],
+        "strengths": strengths,
+        "weaknesses": weaknesses,
+        "failure_modes": failure_modes,
+        "recommended_followups": recommended_followups,
     }

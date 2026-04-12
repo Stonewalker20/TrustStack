@@ -90,6 +90,7 @@ def answer_question(question: str, top_k: int | None = None) -> dict:
         evidence_ids=[item["chunk_id"] for item in hits],
         insufficient_evidence=insufficient_evidence,
         risk_flags=risk_flags,
+        hits=hits,
     )
     confidence_score = evaluation["overall_score"]
     trust_summary = summarize_trust(confidence_score, risk_flags)

@@ -91,6 +91,13 @@ class MongoIntegrationAPITestCase(unittest.TestCase):
             self.assertIn("inspection", query_payload["answer"].lower())
             self.assertIn(query_payload["evaluation"]["verdict"], {"pass", "review", "fail"})
 
+            suite_response = self.client.post("/evaluation/standard-run")
+            self.assertEqual(suite_response.status_code, 200, suite_response.text)
+            suite_payload = suite_response.json()
+            self.assertIn("final_score", suite_payload)
+            self.assertGreaterEqual(len(suite_payload["score_breakdown"]), 1)
+            self.assertGreaterEqual(len(suite_payload["cases"]), 1)
+
             runs_response = self.client.get("/runs")
             self.assertEqual(runs_response.status_code, 200, runs_response.text)
             runs_payload = runs_response.json()

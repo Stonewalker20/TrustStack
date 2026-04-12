@@ -180,7 +180,10 @@ class APITestCase(unittest.TestCase):
         self.assertIn("explanation", payload)
         self.assertIn("evaluation", payload)
         self.assertEqual(payload["evaluation"]["framework"]["name"], "TrustStack Evaluation Standard")
+        self.assertEqual(payload["evaluation"]["framework"]["version"], "2.0")
         self.assertIn("score_breakdown", payload["explanation"])
+        self.assertIn("diagnostics", payload["evaluation"])
+        self.assertIn("claims", payload["evaluation"])
         self.assertGreaterEqual(len(payload["explanation"]["teaching_points"]), 3)
         self.assertEqual(len(self.repo.runs), 1)
         self.assertEqual(self.repo.runs[0]["question"], fake_result["question"])
@@ -428,6 +431,59 @@ class APITestCase(unittest.TestCase):
             with self.subTest(top_k=top_k):
                 response = self.client.post("/query", json={"question": "What does the SOP require before startup?", "top_k": top_k})
                 self.assertEqual(response.status_code, 422)
+
+    def test_standard_run_endpoint_returns_suite_breakdown(self):
+        fake_suite = {
+            "framework": {
+                "name": "TrustStack Evaluation Standard",
+                "version": "2.0",
+                "description": "A weighted, evidence-first evaluation standard for TrustStack answers with claim support, contradiction scanning, and calibration diagnostics.",
+                "score_range": "0-100",
+                "pass_threshold": 80.0,
+                "review_threshold": 60.0,
+                "dimensions": [
+                    {"key": "retrieval_relevance", "label": "Retrieval relevance", "weight": 0.16, "purpose": "Measures retrieval quality."}
+                ],
+            },
+            "final_score": 84.2,
+            "verdict": "pass",
+            "summary": "TrustStack Standard Suite scored the system at 84.2/100.",
+            "score_breakdown": [
+                {
+                    "key": "grounding",
+                    "label": "Grounding and retrieval",
+                    "weight": 0.22,
+                    "score": 86.0,
+                    "verdict": "pass",
+                    "summary": "Grounding performed strongly.",
+                }
+            ],
+            "cases": [
+                {
+                    "id": "grounded-1",
+                    "label": "Direct evidence retrieval",
+                    "category": "grounding",
+                    "question": "What inspection is required before startup?",
+                    "score": 88.0,
+                    "verdict": "pass",
+                    "trust_summary": "High confidence.",
+                    "risk_flags": [],
+                    "citations": ["doc-1-chunk-0"],
+                    "evidence_count": 1,
+                }
+            ],
+            "recommended_actions": ["Review weak categories before presenting the system as deployment-ready."],
+        }
+
+        with patch("app.routers.evaluation.run_standard_suite", return_value=fake_suite):
+            response = self.client.post("/evaluation/standard-run")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["framework"]["version"], "2.0")
+        self.assertEqual(payload["verdict"], "pass")
+        self.assertEqual(len(payload["score_breakdown"]), 1)
+        self.assertEqual(len(payload["cases"]), 1)
 
 
 if __name__ == "__main__":

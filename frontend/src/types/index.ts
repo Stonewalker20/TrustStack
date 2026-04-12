@@ -28,6 +28,42 @@ export type QueryResponse = {
     evidence_strength: string
     citation_coverage: string
     flagged_concerns: string[]
+    strengths?: string[]
+    weaknesses?: string[]
+    failure_modes?: string[]
+    recommended_followups?: string[]
+  }
+  evaluation?: {
+    overall_score: number
+    verdict: string
+    summary: string
+    strengths: string[]
+    weaknesses: string[]
+    failure_modes: string[]
+    recommended_followups: string[]
+    diagnostics: {
+      top_hit_score: number
+      avg_hit_score: number
+      supporting_chunk_count: number
+      source_count: number
+      citation_match_ratio: number
+      unsupported_claim_ratio: number
+    }
+    dimensions: Array<{
+      key: string
+      label: string
+      weight: number
+      score: number
+      status: string
+      rationale: string
+      signals: string[]
+    }>
+    claims: Array<{
+      claim: string
+      status: string
+      supporting_chunk_ids: string[]
+      notes: string
+    }>
   }
 }
 
@@ -45,4 +81,49 @@ export type RunItem = {
 export type SampleQuestionItem = {
   question: string
   source?: string | null
+}
+
+export type StandardTestCategoryScore = {
+  key: string
+  label: string
+  weight: number
+  score: number
+  verdict: string
+  summary: string
+}
+
+export type StandardTestCaseResult = {
+  id: string
+  label: string
+  category: string
+  question: string
+  score: number
+  verdict: string
+  trust_summary: string
+  risk_flags: string[]
+  citations: string[]
+  evidence_count: number
+}
+
+export type StandardTestRunResponse = {
+  framework: {
+    name: string
+    version: string
+    description: string
+    score_range: string
+    pass_threshold: number
+    review_threshold: number
+    dimensions: Array<{
+      key: string
+      label: string
+      weight: number
+      purpose: string
+    }>
+  }
+  final_score: number
+  verdict: string
+  summary: string
+  score_breakdown: StandardTestCategoryScore[]
+  cases: StandardTestCaseResult[]
+  recommended_actions: string[]
 }

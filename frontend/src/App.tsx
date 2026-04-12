@@ -11,122 +11,202 @@ import { RunHistoryTable } from './components/RunHistoryTable'
 import { TrustHero } from './components/TrustHero'
 import { UploadPanel } from './components/UploadPanel'
 import { api } from './lib/api'
-import type { DocumentItem, QueryResponse, RunItem, SampleQuestionItem } from './types'
+import type {
+  DocumentItem,
+  QueryResponse,
+  RunItem,
+  SampleQuestionItem,
+  StandardTestRunResponse,
+} from './types'
 
-type TourNode = {
+type PlanetSlide = {
   id: string
   subsystem: string
   planet: string
   title: string
   summary: string
-  guideTitle: string
-  guideMessage: string
+  reportSection: string
+  reportFigureCaption: string
 }
 
-const TOUR_NODES: TourNode[] = [
+const PLANET_SLIDES: PlanetSlide[] = [
   {
-    id: 'safety-mercury',
-    subsystem: 'Source Readiness',
+    id: 'intro-mercury',
+    subsystem: 'Evidence Intake',
     planet: 'Mercury',
-    title: 'Prepare verified source material',
-    summary: 'Upload, organize, and normalize the evidence base so every TrustStack review begins with reliable context.',
-    guideTitle: 'Dock at Mercury',
-    guideMessage: 'Start the mission by loading source material and confirming the corpus is ready for evaluation.',
+    title: 'Problem framing and corpus intake',
+    summary: 'Mercury introduces the evidence-first premise of TrustStack: ingest source material, normalize it, and make every later score traceable to a real corpus.',
+    reportSection: 'Problem Statement and Evidence Intake',
+    reportFigureCaption: 'Evidence ingestion flow used to ground the TrustStack evaluation stack.',
   },
   {
-    id: 'robustness-venus',
-    subsystem: 'Evaluation Design',
+    id: 'design-venus',
+    subsystem: 'Evaluation Architecture',
     planet: 'Venus',
-    title: 'Shape the evaluation workflow',
-    summary: 'Review the framework structure, scoring logic, and control layers that define how TrustStack evaluates responses.',
-    guideTitle: 'Stabilize Venus',
-    guideMessage: 'Use Venus to understand how the workflow is structured before sending a live prompt through the system.',
+    title: 'TrustStack evaluation architecture',
+    summary: 'Venus presents the system design: indexing, retrieval, scoring, risk labeling, explanation generation, and operator-facing review layers.',
+    reportSection: 'System Architecture',
+    reportFigureCaption: 'Evaluation architecture slide showing the layered TrustStack pipeline.',
   },
   {
-    id: 'privacy-earth',
+    id: 'query-earth',
     subsystem: 'Live Evaluation',
     planet: 'Earth',
-    title: 'Run a grounded live query',
-    summary: 'Submit a real question against the indexed corpus and see TrustStack respond with evidence-aware output.',
-    guideTitle: 'Orbit Earth',
-    guideMessage: 'Submit a live query here. TrustStack will stay on Earth until the response is ready or you advance manually.',
+    title: 'Live evidence-grounded querying',
+    summary: 'Earth demonstrates the runtime loop: a user question, a retrieved evidence set, and a grounded response scored under the TrustStack standard.',
+    reportSection: 'Interactive Evaluation Flow',
+    reportFigureCaption: 'Live query interface showing how TrustStack turns a user question into a grounded answer.',
   },
   {
-    id: 'bias-mars',
+    id: 'evidence-mars',
     subsystem: 'Evidence Review',
     planet: 'Mars',
-    title: 'Inspect evidence and weak spots',
-    summary: 'Break down the answer, trace its support, and pinpoint where the evidence is incomplete or missing.',
-    guideTitle: 'Inspect Mars',
-    guideMessage: 'Review the answer and its supporting evidence here before moving on to the risk summary.',
+    title: 'Evidence review and explanation',
+    summary: 'Mars is the explainability slide: the answer, the evidence, the claim coverage, and the places where support is weak or missing.',
+    reportSection: 'Evidence Review and Explainability',
+    reportFigureCaption: 'Answer and evidence review interface used to audit retrieval support.',
   },
   {
-    id: 'monitoring-jupiter',
-    subsystem: 'Risk Summary',
+    id: 'scores-jupiter',
+    subsystem: 'Score Breakdown',
     planet: 'Jupiter',
-    title: 'Surface trust and risk signals',
-    summary: 'Translate raw evaluation output into confidence indicators, risk flags, and decision-ready oversight signals.',
-    guideTitle: 'Read Jupiter',
-    guideMessage: 'Use Jupiter to review the trust posture before moving into long-term performance history.',
+    title: 'Standardized score breakdown',
+    summary: 'Jupiter translates raw evaluation data into a decision-grade trust posture with weighted category scores, verdict bands, and risk signals.',
+    reportSection: 'Evaluation Results',
+    reportFigureCaption: 'Category-level score breakdown under the TrustStack Evaluation Standard.',
   },
   {
-    id: 'hallucination-saturn',
-    subsystem: 'Performance History',
+    id: 'history-saturn',
+    subsystem: 'Historical Runs',
     planet: 'Saturn',
-    title: 'Review performance over time',
-    summary: 'Examine historical runs to catch drift, inconsistency, and recurring hallucination patterns before deployment.',
-    guideTitle: 'Survey Saturn',
-    guideMessage: 'Saturn is the historical view. Review prior runs here before exploring the broader framework and method.',
+    title: 'Historical consistency and benchmarking',
+    summary: 'Saturn shows how TrustStack supports repeated evaluation, cross-run comparison, and traceable run history for review and benchmarking.',
+    reportSection: 'Benchmarking and Historical Analysis',
+    reportFigureCaption: 'Historical run tracking interface used for longitudinal review.',
   },
   {
-    id: 'framework-uranus',
+    id: 'blueprint-uranus',
     subsystem: 'System Blueprint',
     planet: 'Uranus',
-    title: 'Explore the TrustStack blueprint',
-    summary: 'Navigate the full system map and see how each evaluation stage contributes to the final trust verdict.',
-    guideTitle: 'Chart Uranus',
-    guideMessage: 'Uranus provides the full system blueprint so you can orient the entire TrustStack pipeline in one place.',
+    title: 'Blueprint of the full TrustStack stack',
+    summary: 'Uranus zooms out into the full blueprint so the audience can map ingestion, retrieval, scoring, explanation, and operator review to one coherent system.',
+    reportSection: 'System Blueprint',
+    reportFigureCaption: 'Top-level blueprint of the TrustStack system and its evaluation stages.',
   },
   {
-    id: 'methodology-neptune',
-    subsystem: 'Evaluation Method',
+    id: 'method-neptune',
+    subsystem: 'Methodology',
     planet: 'Neptune',
-    title: 'Ground the experience in method',
-    summary: 'Connect the interface to a defensible evaluation methodology suitable for academic, research, and enterprise review.',
-    guideTitle: 'Anchor Neptune',
-    guideMessage: 'Review the evaluation method here to connect the visual experience to a rigorous underlying framework.',
+    title: 'Methodology and evaluation standard',
+    summary: 'Neptune grounds the presentation in a defensible research method: weighted dimensions, failure modes, diagnostics, and report-ready evidence.',
+    reportSection: 'Methodology',
+    reportFigureCaption: 'Methodology view connecting the UI narrative to the formal TrustStack standard.',
   },
   {
-    id: 'author-pluto',
-    subsystem: 'Mission Control',
+    id: 'standard-pluto',
+    subsystem: 'TrustStack Standard',
     planet: 'Pluto',
-    title: 'Operate TrustStack from one control center',
-    summary: 'Use Pluto as a practical command deck where uploads, live queries, evidence review, and trust signals are all accessible on one screen.',
-    guideTitle: 'Survey Pluto',
-    guideMessage: 'Pluto is the direct-access mode. Use it to run the full TrustStack workflow from one dense control-center view.',
+    title: 'TrustStack standard and report export',
+    summary: 'Pluto summarizes the formal standard, the report structure, and the final artifacts that Mission Control can generate for presentations and papers.',
+    reportSection: 'Conclusion and Standard Export',
+    reportFigureCaption: 'Summary slide aligning TrustStack outputs with presentation and report artifacts.',
   },
 ]
 
-function ControlCenterCard({
-  nodes,
+function ScoreBreakdownPanel({
+  suiteResult,
+}: {
+  suiteResult: StandardTestRunResponse | null
+}) {
+  if (!suiteResult) {
+    return (
+      <div className="panel panel--glass">
+        <div className="panel-header">
+          <div>
+            <div className="eyebrow">TrustStack Standard</div>
+            <h3>Run the standardized suite to populate this breakdown.</h3>
+          </div>
+        </div>
+        <p className="muted">
+          Mission Control can execute the full TrustStack Evaluation Standard and return a final score, weighted category
+          breakdown, and recommended follow-up actions.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="panel panel--glass">
+      <div className="panel-header">
+        <div>
+          <div className="eyebrow">TrustStack Standard</div>
+          <h3>Overall suite score: {suiteResult.final_score}</h3>
+        </div>
+        <span className="badge badge--bright">{suiteResult.verdict.toUpperCase()}</span>
+      </div>
+      <p className="muted">{suiteResult.summary}</p>
+      <div className="signal-stack">
+        {suiteResult.score_breakdown.map((category) => (
+          <div className="signal-row" key={category.key}>
+            <span>{category.label}</span>
+            <div className="signal-bar">
+              <div className="signal-bar-fill" style={{ width: `${category.score}%` }} />
+            </div>
+            <strong>{category.score}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StandardSlidePanel({
+  slide,
+  suiteResult,
+}: {
+  slide: PlanetSlide
+  suiteResult: StandardTestRunResponse | null
+}) {
+  return (
+    <div className="stage-stack">
+      <div className="panel panel--glass">
+        <div className="panel-header">
+          <div>
+            <div className="eyebrow">Presentation Alignment</div>
+            <h3>{slide.reportSection}</h3>
+          </div>
+        </div>
+        <p className="muted">{slide.reportFigureCaption}</p>
+      </div>
+      <ScoreBreakdownPanel suiteResult={suiteResult} />
+    </div>
+  )
+}
+
+function MissionControlOverlay({
   documents,
   runs,
   result,
   signals,
   sampleQuestions,
   loading,
+  suiteLoading,
+  suiteResult,
   onSubmit,
   onUploaded,
+  onRunSuite,
 }: {
-  nodes: TourNode[]
   documents: DocumentItem[]
   runs: RunItem[]
   result: QueryResponse | null
   signals: { label: string; value: number }[]
   sampleQuestions: SampleQuestionItem[]
   loading: boolean
+  suiteLoading: boolean
+  suiteResult: StandardTestRunResponse | null
   onSubmit: (question: string) => void
   onUploaded: () => void
+  onRunSuite: () => void
 }) {
   const latestRun = runs[0] ?? null
 
@@ -135,12 +215,15 @@ function ControlCenterCard({
       <div className="panel-header">
         <div>
           <div className="eyebrow">Mission Control</div>
-          <h2>Use every major TrustStack feature from one screen.</h2>
+          <h2>Run the TrustStack standard from one screen.</h2>
         </div>
+        <button className="primary primary--glow" onClick={onRunSuite} disabled={suiteLoading}>
+          {suiteLoading ? 'Running Standard…' : 'Run Standardized Tests'}
+        </button>
       </div>
       <p className="muted">
-        Pluto is the non-cinematic workspace. It keeps ingestion, querying, evidence review, trust signals, and the
-        subsystem map visible in one practical control-center layout.
+        Mission Control is now the operator console for the formal TrustStack standard: upload evidence, run live
+        questions, execute the standardized suite, and capture the final score breakdown for the presentation and report.
       </p>
 
       <div className="control-center-grid">
@@ -160,7 +243,7 @@ function ControlCenterCard({
               {result ? <span className="badge badge--bright">{result.confidence_score}</span> : null}
             </div>
             <p className="muted">
-              {result ? result.answer : 'Pluto keeps your latest answer, summary, and source coverage visible in one place.'}
+              {result ? result.answer : 'Mission Control keeps the latest grounded answer visible while the standard suite runs.'}
             </p>
             <div className="pill-grid">
               {(result?.citations ?? []).slice(0, 4).map((citation) => (
@@ -174,6 +257,8 @@ function ControlCenterCard({
         </div>
 
         <div className="control-column">
+          <ScoreBreakdownPanel suiteResult={suiteResult} />
+
           <div className="panel panel--glass">
             <div className="panel-header">
               <div>
@@ -191,7 +276,7 @@ function ControlCenterCard({
               </div>
             ))}
             <div className="framework-note">
-              {result ? result.trust_summary : 'Run an evaluation to populate the live trust summary and risk posture.'}
+              {result ? result.trust_summary : 'Run an evaluation to populate the live trust posture.'}
             </div>
           </div>
 
@@ -214,24 +299,6 @@ function ControlCenterCard({
           </div>
         </div>
       </div>
-
-      <div className="overview-grid">
-        {nodes.map((node, index) => (
-          <article key={node.id} className="overview-card">
-            <div className="framework-node-topline">
-              <span>{node.planet}</span>
-              <strong>{String(index + 1).padStart(2, '0')}</strong>
-            </div>
-            <h3>{node.subsystem}</h3>
-            <p className="muted">{node.summary}</p>
-          </article>
-        ))}
-      </div>
-      <div className="pill-grid">
-        <span className="data-pill">Single-screen workflow</span>
-        <span className="data-pill">Low-friction operator mode</span>
-        <span className="data-pill">Direct feature access</span>
-      </div>
     </div>
   )
 }
@@ -241,9 +308,11 @@ export default function App() {
   const [runs, setRuns] = useState<RunItem[]>([])
   const [result, setResult] = useState<QueryResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [suiteLoading, setSuiteLoading] = useState(false)
   const [activePlanetIndex, setActivePlanetIndex] = useState(0)
-  const [guideEnabled, setGuideEnabled] = useState(true)
+  const [missionControlOpen, setMissionControlOpen] = useState(false)
   const [sampleQuestions, setSampleQuestions] = useState<SampleQuestionItem[]>([])
+  const [suiteResult, setSuiteResult] = useState<StandardTestRunResponse | null>(null)
 
   const refreshDocuments = async () => {
     const res = await api.get<DocumentItem[]>('/documents')
@@ -272,11 +341,23 @@ export default function App() {
       const res = await api.post<QueryResponse>('/query', { question, top_k: 5 })
       setResult(res.data)
       refreshRuns().catch(console.error)
-      setActivePlanetIndex(3)
     } catch (error) {
       console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRunSuite = async () => {
+    setSuiteLoading(true)
+    try {
+      const res = await api.post<StandardTestRunResponse>('/evaluation/standard-run')
+      setSuiteResult(res.data)
+      setActivePlanetIndex(4)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setSuiteLoading(false)
     }
   }
 
@@ -304,6 +385,7 @@ export default function App() {
   }, [result])
 
   const activePanel = useMemo<ReactNode>(() => {
+    const slide = PLANET_SLIDES[activePlanetIndex]
     switch (activePlanetIndex) {
       case 0:
         return (
@@ -312,9 +394,6 @@ export default function App() {
               onUploaded={() => {
                 refreshDocuments().catch(console.error)
                 refreshSampleQuestions().catch(console.error)
-                if (guideEnabled && activePlanetIndex === 0) {
-                  setActivePlanetIndex(1)
-                }
               }}
             />
             <DocumentList items={documents} />
@@ -336,6 +415,7 @@ export default function App() {
           <div className="stage-stack">
             <RiskPanel result={result} />
             <ResultsSection result={result} runs={runs} signals={trustSignals} minimal />
+            <ScoreBreakdownPanel suiteResult={suiteResult} />
           </div>
         )
       case 5:
@@ -345,36 +425,39 @@ export default function App() {
       case 7:
         return <MethodologySection />
       case 8:
-        return (
-          <ControlCenterCard
-            nodes={TOUR_NODES.slice(0, -1)}
+        return <StandardSlidePanel slide={slide} suiteResult={suiteResult} />
+      default:
+        return null
+    }
+  }, [activePlanetIndex, documents, loading, result, runs, sampleQuestions, suiteResult, trustSignals])
+
+  return (
+    <div className="app-root app-root--fixed">
+      <TrustHero
+        nodes={PLANET_SLIDES}
+        activeIndex={activePlanetIndex}
+        detailPanel={activePanel}
+        missionControlPanel={
+          <MissionControlOverlay
             documents={documents}
             runs={runs}
             result={result}
             signals={trustSignals}
             sampleQuestions={sampleQuestions}
             loading={loading}
+            suiteLoading={suiteLoading}
+            suiteResult={suiteResult}
             onSubmit={handleSubmit}
             onUploaded={() => {
               refreshDocuments().catch(console.error)
               refreshSampleQuestions().catch(console.error)
             }}
+            onRunSuite={handleRunSuite}
           />
-        )
-      default:
-        return null
-    }
-  }, [activePlanetIndex, documents, guideEnabled, loading, result, runs, sampleQuestions, trustSignals])
-
-  return (
-    <div className="app-root app-root--fixed">
-      <TrustHero
-        nodes={TOUR_NODES}
-        activeIndex={activePlanetIndex}
-        guideEnabled={guideEnabled}
-        detailPanel={activePanel}
+        }
+        missionControlOpen={missionControlOpen}
         onActiveIndexChange={setActivePlanetIndex}
-        onGuideEnabledChange={setGuideEnabled}
+        onMissionControlOpenChange={setMissionControlOpen}
       />
     </div>
   )

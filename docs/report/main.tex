@@ -1,0 +1,212 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\title{TrustStack: A Local-First, Evidence-Grounded Evaluation Standard and Mission-Control Interface for Trustworthy AI}
+
+\author{
+\IEEEauthorblockN{Anonymous Submission}
+\IEEEauthorblockA{Prepared in IEEE conference format for TrustStack system review}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+TrustStack is a local-first system for evaluating whether AI outputs are grounded, auditable, and safe enough to trust in operational settings. The system combines document ingestion, retrieval-augmented response generation, structured confidence scoring, risk labeling, and operator-facing explanation into a single evaluation workflow. This paper introduces the \emph{TrustStack Evaluation Standard v2.0}, a weighted, evidence-first framework that scores answers across retrieval relevance, evidence sufficiency, citation traceability, claim support, contradiction risk, completeness, abstention behavior, answer discipline, safety risk, and calibration. We also describe a presentation-oriented interface in which each planet view acts as a slide in the TrustStack narrative while Mission Control executes the full standardized suite and returns an aggregate score breakdown. The result is a system intended not merely to answer questions, but to teach users how trust should be inspected before AI output is operationalized.
+\end{abstract}
+
+\begin{IEEEkeywords}
+trustworthy AI, retrieval-augmented generation, explainability, evaluation standard, human-in-the-loop oversight, local-first systems
+\end{IEEEkeywords}
+
+\section{Introduction}
+AI systems are increasingly deployed into settings where an answer is not enough; users must also understand why the answer should or should not be trusted. Existing chat interfaces typically optimize for fluency rather than auditability, leaving operators with limited visibility into evidence quality, citation traceability, contradiction risk, and the conditions under which a model should abstain. TrustStack addresses this gap by treating trust as an evaluation product rather than a by-product of generation.
+
+TrustStack is motivated by one central question: \emph{can a user understand not only what the model said, but whether the answer is sufficiently grounded to act on?} To answer this, TrustStack combines local document ingestion, retrieval, answer generation, evaluation, and explanation into a single review surface. The system is explicitly designed for low-friction local deployment with MongoDB-backed persistence, live browser-based interaction, and deterministic fallback modes when external providers are unavailable.
+
+This paper makes three contributions:
+\begin{enumerate}
+  \item It introduces the TrustStack Evaluation Standard v2.0, a weighted scoring framework for grounded-answer review.
+  \item It describes a local-first implementation that unifies ingestion, retrieval, query, scoring, risk flags, and run history.
+  \item It presents a mission-control interface and presentation narrative that map system behavior to operator review and report-ready outputs.
+\end{enumerate}
+
+\section{Problem Setting}
+TrustStack assumes a corpus of uploaded evidence, a user question, and a model-generated answer conditioned on retrieved context. The system does not attempt to solve open-domain truth verification. Instead, it asks whether the answer is justified \emph{with respect to the indexed evidence currently available}. This is a narrower but more defensible setting for enterprise, academic, and operational review workflows.
+
+The practical failure modes in this setting are familiar:
+\begin{itemize}
+  \item retrieval returns weak or irrelevant chunks;
+  \item the answer cites evidence poorly or not at all;
+  \item specific claims are unsupported by the retrieved material;
+  \item the answer drifts beyond the scope of the question;
+  \item the answer contains operational advice that requires human review;
+  \item the interface fails to teach the user how the score was formed.
+\end{itemize}
+
+TrustStack is built to expose each of these failure modes rather than hide them behind a single scalar score.
+
+\section{System Overview}
+The TrustStack pipeline contains five operational layers:
+\begin{enumerate}
+  \item \textbf{Evidence Intake}: user uploads are parsed, chunked, and persisted.
+  \item \textbf{Retrieval and Query}: the system embeds the question, retrieves the top evidence chunks, and assembles a grounded context.
+  \item \textbf{Answer Generation}: a configured LLM or fallback path produces an answer, citations, and an insufficient-evidence signal.
+  \item \textbf{Evaluation and Risk Analysis}: the answer is scored under TrustStack Evaluation Standard v2.0 and labeled with risk flags.
+  \item \textbf{Operator Review}: the interface surfaces the answer, supporting chunks, diagnostics, historical runs, and standardized-suite summary.
+\end{enumerate}
+
+\begin{table}[t]
+  \caption{TrustStack implementation stack}
+  \label{tab:stack}
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Layer & Implementation \\
+    \midrule
+    Frontend & React, Vite, TypeScript \\
+    Backend API & FastAPI \\
+    Document store & MongoDB \\
+    Retrieval store & ChromaDB or local vector fallback \\
+    Embeddings & Ollama, local lexical fallback \\
+    Generation & Ollama or extractive fallback \\
+    Verification & unittest, Playwright, smoke tests \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{TrustStack Evaluation Standard v2.0}
+The TrustStack Evaluation Standard v2.0 is a weighted framework that converts a single answer into an evidence-first evaluation report. Table~\ref{tab:dimensions} summarizes the ten dimensions currently implemented.
+
+\begin{table*}[t]
+  \caption{TrustStack Evaluation Standard v2.0}
+  \label{tab:dimensions}
+  \centering
+  \begin{tabular}{p{0.17\linewidth}p{0.08\linewidth}p{0.62\linewidth}}
+    \toprule
+    Dimension & Weight & Purpose \\
+    \midrule
+    Retrieval relevance & 0.16 & Measures whether the retrieved evidence is strongly aligned with the question rather than dominated by one weak hit. \\
+    Evidence sufficiency & 0.13 & Measures whether the answer is backed by enough non-duplicative support across the corpus. \\
+    Citation traceability & 0.12 & Measures whether citations point back to the retrieved evidence and cover the answer transparently. \\
+    Claim support & 0.15 & Measures whether individual claims in the answer are explicitly supported by retrieved evidence. \\
+    Contradiction risk & 0.10 & Measures whether the answer appears to conflict with the retrieved evidence. \\
+    Completeness & 0.09 & Measures whether the answer addresses the major terms and demands of the question. \\
+    Honesty and abstention & 0.10 & Rewards the system for acknowledging missing evidence instead of overstating certainty. \\
+    Answer discipline & 0.06 & Measures whether the answer stays proportional to the evidence without drifting into unsupported detail. \\
+    Safety and operational risk & 0.05 & Measures whether the answer contains procedural or high-stakes guidance that needs review. \\
+    Calibration and consistency & 0.04 & Measures whether the score and explanation are calibrated to detected weaknesses. \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+Each answer is also accompanied by:
+\begin{itemize}
+  \item explicit checks such as evidence presence, citation match, contradiction scan, question coverage, and safety screening;
+  \item claim-level diagnostics identifying supported and weakly supported statements;
+  \item evidence diagnostics including top-hit score, average hit score, supporting chunk count, source diversity, and unsupported claim ratio;
+  \item recommended follow-up actions for the user.
+\end{itemize}
+
+The score bands are currently defined as:
+\begin{itemize}
+  \item \textbf{Pass}: score $\geq 80$
+  \item \textbf{Review}: score $\geq 60$ and $< 80$
+  \item \textbf{Fail}: score $< 60$
+\end{itemize}
+
+\section{Standardized Test Suite}
+In addition to single-query evaluation, TrustStack now runs a standardized suite that evaluates the current corpus and runtime stack through a set of grounded probes. The suite includes:
+\begin{itemize}
+  \item direct evidence retrieval prompts derived from the corpus;
+  \item citation-audit prompts that ask which evidence supports a requirement;
+  \item negative-control prompts that probe abstention on unsupported or out-of-scope questions;
+  \item operational-restraint prompts that test whether high-stakes guidance is flagged for review;
+  \item synthesis prompts that assess coverage across the uploaded material.
+\end{itemize}
+
+The suite aggregates per-answer evaluation reports into weighted category scores:
+\begin{itemize}
+  \item grounding and retrieval;
+  \item auditability and traceability;
+  \item safety and operational restraint;
+  \item consistency and calibration;
+  \item communication and explanation;
+  \item corpus coverage.
+\end{itemize}
+
+This structure is intentionally report-friendly: the final suite output produces an overall score, category breakdown, case-level results, and recommended actions that can be cited in a talk, appendix, or deployment review.
+
+\section{Interface as Presentation}
+TrustStack uses a solar-system interface not only as a product metaphor but also as a presentation surface. Each planet acts as a slide aligned to a specific section of the system narrative:
+\begin{itemize}
+  \item Mercury: problem framing and evidence intake;
+  \item Venus: architecture;
+  \item Earth: live evaluation;
+  \item Mars: evidence review and explainability;
+  \item Jupiter: score breakdown;
+  \item Saturn: historical consistency;
+  \item Uranus: full blueprint;
+  \item Neptune: methodology;
+  \item Pluto: standard and report export.
+\end{itemize}
+
+Mission Control is the central execution interface. From the overview, an operator can upload evidence, run live questions, execute the standardized suite, and capture the final score breakdown. This design turns the product itself into the slide deck for demonstrations, while keeping the report structure aligned with the same underlying sections.
+
+\section{Implementation and Verification}
+TrustStack is built as a local-first system. MongoDB stores documents, chunks, and run history. The backend exposes ingestion, document listing, sample-question generation, query, run history, and standardized-suite routes. The frontend consumes those routes through a single API layer and renders both focused planet slides and Mission Control.
+
+Verification currently operates at four levels:
+\begin{enumerate}
+  \item backend API and service unit tests;
+  \item real MongoDB integration tests;
+  \item browser E2E tests against the live app stack;
+  \item served-stack smoke tests against built frontend assets, live FastAPI, and Docker MongoDB.
+\end{enumerate}
+
+This layered verification strategy matters because TrustStack is itself an evaluation product. If the system is intended to judge groundedness and traceability, its own ingest, retrieval, explanation, and persistence paths must be tested with equal rigor.
+
+\section{Experimental Plan}
+The current implementation enables several near-term experiments suitable for a conference evaluation section:
+\begin{itemize}
+  \item compare TrustStack score stability across repeated runs on the same corpus;
+  \item compare grounded answers against an answer-only baseline with no retrieval or citation discipline;
+  \item measure how often unsupported claims are detected when the question is partially or fully out of scope;
+  \item measure operator-facing usefulness of diagnostics such as contradiction notes, unsupported claim ratio, and recommended actions;
+  \item evaluate category-level sensitivity under intentionally degraded retrieval conditions.
+\end{itemize}
+
+The present codebase already supports deterministic local testing through lexical retrieval and fallback generation, which makes the system suitable for reproducible experiments without depending on cloud-only infrastructure.
+
+\section{Limitations}
+TrustStack currently evaluates groundedness relative to the uploaded corpus, not objective world truth. If the corpus is incomplete, outdated, or internally inconsistent, the system can still return a well-structured but ultimately limited evaluation. Likewise, the contradiction and claim-support checks are heuristic rather than formal entailment models. This is a pragmatic choice for local-first operation, but it limits semantic precision.
+
+The current interface is also optimized for explanation and demonstration rather than dense analyst workflows. Future versions should support report export, appendix generation, batch benchmarking across datasets, and stronger citation-to-claim alignment.
+
+\section{Conclusion}
+TrustStack reframes trustworthy AI interaction as an evidence-first evaluation problem. Instead of returning an answer alone, the system returns a score, a rationale, a set of diagnostics, and a review path. By combining a local-first architecture, a standardized evaluation framework, and a presentation-aware interface, TrustStack provides a concrete path toward AI systems that can be inspected before they are trusted.
+
+\section*{Acknowledgment}
+This document is structured as a conference-style system paper scaffold. Final camera-ready submission details, author metadata, and empirical results tables should be updated once the full experimental runs are complete.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

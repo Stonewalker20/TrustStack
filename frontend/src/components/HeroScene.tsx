@@ -47,15 +47,15 @@ type OrbitalBody = Pick<
   | 'meanLongitudeDeg'
 >
 
-const ORBIT_SCALE = 0.94
+const ORBIT_SCALE = 0.68
 const SCREEN_ORBIT_SECONDS = 300
 const EARTH_DIAMETER_KM = 12742
 const SUN_DIAMETER_KM = 1392700
 const SUN_DIAMETER_RATIO_EARTH = SUN_DIAMETER_KM / EARTH_DIAMETER_KM
 const EARTH_VISUAL_DIAMETER = 0.01
 const SUN_POSITION = new THREE.Vector3(0, 0, 0)
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(-24.5, 15.2, 1.4)
-const DEFAULT_CAMERA_TARGET = new THREE.Vector3(4.2, 0, 0)
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(-34.5, 18.4, 4.8)
+const DEFAULT_CAMERA_TARGET = new THREE.Vector3(6.8, 0, 0)
 
 const PLANETS: SubsystemPlanet[] = [
   {

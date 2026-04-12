@@ -64,6 +64,9 @@ class EvaluationDimension(BaseModel):
     status: str
     rationale: str
     signals: list[str]
+    subscore_inputs: dict[str, str | float | int | bool] | None = None
+    penalties: list[str] = []
+    passed_checks: list[str] = []
 
 
 class EvaluationCheck(BaseModel):
@@ -71,6 +74,25 @@ class EvaluationCheck(BaseModel):
     label: str
     status: str
     detail: str
+    severity: str = "info"
+    metric_value: str | float | int | None = None
+    threshold: str | float | int | None = None
+
+
+class ClaimAssessment(BaseModel):
+    claim: str
+    status: str
+    supporting_chunk_ids: list[str]
+    notes: str
+
+
+class EvidenceDiagnostics(BaseModel):
+    top_hit_score: float
+    avg_hit_score: float
+    supporting_chunk_count: int
+    source_count: int
+    citation_match_ratio: float
+    unsupported_claim_ratio: float
 
 
 class EvaluationReport(BaseModel):
@@ -82,6 +104,12 @@ class EvaluationReport(BaseModel):
     next_step: str
     dimensions: list[EvaluationDimension]
     checks: list[EvaluationCheck]
+    diagnostics: EvidenceDiagnostics
+    claims: list[ClaimAssessment]
+    strengths: list[str]
+    weaknesses: list[str]
+    failure_modes: list[str]
+    recommended_followups: list[str]
 
 
 class QueryExplanation(BaseModel):
@@ -92,6 +120,10 @@ class QueryExplanation(BaseModel):
     evidence_strength: str
     citation_coverage: str
     flagged_concerns: list[str]
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+    failure_modes: list[str] = []
+    recommended_followups: list[str] = []
 
 
 class QueryResponse(BaseModel):
@@ -129,3 +161,35 @@ class DocumentItem(BaseModel):
 class SampleQuestionItem(BaseModel):
     question: str
     source: str | None = None
+
+
+class StandardTestCaseResult(BaseModel):
+    id: str
+    label: str
+    category: str
+    question: str
+    score: float
+    verdict: str
+    trust_summary: str
+    risk_flags: list[str]
+    citations: list[str]
+    evidence_count: int
+
+
+class StandardTestCategoryScore(BaseModel):
+    key: str
+    label: str
+    weight: float
+    score: float
+    verdict: str
+    summary: str
+
+
+class StandardTestRunResponse(BaseModel):
+    framework: EvaluationFramework
+    final_score: float
+    verdict: str
+    summary: str
+    score_breakdown: list[StandardTestCategoryScore]
+    cases: list[StandardTestCaseResult]
+    recommended_actions: list[str]

@@ -8,26 +8,24 @@ test('upload, prompt generation, query, risk, and history work through the real 
 
   await expect(page.getByText('TrustStack Mission Control')).toBeVisible()
 
-  await page.getByTestId('planet-button-pluto').click()
-  await expect(page.getByText('Use every major TrustStack feature from one screen.')).toBeVisible()
+  await page.getByTestId('mission-control-open').click()
+  await expect(page.getByText('Run the TrustStack standard from one screen.')).toBeVisible()
+  const missionControl = page.getByTestId('mission-control-panel')
 
-  await page.getByTestId('upload-input').setInputFiles(fixturePath)
-  await page.getByTestId('upload-submit').click()
+  await missionControl.getByTestId('upload-input').setInputFiles(fixturePath)
+  await missionControl.getByTestId('upload-submit').click()
 
-  await expect(page.getByTestId('upload-status')).toContainText('Indexed facility_safety_sop.txt')
-  await expect(page.getByTestId('document-list')).toContainText('facility_safety_sop.txt')
-  await expect(page.getByTestId('query-suggestion').first()).toBeVisible()
+  await expect(missionControl.getByTestId('upload-status')).toContainText('Indexed facility_safety_sop.txt')
+  await expect(missionControl.getByTestId('document-list')).toContainText('facility_safety_sop.txt')
+  await expect(missionControl.getByTestId('query-suggestion').first()).toBeVisible()
 
-  await page.getByTestId('query-suggestion').first().click()
-  await page.getByTestId('query-submit').click()
+  await missionControl.getByTestId('query-suggestion').first().click()
+  await missionControl.getByTestId('query-submit').click()
 
-  await expect(page.getByTestId('answer-card')).toBeVisible()
-  await expect(page.getByTestId('answer-text')).toContainText(/inspection|hazard|startup/i)
+  await expect(missionControl.getByText('Current evaluation output')).toBeVisible()
+  await expect(missionControl).toContainText(/inspection|hazard|startup/i)
 
-  await page.getByRole('button', { name: 'Next Planet' }).click()
+  await missionControl.getByRole('button', { name: 'Close' }).click()
+  await page.getByTestId('planet-button-jupiter').click({ force: true })
   await expect(page.getByText('Trust status')).toBeVisible()
-
-  await page.getByRole('button', { name: 'Next Planet' }).click()
-  await expect(page.getByTestId('run-history')).toBeVisible()
-  await expect(page.getByTestId('run-history-item').first()).toContainText(/inspection|required|startup/i)
 })

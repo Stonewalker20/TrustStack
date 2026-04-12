@@ -8,6 +8,7 @@ from app.services.explanations import build_query_explanation
 from app.services.rag import _extract_hits, _rebuild_index_from_chunks
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
+from app.services.standard_suite import run_standard_suite
 from app.services.suggestions import build_sample_questions
 
 
@@ -76,9 +77,11 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertIn("TrustStack scored this answer", explanation["overview"])
         self.assertGreaterEqual(len(explanation["teaching_points"]), 4)
-        self.assertEqual(explanation["score_breakdown"][0]["label"], "Retrieval alignment")
+        self.assertEqual(explanation["score_breakdown"][0]["label"], "Retrieval relevance")
         self.assertEqual(len(explanation["flagged_concerns"]), 1)
         self.assertIn("retrieved passages", explanation["flagged_concerns"][0].lower())
+        self.assertIn("strengths", explanation)
+        self.assertIn("recommended_followups", explanation)
 
     def test_build_evaluation_report_exposes_standardized_dimensions_and_checks(self):
         report = build_evaluation_report(
@@ -92,11 +95,14 @@ class ServiceBehaviorTests(unittest.TestCase):
         )
 
         self.assertEqual(report["framework"]["name"], "TrustStack Evaluation Standard")
-        self.assertEqual(report["framework"]["version"], "1.0")
-        self.assertGreaterEqual(len(report["dimensions"]), 6)
-        self.assertGreaterEqual(len(report["checks"]), 6)
+        self.assertEqual(report["framework"]["version"], "2.0")
+        self.assertGreaterEqual(len(report["dimensions"]), 10)
+        self.assertGreaterEqual(len(report["checks"]), 10)
         self.assertIn(report["verdict"], {"pass", "review", "fail"})
         self.assertIn("teaching_points", report)
+        self.assertIn("diagnostics", report)
+        self.assertIn("claims", report)
+        self.assertIn("strengths", report)
 
     def test_rebuild_index_from_repository_chunks(self):
         fake_repo = Mock()
@@ -131,6 +137,51 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertGreaterEqual(len(questions), 1)
         self.assertTrue(any("what" in question.lower() for question in questions))
+
+    def test_run_standard_suite_aggregates_cases_and_breakdown(self):
+        fake_chunks = [
+            {
+                "document_id": "doc-1",
+                "filename": "policy.txt",
+                "page_num": None,
+                "chunk_uid": "doc-1-chunk-0",
+                "text": "Operators must complete a startup inspection before energizing the system.",
+            }
+        ]
+        fake_response = {
+            "question": "What inspection is required before startup?",
+            "answer": "The evidence requires a startup inspection before energizing the system.",
+            "citations": ["doc-1-chunk-0"],
+            "evidence": [{"source": "policy.txt", "page": None, "chunk_id": "doc-1-chunk-0", "score": 0.91, "text": fake_chunks[0]["text"]}],
+            "confidence_score": 88.0,
+            "risk_flags": [],
+            "trust_summary": "High confidence.",
+            "insufficient_evidence": False,
+            "latency_ms": 10,
+            "evaluation": build_evaluation_report(
+                question="What inspection is required before startup?",
+                answer="The evidence requires a startup inspection before energizing the system.",
+                evidence_scores=[0.91],
+                citations=["doc-1-chunk-0"],
+                evidence_ids=["doc-1-chunk-0"],
+                insufficient_evidence=False,
+                risk_flags=[],
+                hits=[{"source": "policy.txt", "page": None, "chunk_id": "doc-1-chunk-0", "score": 0.91, "text": fake_chunks[0]["text"]}],
+            ),
+            "explanation": {},
+        }
+
+        fake_repo = Mock()
+        fake_repo.list_chunks.return_value = fake_chunks
+
+        with patch("app.services.standard_suite.get_repository", return_value=fake_repo), \
+             patch("app.services.standard_suite.answer_question", return_value=fake_response):
+            result = run_standard_suite()
+
+        self.assertGreaterEqual(len(result["cases"]), 4)
+        self.assertGreaterEqual(len(result["score_breakdown"]), 4)
+        self.assertIn(result["verdict"], {"pass", "review", "fail"})
+        self.assertIn("final_score", result)
 
 
 if __name__ == "__main__":
