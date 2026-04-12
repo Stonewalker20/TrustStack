@@ -90,13 +90,26 @@ TrustStack now expects MongoDB for documents, chunks, and run history.
 Default connection:
 
 ```bash
-mongodb://127.0.0.1:27017
+mongodb://127.0.0.1:27018
 ```
 
 Default database:
 
 ```bash
 truststack
+```
+
+Recommended local runtime with Docker:
+
+```bash
+docker compose up -d mongo
+docker compose ps
+```
+
+To stop it later:
+
+```bash
+docker compose stop mongo
 ```
 
 ### 3. Start the backend
@@ -108,6 +121,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn app.main:app --reload
+```
+
+If you are using the included Docker Mongo setup, the default `.env` values already point at it:
+
+```env
+MONGO_URI=mongodb://127.0.0.1:27018
+MONGO_DB_NAME=truststack
 ```
 
 Optional retrieval upgrade:
@@ -178,7 +198,7 @@ The backend suite currently covers:
 Important backend settings in `backend/.env`:
 
 ```env
-MONGO_URI=mongodb://127.0.0.1:27017
+MONGO_URI=mongodb://127.0.0.1:27018
 MONGO_DB_NAME=truststack
 CHROMA_PERSIST_DIR=./data/chroma
 UPLOAD_DIR=./data/uploads
