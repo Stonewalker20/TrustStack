@@ -118,8 +118,10 @@ def _render_case_table(cases: list[dict[str, Any]]) -> str:
                     _latex_escape(item.get("question", "")),
                     _format_score(item.get("score")),
                     _latex_verdict(item.get("verdict", "")),
+                    _latex_escape(item.get("evidence_count", 0)),
                     _latex_escape(item.get("trust_summary", "")),
-                    _latex_escape(citations if citations != "None" else risk_flags),
+                    _latex_escape(citations),
+                    _latex_escape(risk_flags),
                 ]
             )
             + r" \\"
@@ -134,9 +136,9 @@ def _render_case_table(cases: list[dict[str, Any]]) -> str:
             r"\label{tab:truststack-case-results}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\scriptsize",
-            r"\begin{tabular}{p{0.09\textwidth}p{0.14\textwidth}p{0.24\textwidth}c c p{0.20\textwidth}p{0.11\textwidth}}",
+            r"\begin{tabular}{p{0.08\textwidth}p{0.12\textwidth}p{0.20\textwidth}c c c p{0.18\textwidth}p{0.10\textwidth}p{0.10\textwidth}}",
             r"\hline",
-            r"\rowcolor{TrustStackBlue!12}\textbf{Case ID} & \textbf{Category} & \textbf{Question} & \textbf{Score} & \textbf{Verdict} & \textbf{Trust Summary} & \textbf{Citations / Flags} \\",
+            r"\rowcolor{TrustStackBlue!12}\textbf{Case ID} & \textbf{Category} & \textbf{Question} & \textbf{Score} & \textbf{Verdict} & \textbf{Evidence} & \textbf{Trust Summary} & \textbf{Citations} & \textbf{Flags} \\",
             r"\hline",
             *rows,
             r"\hline",
@@ -150,19 +152,20 @@ def _render_appendix_markdown(cases: list[dict[str, Any]]) -> str:
     lines = [
         "### Appendix: Standardized Case Results",
         "",
-        "| Case ID | Category | Question | Score | Verdict | Trust Summary | Citations | Risk Flags |",
-        "| --- | --- | --- | ---: | --- | --- | --- | --- |",
+        "| Case ID | Category | Question | Score | Verdict | Evidence | Trust Summary | Citations | Risk Flags |",
+        "| --- | --- | --- | ---: | --- | ---: | --- | --- | --- |",
     ]
     for item in cases:
         citations = ", ".join(item.get("citations", [])) or "-"
         risk_flags = ", ".join(item.get("risk_flags", [])) or "-"
         lines.append(
-            "| {case_id} | {category} | {question} | {score:.1f} | {verdict} | {trust_summary} | {citations} | {risk_flags} |".format(
+            "| {case_id} | {category} | {question} | {score:.1f} | {verdict} | {evidence_count} | {trust_summary} | {citations} | {risk_flags} |".format(
                 case_id=str(item.get("id", "-")).replace("|", r"\|"),
                 category=str(item.get("category", "-")).replace("|", r"\|"),
                 question=str(item.get("question", "-")).replace("|", r"\|"),
                 score=float(item.get("score", 0.0)),
                 verdict=str(item.get("verdict", "-")).replace("|", r"\|"),
+                evidence_count=int(item.get("evidence_count", 0)),
                 trust_summary=str(item.get("trust_summary", "-")).replace("|", r"\|"),
                 citations=citations.replace("|", r"\|"),
                 risk_flags=risk_flags.replace("|", r"\|"),
@@ -184,6 +187,10 @@ def build_report_artifacts(suite: Mapping[str, Any] | Any) -> dict[str, Any]:
     verdict = str(suite_dict.get("verdict", "review")).lower()
     summary = str(suite_dict.get("summary", "")).strip()
     framework = suite_dict.get("framework", {})
+    metadata = suite_dict.get("metadata", {})
+    suite_label = str(metadata.get("suite_label", "active-corpus"))
+    document_count = int(metadata.get("document_count", 0))
+    chunk_count = int(metadata.get("chunk_count", 0))
 
     best_category = max(score_breakdown, key=lambda item: float(item.get("score", 0.0)))
     weakest_category = min(score_breakdown, key=lambda item: float(item.get("score", 0.0)))
@@ -193,7 +200,8 @@ def build_report_artifacts(suite: Mapping[str, Any] | Any) -> dict[str, Any]:
 
     executive_summary = (
         f"{framework.get('name', 'TrustStack Evaluation Standard')} v{framework.get('version', '2.0')} "
-        f"scored {final_score:.2f}/100 ({verdict.upper()}) across {len(score_breakdown)} categories and {len(cases)} standardized cases. "
+        f"scored {suite_label} at {final_score:.2f}/100 ({verdict.upper()}) across {len(score_breakdown)} categories and {len(cases)} standardized cases, "
+        f"drawn from {document_count} document(s) and {chunk_count} chunk(s). "
         f"The strongest category was {best_category.get('label', 'unknown')} at {float(best_category.get('score', 0.0)):.1f}, "
         f"while {weakest_category.get('label', 'unknown')} was the weakest at {float(weakest_category.get('score', 0.0)):.1f}. "
         f"The case set produced {pass_count} pass, {review_count} review, and {fail_count} fail result(s), so the report should emphasize evidence support, traceability, and the remaining human-review gaps."

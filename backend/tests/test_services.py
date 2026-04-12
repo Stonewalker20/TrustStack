@@ -234,8 +234,12 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertIn("executive_summary", artifacts)
         self.assertIn(r"\begin{table*}", artifacts["latex_category_table"])
+        self.assertIn(r"\rowcolor{TrustStackBlue!12}", artifacts["latex_category_table"])
+        self.assertIn(r"\textcolor{TrustStackGreen}{PASS}", artifacts["latex_category_table"])
         self.assertIn(r"\begin{table*}", artifacts["latex_case_table"])
+        self.assertIn("Evidence", artifacts["latex_case_table"])
         self.assertIn("Appendix: Standardized Case Results", artifacts["appendix_markdown"])
+        self.assertIn("| Case ID | Category | Question | Score | Verdict | Evidence | Trust Summary | Citations | Risk Flags |", artifacts["appendix_markdown"])
 
     def test_run_standard_batch_benchmark_returns_dataset_runs(self):
         fake_chunks = [

@@ -501,7 +501,85 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(payload["verdict"], "pass")
         self.assertEqual(len(payload["score_breakdown"]), 1)
         self.assertEqual(len(payload["cases"]), 1)
-        self.assertIn("metadata", payload)
+
+    def test_report_artifacts_endpoint_exports_existing_suite_payload(self):
+        fake_suite = {
+            "framework": {
+                "name": "TrustStack Evaluation Standard",
+                "version": "2.0",
+                "description": "A weighted, evidence-first evaluation standard for TrustStack answers with claim support, contradiction scanning, and calibration diagnostics.",
+                "score_range": "0-100",
+                "pass_threshold": 80.0,
+                "review_threshold": 60.0,
+                "dimensions": [
+                    {"key": "retrieval_relevance", "label": "Retrieval relevance", "weight": 0.16, "purpose": "Measures retrieval quality."}
+                ],
+            },
+            "metadata": {
+                "suite_id": "suite-123",
+                "generated_at": "2026-04-12T00:00:00+00:00",
+                "suite_label": "active-corpus",
+                "document_count": 1,
+                "chunk_count": 3,
+                "source_filenames": ["facility_safety_sop.txt"],
+                "retrieval_backend": "simple-vector-benchmark",
+                "embedding_provider": "lexical",
+                "embedding_model": "lexical",
+                "llm_provider": "disabled",
+                "llm_model": "disabled",
+                "top_k": 5,
+                "max_context_chunks": 5,
+            },
+            "final_score": 84.2,
+            "verdict": "pass",
+            "summary": "summary",
+            "score_breakdown": [
+                {
+                    "key": "grounding",
+                    "label": "Grounding and retrieval",
+                    "weight": 0.22,
+                    "score": 86.0,
+                    "verdict": "pass",
+                    "summary": "Grounding performed strongly.",
+                }
+            ],
+            "cases": [
+                {
+                    "id": "grounded-1",
+                    "label": "Direct evidence retrieval",
+                    "category": "grounding",
+                    "question": "What inspection is required before startup?",
+                    "score": 88.0,
+                    "verdict": "pass",
+                    "trust_summary": "High confidence.",
+                    "risk_flags": [],
+                    "citations": ["doc-1-chunk-0"],
+                    "evidence_count": 1,
+                    "supported_claim_ratio": 1.0,
+                    "citation_alignment_ratio": 1.0,
+                }
+            ],
+            "recommended_actions": ["Review weak categories before presenting the system as deployment-ready."],
+        }
+        fake_artifacts = {
+            "suite": fake_suite,
+            "executive_summary": "TrustStack scored the active evaluation stack at 84.2/100.",
+            "latex_category_table": "\\begin{table*}[t]\\n\\rowcolor{TrustStackBlue!12}",
+            "latex_case_table": "\\begin{table*}[p]\\n\\rowcolor{TrustStackBlue!12}",
+            "appendix_markdown": "### Appendix: Standardized Case Results",
+        }
+
+        with patch("app.routers.evaluation.build_report_artifacts", return_value=fake_artifacts) as build_report_artifacts_mock:
+            response = self.client.post("/evaluation/report-artifacts", json={"suite": fake_suite})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["suite"]["verdict"], "pass")
+        self.assertEqual(payload["suite"]["metadata"]["suite_label"], "active-corpus")
+        self.assertIn("executive_summary", payload)
+        self.assertIn("latex_category_table", payload)
+        self.assertIn("appendix_markdown", payload)
+        build_report_artifacts_mock.assert_called_once()
 
     def test_report_artifacts_endpoint_returns_export_content(self):
         fake_artifacts = {
