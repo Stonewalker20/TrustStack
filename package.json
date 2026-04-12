@@ -11,7 +11,8 @@
     "verify:backend:unit": "cd backend && ./.venv/bin/python -m unittest tests.test_api tests.test_services -v",
     "verify:backend:integration": "docker compose up -d mongo && cd backend && ./.venv/bin/python -m unittest tests.test_integration_mongo -v",
     "verify:e2e": "playwright test",
-    "verify": "npm run verify:frontend && npm run verify:backend:unit && npm run verify:backend:integration && npm run verify:e2e"
+    "verify:smoke": "playwright test --config=playwright.smoke.config.ts",
+    "verify": "npm run verify:frontend && npm run verify:backend:unit && npm run verify:backend:integration && npm run verify:e2e && npm run verify:smoke"
   },
   "dependencies": {
     "@react-three/drei": "^10.1.2",

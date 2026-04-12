@@ -194,6 +194,7 @@ npm run verify:frontend
 npm run verify:backend:unit
 npm run verify:backend:integration
 npm run verify:e2e
+npm run verify:smoke
 ```
 
 The backend suite currently covers:
@@ -216,6 +217,13 @@ Browser E2E coverage now includes:
 - sample-question generation in the UI
 - grounded query execution through the browser
 - downstream risk and run-history views after a live evaluation
+
+Production-like smoke coverage now includes:
+
+- built frontend assets served through `vite preview`
+- live FastAPI backend served through `uvicorn`
+- live MongoDB container runtime
+- end-to-end browser validation against the served stack
 
 ---
 
