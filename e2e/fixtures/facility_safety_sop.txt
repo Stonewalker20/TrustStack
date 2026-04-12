@@ -1,0 +1,3 @@
+Operators must complete a documented startup inspection before energizing the system.
+Any hazard discovered during the inspection must be logged and reviewed by a supervisor before restart.
+Maintenance records must be attached to the inspection packet after corrective work.

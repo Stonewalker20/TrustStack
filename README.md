@@ -193,6 +193,7 @@ Project-level verification:
 npm run verify:frontend
 npm run verify:backend:unit
 npm run verify:backend:integration
+npm run verify:e2e
 ```
 
 The backend suite currently covers:
@@ -207,6 +208,14 @@ The backend suite currently covers:
 - risk flags
 - explanation generation
 - repository-driven index rebuild behavior
+
+Browser E2E coverage now includes:
+
+- real frontend against the live local backend
+- real document upload from the UI
+- sample-question generation in the UI
+- grounded query execution through the browser
+- downstream risk and run-history views after a live evaluation
 
 ---
 

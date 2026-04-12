@@ -3,7 +3,7 @@ import type { QueryResponse } from '../types'
 
 export function AnswerCard({ result }: { result: QueryResponse | null }) {
   return (
-    <div className="panel panel--glass stack hud-module hud-module--primary">
+    <div className="panel panel--glass stack hud-module hud-module--primary" data-testid="answer-card">
       <div className="panel-header">
         <div>
           <div className="eyebrow">Final Verdict</div>
@@ -14,7 +14,12 @@ export function AnswerCard({ result }: { result: QueryResponse | null }) {
       {!result ? <div className="muted">Run a query to see the grounded answer, citations, and trust summary.</div> : null}
       {result ? (
         <>
-          <motion.div className="answer-box answer-box--hero hud-copy-block" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div
+            className="answer-box answer-box--hero hud-copy-block"
+            data-testid="answer-text"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             {result.answer}
           </motion.div>
           <div className="muted muted--large">{result.trust_summary}</div>

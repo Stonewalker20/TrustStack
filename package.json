@@ -10,7 +10,8 @@
     "verify:frontend": "cd frontend && npm run build",
     "verify:backend:unit": "cd backend && ./.venv/bin/python -m unittest tests.test_api tests.test_services -v",
     "verify:backend:integration": "docker compose up -d mongo && cd backend && ./.venv/bin/python -m unittest tests.test_integration_mongo -v",
-    "verify": "npm run verify:frontend && npm run verify:backend:unit && npm run verify:backend:integration"
+    "verify:e2e": "playwright test",
+    "verify": "npm run verify:frontend && npm run verify:backend:unit && npm run verify:backend:integration && npm run verify:e2e"
   },
   "dependencies": {
     "@react-three/drei": "^10.1.2",
@@ -22,6 +23,7 @@
     "three": "^0.176.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.6",
     "@vitejs/plugin-react": "^4.4.1",

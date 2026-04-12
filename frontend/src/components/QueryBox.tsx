@@ -13,7 +13,7 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
   const suggestedQuestions = useMemo(() => sampleQuestions.slice(0, 4), [sampleQuestions])
 
   return (
-    <div className="panel panel--glass stack hud-module hud-module--primary">
+    <div className="panel panel--glass stack" data-testid="query-box">
       <div className="panel-header">
         <div>
           <div className="eyebrow">Run Evaluation</div>
@@ -23,24 +23,36 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
 
       <textarea
         className="textarea"
+        data-testid="query-input"
         placeholder="Ask a grounded question over your indexed documents..."
         value={question}
         onChange={(event) => setQuestion(event.target.value)}
       />
 
       <div className="query-actions">
-        <button className="primary primary--glow" disabled={loading || !question.trim()} onClick={() => onSubmit(question)}>
+        <button
+          className="primary primary--glow"
+          data-testid="query-submit"
+          disabled={loading || !question.trim()}
+          onClick={() => onSubmit(question)}
+        >
           {loading ? 'Evaluating…' : 'Run Query'}
         </button>
         <div className="muted">Best demo pattern: ask one clearly supported question, then one weakly supported question.</div>
       </div>
 
-      <div className="query-suggestions hud-module hud-module--compact">
+      <div className="query-suggestions" data-testid="query-suggestions">
         <div className="query-suggestions-label">Suggested prompts from your evidence</div>
         <div className="pill-grid">
           {suggestedQuestions.length > 0 ? (
             suggestedQuestions.map((prompt) => (
-              <button key={prompt.question} type="button" className="query-suggestion" onClick={() => setQuestion(prompt.question)}>
+              <button
+                key={prompt.question}
+                type="button"
+                className="query-suggestion"
+                data-testid="query-suggestion"
+                onClick={() => setQuestion(prompt.question)}
+              >
                 <span className="query-suggestion-copy">{prompt.question}</span>
                 {prompt.source ? <small>{prompt.source}</small> : null}
               </button>

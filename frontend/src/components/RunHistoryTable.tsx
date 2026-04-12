@@ -2,7 +2,7 @@ import type { RunItem } from '../types'
 
 export function RunHistoryTable({ items }: { items: RunItem[] }) {
   return (
-    <div className="panel hud-module hud-module--compact">
+    <div className="panel hud-module hud-module--compact" data-testid="run-history">
       <div className="panel-header">
         <div>
           <div className="eyebrow">Run Ledger</div>
@@ -12,7 +12,7 @@ export function RunHistoryTable({ items }: { items: RunItem[] }) {
       </div>
       <div className="list">
         {items.map((run) => (
-          <div className="card card--elevated hud-history-item" key={run.id}>
+          <div className="card card--elevated hud-history-item" data-testid="run-history-item" key={run.id}>
             <div className="card-topline">
               <strong>{run.question}</strong>
               <span className="badge badge--bright">{run.confidence_score}</span>

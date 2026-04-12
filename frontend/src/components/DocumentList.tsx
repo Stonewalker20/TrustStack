@@ -2,7 +2,7 @@ import type { DocumentItem } from '../types'
 
 export function DocumentList({ items }: { items: DocumentItem[] }) {
   return (
-    <div className="panel hud-module hud-module--compact">
+    <div className="panel hud-module hud-module--compact" data-testid="document-list">
       <div className="panel-header">
         <div>
           <div className="eyebrow">Evidence Store</div>
@@ -12,7 +12,7 @@ export function DocumentList({ items }: { items: DocumentItem[] }) {
       </div>
       <div className="list">
         {items.map((doc) => (
-          <div className="card card--elevated hud-list-item" key={doc.id}>
+          <div className="card card--elevated hud-list-item" data-testid="document-item" key={doc.id}>
             <div className="card-topline">
               <strong>{doc.filename}</strong>
               <span className="status-dot" />

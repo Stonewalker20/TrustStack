@@ -112,46 +112,28 @@ export function TrustHero({
       </div>
 
       <div className="hero-grid hero-grid--guided">
-        <div className="hero-status-strip" aria-hidden={overviewMode ? 'false' : 'true'}>
-          <div className="hero-status-strip__mission">
-            <span className="hero-status-dot" />
-            <div>
-              <strong>TrustStack Mission Control</strong>
-              <small>Evidence-led evaluation in orbital view</small>
-            </div>
-          </div>
-          <div className="hero-status-strip__metrics">
-            <span>System live</span>
-            <span>{overviewMode ? 'Solar overview' : `${activeNode.planet} focus`}</span>
-            <span>{guideEnabled ? 'Guide enabled' : 'Guide hidden'}</span>
-          </div>
-        </div>
-
         <header className={`hero-header hero-header--guided ${overviewMode ? '' : 'hero-header--hidden'}`}>
-          <div className="eyebrow">Decision-grade AI trust</div>
-          <h1>Navigate evidence, evaluate responses, and surface risk without losing the system view.</h1>
+          <div className="eyebrow">TrustStack Mission Control</div>
+          <h1>Turn evidence into decision-grade AI trust signals.</h1>
           <p>
-            TrustStack turns model testing into a guided orbital workflow so teams can move from uploaded evidence to
-            grounded answers, risk posture, and repeatable review from one cinematic interface.
+            TrustStack turns evaluation into a guided experience for teams that need clearer answers, stronger
+            evidence, and a cleaner path from upload to decision.
           </p>
         </header>
 
         <div className={`hero-journey-card ${overviewMode || isPlutoView ? 'hero-journey-card--hidden' : ''}`}>
-          <div className="hero-journey-kicker">
-            <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
-            <span>{activeNode?.subsystem ?? 'TrustStack'}</span>
-          </div>
+          <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
           <h3>{activeNode ? activeNode.title : 'Select a planet to begin'}</h3>
           <p className="muted muted--large">{activeNode?.summary ?? 'Follow the planets to move through the TrustStack flow.'}</p>
           <div className="hero-journey-meta">
-            <span>Stage focus locked</span>
+            <span>{activeNode?.subsystem ?? 'TrustStack'}</span>
             <strong>{activeIndex + 1} / {nodes.length}</strong>
           </div>
         </div>
 
         <div className={`hero-stage-cluster ${isPlutoView ? 'hero-stage-cluster--pluto' : ''} ${overviewMode ? 'hero-stage-cluster--hidden' : ''}`}>
           {showGuidePopup ? (
-            <aside className="hero-guide-popup panel panel--glass hud-module" role="dialog" aria-live="polite" aria-label="Guided tour message">
+            <aside className="hero-guide-popup panel panel--glass" role="dialog" aria-live="polite" aria-label="Guided tour message">
               <button type="button" className="hero-guide-close" aria-label="Dismiss guided tour message" onClick={handleDismissGuide}>
                 x
               </button>
@@ -166,11 +148,6 @@ export function TrustHero({
               <div>
                 <div className="eyebrow">{activeNode?.subsystem ?? 'TrustStack'}</div>
                 <h2>{activeNode ? activeNode.title : 'TrustStack journey'}</h2>
-                <p className="hero-stage-panel-copy">
-                  {isPlutoView
-                    ? 'Mission Control keeps the full TrustStack workflow visible from one command surface.'
-                    : activeNode?.guideMessage}
-                </p>
               </div>
               <div className="badge badge--bright">
                 {activeIndex + 1} / {nodes.length}
@@ -183,7 +160,7 @@ export function TrustHero({
         <div className="hero-actions-bar">
           <div className="hero-actions">
             <button className="primary primary--glow" onClick={() => setFocusedPlanet(activeIndex)}>
-              Open Guided Tour
+              Guided Tour
             </button>
             <button className="secondary" onClick={handlePrevious}>
               Previous Planet
@@ -217,6 +194,7 @@ export function TrustHero({
             <button
               key={node.id}
               type="button"
+              data-testid={`planet-button-${node.planet.toLowerCase()}`}
               className={`hero-node hero-node--orbital ${activeIndex === index ? 'hero-node--active hero-node--selected' : ''}`}
               onClick={() => handlePlanetButtonClick(index)}
             >

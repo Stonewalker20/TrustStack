@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../lib/api'
+
 export function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<string>('')
@@ -21,7 +22,7 @@ export function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
   }
 
   return (
-    <div className="panel panel--glass stack hud-module hud-module--primary">
+    <div className="panel panel--glass stack" data-testid="upload-panel">
       <div className="panel-header">
         <div>
           <div className="eyebrow">Ingestion</div>
@@ -29,14 +30,21 @@ export function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
         </div>
       </div>
       <label className="upload-dropzone">
-        <input className="upload-input" type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <input
+          className="upload-input"
+          data-testid="upload-input"
+          type="file"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        />
         <span>{file ? file.name : 'Drop a PDF, TXT, DOCX, or MD file here.'}</span>
         <small>TrustStack ingests the file into the evidence store for retrieval.</small>
       </label>
-      <button className="primary" onClick={handleUpload} disabled={!file}>
+      <button className="primary" data-testid="upload-submit" onClick={handleUpload} disabled={!file}>
         Upload & Index
       </button>
-      <div className="muted">{status || 'Use short, clean domain documents for the strongest demo.'}</div>
+      <div className="muted" data-testid="upload-status">
+        {status || 'Use short, clean domain documents for the strongest demo.'}
+      </div>
     </div>
   )
 }

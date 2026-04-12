@@ -9,6 +9,8 @@ __pycache__/
 # Node
 node_modules/
 dist/
+playwright-report/
+test-results/
 
 # Data
 backend/data/uploads/*
@@ -22,3 +24,5 @@ backend/data/reports/*
 .DS_Store
 .vscode/
 .idea/
+
+Solar-System-3D-main/
