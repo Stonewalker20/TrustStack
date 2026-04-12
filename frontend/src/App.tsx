@@ -11,7 +11,7 @@ import { RunHistoryTable } from './components/RunHistoryTable'
 import { TrustHero } from './components/TrustHero'
 import { UploadPanel } from './components/UploadPanel'
 import { api } from './lib/api'
-import type { DocumentItem, QueryResponse, RunItem } from './types'
+import type { DocumentItem, QueryResponse, RunItem, SampleQuestionItem } from './types'
 
 type TourNode = {
   id: string
@@ -113,6 +113,7 @@ function ControlCenterCard({
   runs,
   result,
   signals,
+  sampleQuestions,
   loading,
   onSubmit,
   onUploaded,
@@ -122,6 +123,7 @@ function ControlCenterCard({
   runs: RunItem[]
   result: QueryResponse | null
   signals: { label: string; value: number }[]
+  sampleQuestions: SampleQuestionItem[]
   loading: boolean
   onSubmit: (question: string) => void
   onUploaded: () => void
@@ -148,7 +150,7 @@ function ControlCenterCard({
         </div>
 
         <div className="control-column">
-          <QueryBox onSubmit={onSubmit} loading={loading} />
+          <QueryBox onSubmit={onSubmit} loading={loading} sampleQuestions={sampleQuestions} />
           <div className="panel panel--glass">
             <div className="panel-header">
               <div>
@@ -241,10 +243,16 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [activePlanetIndex, setActivePlanetIndex] = useState(0)
   const [guideEnabled, setGuideEnabled] = useState(true)
+  const [sampleQuestions, setSampleQuestions] = useState<SampleQuestionItem[]>([])
 
   const refreshDocuments = async () => {
     const res = await api.get<DocumentItem[]>('/documents')
     setDocuments(res.data)
+  }
+
+  const refreshSampleQuestions = async () => {
+    const res = await api.get<SampleQuestionItem[]>('/documents/sample-questions')
+    setSampleQuestions(res.data)
   }
 
   const refreshRuns = async () => {
@@ -254,6 +262,7 @@ export default function App() {
 
   useEffect(() => {
     refreshDocuments().catch(console.error)
+    refreshSampleQuestions().catch(console.error)
     refreshRuns().catch(console.error)
   }, [])
 
@@ -302,6 +311,7 @@ export default function App() {
             <UploadPanel
               onUploaded={() => {
                 refreshDocuments().catch(console.error)
+                refreshSampleQuestions().catch(console.error)
                 if (guideEnabled && activePlanetIndex === 0) {
                   setActivePlanetIndex(1)
                 }
@@ -313,7 +323,7 @@ export default function App() {
       case 1:
         return <FrameworkExplorer signals={trustSignals} latestResult={result} />
       case 2:
-        return <QueryBox onSubmit={handleSubmit} loading={loading} />
+        return <QueryBox onSubmit={handleSubmit} loading={loading} sampleQuestions={sampleQuestions} />
       case 3:
         return (
           <div className="stage-stack">
@@ -342,15 +352,19 @@ export default function App() {
             runs={runs}
             result={result}
             signals={trustSignals}
+            sampleQuestions={sampleQuestions}
             loading={loading}
             onSubmit={handleSubmit}
-            onUploaded={() => refreshDocuments().catch(console.error)}
+            onUploaded={() => {
+              refreshDocuments().catch(console.error)
+              refreshSampleQuestions().catch(console.error)
+            }}
           />
         )
       default:
         return null
     }
-  }, [activePlanetIndex, documents, guideEnabled, loading, result, runs, trustSignals])
+  }, [activePlanetIndex, documents, guideEnabled, loading, result, runs, sampleQuestions, trustSignals])
 
   return (
     <div className="app-root app-root--fixed">

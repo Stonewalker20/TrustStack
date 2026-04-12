@@ -1,5 +1,5 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Line, OrbitControls, useTexture } from '@react-three/drei'
+import { Line, OrbitControls, Stars, useTexture } from '@react-three/drei'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -1010,13 +1010,11 @@ function SolarCore({
             <sphereGeometry args={[sunRadius, 32, 32]} />
             <meshBasicMaterial color="#ff9a42" transparent opacity={0.1} blending={THREE.AdditiveBlending} depthWrite={false} />
           </mesh>
-          <mesh position={SUN_POSITION} scale={1.02}>
-            <sphereGeometry args={[sunRadius, 28, 28]} />
-            <meshBasicMaterial color="#ff7a1f" transparent opacity={0.045} blending={THREE.AdditiveBlending} depthWrite={false} />
-          </mesh>
         </>
       ) : null}
       <ISSOrbit />
+      <Stars radius={180} depth={90} count={9000} factor={4} saturation={0} fade speed={0.18} />
+      <Stars radius={120} depth={45} count={3500} factor={2.5} saturation={0} fade speed={0.08} />
       {PLANETS.map((planet, index) => (
         <PlanetBody
           key={planet.planet}

@@ -114,10 +114,10 @@ export function TrustHero({
       <div className="hero-grid hero-grid--guided">
         <header className={`hero-header hero-header--guided ${overviewMode ? '' : 'hero-header--hidden'}`}>
           <div className="eyebrow">TrustStack Mission Control</div>
-          <h1>Launch trustworthy AI reviews through a cinematic control room built for evidence, risk, and confidence.</h1>
+          <h1>Turn evidence into decision-grade AI trust signals.</h1>
           <p>
-            TrustStack turns evaluation into a guided experience. Move from planet to planet to ingest evidence, test
-            model behavior, inspect trust signals, and close with a polished executive view.
+            TrustStack turns evaluation into a guided experience for teams that need clearer answers, stronger
+            evidence, and a cleaner path from upload to decision.
           </p>
         </header>
 

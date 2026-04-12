@@ -1,5 +1,5 @@
 export type DocumentItem = {
-  id: number
+  id: string
   filename: string
   uploaded_at: string
 }
@@ -21,10 +21,18 @@ export type QueryResponse = {
   risk_flags: string[]
   trust_summary: string
   insufficient_evidence: boolean
+  explanation?: {
+    overview: string
+    teaching_points: string[]
+    review_recommendation: string
+    evidence_strength: string
+    citation_coverage: string
+    flagged_concerns: string[]
+  }
 }
 
 export type RunItem = {
-  id: number
+  id: string
   question: string
   answer: string
   confidence_score: number
@@ -32,4 +40,9 @@ export type RunItem = {
   risk_flags: string[]
   citations: string[]
   created_at: string
+}
+
+export type SampleQuestionItem = {
+  question: string
+  source?: string | null
 }
