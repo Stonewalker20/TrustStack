@@ -23,9 +23,10 @@ type PlanetSlide = {
   researchQuestion: string
   truststackResponse: string
   academicTakeaway: string
-  keyPoints: string[]
-  evidenceCueLabel: string
-  evidenceCueValue: string
+  visualTitle: string
+  visualCaption: string
+  visualStats: { label: string; value: string }[]
+  visualFlow: string[]
   reportSection: string
   reportFigureCaption: string
 }
@@ -41,13 +42,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'How can an operator decide whether an AI answer is safe to use when the system does not expose where the answer came from or how well it is supported?',
     truststackResponse: 'TrustStack treats trust as an evidence-grounding problem. It starts by ingesting a real corpus and preserving the traceability needed for later scoring, explanation, and audit.',
     academicTakeaway: 'This opening slide frames TrustStack as an evaluation system for operational trust, not as a tool for making language models appear more fluent or confident.',
-    keyPoints: [
-      'Ground the system in uploaded evidence rather than model confidence alone.',
-      'Normalize documents into indexed chunks so later claims remain auditable.',
-      'Turn trust review into a repeatable workflow instead of an intuition call.',
+    visualTitle: 'Problem framing',
+    visualCaption: 'TrustStack begins by converting a vague trust question into an evidence-grounded evaluation problem.',
+    visualStats: [
+      { label: 'Trust object', value: 'AI answer' },
+      { label: 'Failure mode', value: 'Unsupported confidence' },
+      { label: 'Review basis', value: 'Uploaded evidence' },
     ],
-    evidenceCueLabel: 'Evidence cue',
-    evidenceCueValue: 'Show the audience the problem before showing the product.',
+    visualFlow: ['Question asked', 'Evidence absent', 'Trust unclear', 'TrustStack reframes the review'],
     reportSection: 'Problem Statement and Evidence Intake',
     reportFigureCaption: 'Evidence ingestion flow used to ground the TrustStack evaluation stack.',
   },
@@ -61,13 +63,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'What architecture is required if trust is supposed to be inspectable rather than collapsed into one opaque score or one prompt template?',
     truststackResponse: 'TrustStack decomposes the workflow into ingestion, retrieval, grounded generation, evaluation, risk labeling, and review so each stage can be challenged independently.',
     academicTakeaway: 'The architecture slide makes the contribution legible: TrustStack is a systems pipeline with explicit responsibilities, not a single-model wrapper.',
-    keyPoints: [
-      'Each subsystem has a distinct responsibility in the trust pipeline.',
-      'The architecture is local-first, auditable, and designed for demonstrations and real review work.',
-      'The UI maps directly onto the backend evaluation flow and the final report structure.',
+    visualTitle: 'Layered system view',
+    visualCaption: 'The system is organized so each stage can be evaluated, challenged, and explained independently.',
+    visualStats: [
+      { label: 'Storage', value: 'Mongo-backed corpus' },
+      { label: 'Inference mode', value: 'Grounded retrieval' },
+      { label: 'Output type', value: 'Scored review packet' },
     ],
-    evidenceCueLabel: 'Architecture cue',
-    evidenceCueValue: 'Every trust signal has a visible pipeline behind it.',
+    visualFlow: ['Ingest', 'Retrieve', 'Generate', 'Evaluate', 'Review'],
     reportSection: 'System Architecture',
     reportFigureCaption: 'Evaluation architecture slide showing the layered TrustStack pipeline.',
   },
@@ -81,13 +84,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'How should a user interact with a trust system if the goal is to evaluate groundedness rather than simply receive fluent output?',
     truststackResponse: 'TrustStack binds every query to retrieval, evidence review, and structured evaluation so the user can inspect support at the same moment the answer is generated.',
     academicTakeaway: 'This runtime slide shows that the system is usable in real time without abandoning formal evaluation logic or operator review.',
-    keyPoints: [
-      'The question is evaluated against indexed evidence, not treated as open-ended chat.',
-      'Sample prompts lower the barrier to trying grounded evaluation on a fresh corpus.',
-      'The same runtime loop powers demos, experiments, and analyst review.',
+    visualTitle: 'Runtime evaluation loop',
+    visualCaption: 'The operator experience is built around a live loop that preserves evidence, score, and explanation in the same interaction.',
+    visualStats: [
+      { label: 'Input', value: 'User query' },
+      { label: 'Context source', value: 'Top retrieved chunks' },
+      { label: 'Decision output', value: 'Answer + score' },
     ],
-    evidenceCueLabel: 'Runtime cue',
-    evidenceCueValue: 'Ask, retrieve, evaluate, explain.',
+    visualFlow: ['Ask', 'Retrieve', 'Answer', 'Score', 'Inspect'],
     reportSection: 'Interactive Evaluation Flow',
     reportFigureCaption: 'Live query interface showing how TrustStack turns a user question into a grounded answer.',
   },
@@ -101,13 +105,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'What must an evaluation system expose if it wants users to audit claims rather than trust the tone of the answer?',
     truststackResponse: 'TrustStack pairs the answer with citations, supporting evidence, confidence rationale, and weak-claim diagnostics so the operator can review support before acting.',
     academicTakeaway: 'This slide marks the shift from convenience to accountability. TrustStack does not ask for trust; it surfaces the material needed to test whether trust is earned.',
-    keyPoints: [
-      'Citations point back to concrete retrieved evidence.',
-      'Claim support and contradiction risk are part of the evaluation, not afterthoughts.',
-      'The system teaches the user what to review next instead of hiding uncertainty.',
+    visualTitle: 'Evidence-centered review',
+    visualCaption: 'Explainability is represented as a review artifact: answer, support, gaps, and confidence all remain visible together.',
+    visualStats: [
+      { label: 'Support unit', value: 'Claim-level evidence' },
+      { label: 'Audit object', value: 'Citation traceability' },
+      { label: 'Risk lens', value: 'Weak support detection' },
     ],
-    evidenceCueLabel: 'Audit cue',
-    evidenceCueValue: 'Can I see exactly why this answer should be trusted?',
+    visualFlow: ['Answer shown', 'Evidence linked', 'Weak claims exposed', 'Operator decides'],
     reportSection: 'Evidence Review and Explainability',
     reportFigureCaption: 'Answer and evidence review interface used to audit retrieval support.',
   },
@@ -121,13 +126,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'How can complex evidence diagnostics be summarized in a way that is both decision-ready and still academically defensible?',
     truststackResponse: 'The TrustStack Evaluation Standard converts retrieval quality, evidence sufficiency, traceability, contradiction risk, and calibration into a weighted, inspectable score breakdown.',
     academicTakeaway: 'This is the core results slide. It demonstrates how TrustStack converts noisy model behavior into a structured, explainable trust judgment.',
-    keyPoints: [
-      'Weighted categories prevent the product from collapsing into one opaque confidence number.',
-      'Verdict bands make it clear when a result passes, needs review, or fails.',
-      'Risk signals communicate why human oversight is still necessary.',
+    visualTitle: 'Score interpretation',
+    visualCaption: 'TrustStack compresses multiple diagnostics into a weighted result while still preserving the structure needed for explanation.',
+    visualStats: [
+      { label: 'Framework', value: 'Weighted categories' },
+      { label: 'Verdict band', value: 'Pass / Review / Fail' },
+      { label: 'Risk signal', value: 'Human review required' },
     ],
-    evidenceCueLabel: 'Results cue',
-    evidenceCueValue: 'Scores become explainable decisions, not decorative metrics.',
+    visualFlow: ['Diagnostics collected', 'Categories weighted', 'Verdict assigned', 'Decision explained'],
     reportSection: 'Evaluation Results',
     reportFigureCaption: 'Category-level score breakdown under the TrustStack Evaluation Standard.',
   },
@@ -141,13 +147,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'What does trustworthy behavior mean if a system can perform well once but cannot remain stable across repeated evaluations or changing corpora?',
     truststackResponse: 'TrustStack records historical runs and standardized benchmark outputs so teams can compare drift, instability, and recurring failure modes over time.',
     academicTakeaway: 'This slide extends the contribution from live evaluation into benchmarking and governance. It argues that trust must be measured longitudinally, not just locally.',
-    keyPoints: [
-      'Repeated runs expose drift and unstable behavior that a single demo misses.',
-      'Benchmark-friendly history makes the system useful for governance, not just demos.',
-      'Historical context helps distinguish isolated misses from systemic weaknesses.',
+    visualTitle: 'Benchmarking and drift',
+    visualCaption: 'Historical review turns isolated evaluations into a benchmarkable record of consistency, variation, and recurring failure modes.',
+    visualStats: [
+      { label: 'Time horizon', value: 'Repeated runs' },
+      { label: 'Comparison mode', value: 'Cross-run review' },
+      { label: 'Governance value', value: 'Stability evidence' },
     ],
-    evidenceCueLabel: 'Benchmark cue',
-    evidenceCueValue: 'Consistency is part of trustworthiness.',
+    visualFlow: ['Run logged', 'Score compared', 'Trend observed', 'Stability judged'],
     reportSection: 'Benchmarking and Historical Analysis',
     reportFigureCaption: 'Historical run tracking interface used for longitudinal review.',
   },
@@ -161,13 +168,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'Why does a trust workflow fail when retrieval, scoring, explanation, and export are treated as disconnected utilities rather than one integrated system?',
     truststackResponse: 'TrustStack packages the full evaluation lifecycle into a unified stack so the interface, backend, benchmark, and report all speak the same language.',
     academicTakeaway: 'This slide reinforces systems coherence. The product is stronger because architecture, evaluation standard, and reporting workflow are aligned rather than fragmented.',
-    keyPoints: [
-      'The planet narrative maps directly onto the actual system architecture.',
-      'The same backend powers live queries, scoring, benchmarks, and report exports.',
-      'This coherence is what makes the product presentation-ready instead of a disconnected prototype.',
+    visualTitle: 'Integrated stack',
+    visualCaption: 'The product, evaluation framework, and reporting path are designed as one system so outputs stay consistent across use cases.',
+    visualStats: [
+      { label: 'System shape', value: 'End-to-end pipeline' },
+      { label: 'Reuse', value: 'Shared backend services' },
+      { label: 'Output continuity', value: 'UI to report' },
     ],
-    evidenceCueLabel: 'Integration cue',
-    evidenceCueValue: 'One system, one standard, one review workflow.',
+    visualFlow: ['Interface', 'Evaluation engine', 'Benchmark suite', 'Export artifact'],
     reportSection: 'System Blueprint',
     reportFigureCaption: 'Top-level blueprint of the TrustStack system and its evaluation stages.',
   },
@@ -181,13 +189,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'What methodological structure is necessary if a trust system is expected to survive technical review, classroom scrutiny, or conference-style evaluation?',
     truststackResponse: 'TrustStack Evaluation Standard v2.0 defines weighted dimensions, structured checks, diagnostics, and metadata so results can be reproduced and critiqued.',
     academicTakeaway: 'This is the main research slide. It demonstrates that TrustStack is defining a concrete evaluation methodology rather than merely packaging model outputs.',
-    keyPoints: [
-      'Groundedness, citations, contradiction risk, completeness, and calibration are all explicit dimensions.',
-      'Per-case metrics and metadata make results reportable instead of anecdotal.',
-      'The methodology is designed to support both live demos and formal writeups.',
+    visualTitle: 'Methodological structure',
+    visualCaption: 'The evaluation standard formalizes what is being measured, how it is measured, and how results can be reproduced later.',
+    visualStats: [
+      { label: 'Dimensions', value: '10 weighted criteria' },
+      { label: 'Diagnostics', value: 'Checks + metadata' },
+      { label: 'Reproducibility', value: 'Reportable outputs' },
     ],
-    evidenceCueLabel: 'Method cue',
-    evidenceCueValue: 'Defensible method, reproducible output.',
+    visualFlow: ['Dimension defined', 'Check executed', 'Score computed', 'Result exported'],
     reportSection: 'Methodology',
     reportFigureCaption: 'Methodology view connecting the UI narrative to the formal TrustStack standard.',
   },
@@ -201,13 +210,14 @@ const PLANET_SLIDES: PlanetSlide[] = [
     researchQuestion: 'What durable artifact should remain after a trust evaluation if the system is supposed to support academic reporting, benchmarking, and future review?',
     truststackResponse: 'TrustStack executes the standardized suite and generates report-ready outputs so the live evaluation, benchmark summary, and written report remain aligned.',
     academicTakeaway: 'The closing slide ties the full contribution together: TrustStack becomes a workflow for grounded evaluation, benchmarking, and reporting rather than a one-off demonstration.',
-    keyPoints: [
-      'The same standardized suite produces live results, final scores, and exportable report artifacts.',
-      'Batch benchmarking extends the product beyond a single corpus or one-off demo.',
-      'The product itself becomes the presentation, while the outputs become the paper trail.',
+    visualTitle: 'Deliverable artifact',
+    visualCaption: 'The system closes by producing reusable outputs that survive beyond the live demonstration or single interaction.',
+    visualStats: [
+      { label: 'Primary artifact', value: 'Standardized report export' },
+      { label: 'Secondary artifact', value: 'Batch benchmark summary' },
+      { label: 'End state', value: 'Reusable trust record' },
     ],
-    evidenceCueLabel: 'Closing cue',
-    evidenceCueValue: 'TrustStack is a trust workflow, not just a UI.',
+    visualFlow: ['Suite executed', 'Scores summarized', 'Artifacts exported', 'Report aligned'],
     reportSection: 'Conclusion and Standard Export',
     reportFigureCaption: 'Summary slide aligning TrustStack outputs with presentation and report artifacts.',
   },
@@ -271,14 +281,14 @@ function StandardSlidePanel({
   documents: DocumentItem[]
   runs: RunItem[]
 }) {
-  const proofValue =
+  const emphasisValue =
     slide.planet === 'Mercury'
       ? `${documents.length} document${documents.length === 1 ? '' : 's'} ready for evaluation`
       : slide.planet === 'Jupiter' && suiteResult
         ? `${suiteResult.final_score}/100 ${suiteResult.verdict.toUpperCase()}`
         : slide.planet === 'Saturn'
           ? `${runs.length} recorded evaluation run${runs.length === 1 ? '' : 's'}`
-          : slide.evidenceCueValue
+          : slide.visualStats[0]?.value ?? ''
 
   return (
     <div className="presentation-slide">
@@ -288,10 +298,10 @@ function StandardSlidePanel({
         <p>{slide.summary}</p>
       </div>
 
-      <div className="presentation-slide__grid">
-        <div className="presentation-slide__panel">
+      <div className="presentation-slide__layout">
+        <div className="presentation-slide__panel presentation-slide__panel--wide">
           <div className="eyebrow">Background</div>
-          <h3>Why this part of the story matters</h3>
+          <h3>Why this section matters</h3>
           <p>{slide.background}</p>
         </div>
 
@@ -307,29 +317,39 @@ function StandardSlidePanel({
           <p>{slide.truststackResponse}</p>
         </div>
 
-        <div className="presentation-slide__panel">
+        <div className="presentation-slide__panel presentation-slide__panel--wide">
           <div className="eyebrow">Academic Takeaway</div>
-          <h3>What the audience should remember</h3>
+          <h3>Claim for the audience</h3>
           <p>{slide.academicTakeaway}</p>
         </div>
-      </div>
 
-      <div className="presentation-slide__notes">
-        <div className="presentation-slide__panel">
-          <div className="eyebrow">Talking Points</div>
-          <ul className="presentation-slide__list">
-            {slide.keyPoints.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="presentation-slide__panel presentation-slide__panel--accent">
-          <div>
-            <div className="eyebrow">{slide.evidenceCueLabel}</div>
-            <h3>{proofValue}</h3>
+        <div className="presentation-slide__panel presentation-slide__panel--accent presentation-slide__visual">
+          <div className="presentation-slide__visual-head">
+            <div>
+              <div className="eyebrow">{slide.visualTitle}</div>
+              <h3>{emphasisValue}</h3>
+            </div>
+            <p>{slide.visualCaption}</p>
           </div>
-          <p>{slide.reportSection}</p>
+
+          <div className="presentation-slide__stats">
+            {slide.visualStats.map((item) => (
+              <div className="presentation-slide__stat" key={`${slide.id}-${item.label}`}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="presentation-slide__flow" aria-label="slide visual flow">
+            {slide.visualFlow.map((item, index) => (
+              <div className="presentation-slide__flow-item" key={`${slide.id}-flow-${item}`}>
+                <span>{item}</span>
+                {index < slide.visualFlow.length - 1 ? <i aria-hidden="true" /> : null}
+              </div>
+            ))}
+          </div>
+
           <div className="presentation-slide__caption">{slide.reportFigureCaption}</div>
         </div>
       </div>
