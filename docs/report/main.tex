@@ -199,6 +199,8 @@ TrustStack exposes its evaluation workflow through an operator-facing review int
 
 The interface is therefore designed around three principles. First, every trust judgment should remain traceable to retrieved evidence. Second, every score should be paired with diagnostics that explain what raised or lowered confidence. Third, evaluation outputs should be reusable beyond the immediate interaction, including benchmarking, analyst review, and manuscript export. In practice, this means the frontend behaves as an inspection layer over the standardized backend evaluation process rather than as a thin wrapper around generation alone.
 
+For presentation and teaching use, the same interface can also be organized into a nine-part academic narrative: motivation, system architecture, runtime evaluation loop, evidence review, score interpretation, benchmarking, full-stack integration, methodology, and exportable artifacts. This ordering mirrors the structure of a conference-style systems talk. The important point is not the visual arrangement itself, but the fact that the interface already exposes the underlying stages in a sequence that supports both operator review and formal explanation.
+
 \TrustSection{Implementation and Verification}
 TrustStack is built as a local-first system. MongoDB stores documents, chunks, and run history. The backend exposes ingestion, document listing, sample-question generation, query, run history, standardized-suite execution, batch benchmark, and report-export routes. The frontend consumes those routes through a single API layer and renders an operator-facing inspection workflow for evidence, evaluation, and reporting.
 
