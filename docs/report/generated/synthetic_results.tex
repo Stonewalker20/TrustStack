@@ -1,0 +1,50 @@
+\TrustSection{Synthetic Evaluation Findings}
+We replaced the earlier experimental-plan placeholder with a reproducible synthetic benchmark executed directly on the TrustStack backend. All runs used lexical embeddings and extractive fallback generation so the findings remain deterministic and reproducible without external model availability. The benchmark covered 4 synthetic corpus conditions spanning aligned procedures, contradictory revisions, unsafe override guidance, and sparse evidence.
+
+\begin{table*}[t]
+\centering
+\caption{Synthetic benchmark results across four corpus conditions.}
+\label{tab:synthetic-benchmark-results}
+\renewcommand{\arraystretch}{1.08}
+\scriptsize
+\begin{tabular}{p{0.13\textwidth}p{0.25\textwidth}c c c c c c c}
+\hline
+\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{Docs} & \textbf{Chunks} & \textbf{Final} & \textbf{Verdict} & \textbf{Claim Support} & \textbf{Citation Align.} & \textbf{Flagged Cases} \\
+\hline
+Aligned procedural packet & Well-structured evidence with consistent requirements and explicit process steps. & 2 & 8 & 72.85 & REVIEW & 58.3\% & 100.0\% & 37.5\% \\
+Conflicted revision packet & Multiple revisions contain inconsistent restart and approval guidance. & 2 & 4 & 63.72 & REVIEW & 90.6\% & 90.6\% & 100.0\% \\
+Unsafe override packet & Corpus is internally consistent but operationally unsafe because it normalizes override behavior. & 2 & 4 & 63.09 & REVIEW & 87.5\% & 87.5\% & 100.0\% \\
+Sparse memo packet & Evidence is underspecified and lacks enough detail to support robust grounded answers. & 1 & 2 & 58.49 & FAIL & 66.7\% & 66.7\% & 87.5\% \\
+\hline
+\end{tabular}
+\end{table*}
+
+Across all conditions, TrustStack averaged 64.54/100 with a score spread of 14.36 points between the best and worst corpus conditions. The strongest condition was Aligned procedural packet at 72.85/100, while Sparse memo packet scored 58.49/100. Mean supported-claim ratio reached 75.8\%, mean citation alignment reached 86.2\%, and flagged cases appeared in 81.2\% of prompts.
+
+\begin{table*}[t]
+\centering
+\caption{Category-level mean scores across the synthetic benchmark.}
+\label{tab:synthetic-category-means}
+\renewcommand{\arraystretch}{1.08}
+\footnotesize
+\begin{tabular}{p{0.27\textwidth}c p{0.18\textwidth}c p{0.18\textwidth}c}
+\hline
+\rowcolor{TrustStackBlue!12}\textbf{Category} & \textbf{Mean Score} & \textbf{Best Dataset} & \textbf{Score} & \textbf{Worst Dataset} & \textbf{Score} \\
+\hline
+Consistency and calibration & 89.88 & Unsafe override packet & 93.88 & Conflicted revision packet & 85.50 \\
+Auditability and traceability & 73.54 & Conflicted revision packet & 81.34 & Sparse memo packet & 63.09 \\
+Safety and operational restraint & 71.20 & Sparse memo packet & 79.75 & Conflicted revision packet & 63.92 \\
+Communication and explanation & 59.68 & Aligned procedural packet & 64.79 & Sparse memo packet & 52.34 \\
+Corpus coverage & 55.91 & Aligned procedural packet & 74.47 & Sparse memo packet & 40.36 \\
+Grounding and retrieval & 41.09 & Aligned procedural packet & 65.93 & Sparse memo packet & 25.39 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\TrustCallout{Observed Synthetic Findings}{
+\begin{itemize}
+  \item The strongest synthetic condition was Aligned procedural packet at 72.85/100, while Sparse memo packet fell to 58.49/100.
+  \item The most stable category across conditions was Consistency and calibration (mean 89.88/100), whereas Grounding and retrieval was the limiting factor (mean 41.09/100).
+  \item Average supported-claim ratio was 75.8\%, average citation alignment was 86.2\%, and flagged cases appeared in 81.2\% of standardized prompts.
+\end{itemize}
+}

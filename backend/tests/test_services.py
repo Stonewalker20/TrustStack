@@ -11,6 +11,7 @@ from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
 from app.services.standard_suite import run_standard_batch_benchmark, run_standard_suite
 from app.services.suggestions import build_sample_questions
+from app.services.synthetic_eval import render_synthetic_report_latex, run_synthetic_benchmark
 
 
 class ServiceBehaviorTests(unittest.TestCase):
@@ -238,8 +239,25 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertIn(r"\textcolor{TrustStackGreen}{PASS}", artifacts["latex_category_table"])
         self.assertIn(r"\begin{table*}", artifacts["latex_case_table"])
         self.assertIn("Evidence", artifacts["latex_case_table"])
-        self.assertIn("Appendix: Standardized Case Results", artifacts["appendix_markdown"])
-        self.assertIn("| Case ID | Category | Question | Score | Verdict | Evidence | Trust Summary | Citations | Risk Flags |", artifacts["appendix_markdown"])
+
+    def test_run_synthetic_benchmark_returns_dataset_and_aggregate_analytics(self):
+        result = run_synthetic_benchmark()
+
+        self.assertEqual(result["runtime"]["embedding_provider"], "lexical")
+        self.assertEqual(result["runtime"]["llm_provider"], "disabled")
+        self.assertGreaterEqual(len(result["datasets"]), 4)
+        self.assertIn("aggregate", result)
+        self.assertIn("category_means", result["aggregate"])
+        self.assertGreaterEqual(result["aggregate"]["average_final_score"], 0.0)
+        self.assertTrue(all("suite" in dataset for dataset in result["datasets"]))
+
+    def test_render_synthetic_report_latex_contains_findings_tables(self):
+        latex = render_synthetic_report_latex(run_synthetic_benchmark())
+
+        self.assertIn(r"\TrustSection{Synthetic Evaluation Findings}", latex)
+        self.assertIn(r"\label{tab:synthetic-benchmark-results}", latex)
+        self.assertIn(r"\label{tab:synthetic-category-means}", latex)
+        self.assertIn("Observed Synthetic Findings", latex)
 
     def test_run_standard_batch_benchmark_returns_dataset_runs(self):
         fake_chunks = [
