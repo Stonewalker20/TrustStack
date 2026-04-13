@@ -216,6 +216,82 @@ This layered verification strategy matters because TrustStack is itself an evalu
 
 \input{generated/synthetic_results.tex}
 
+\TrustSection{Discussion}
+The synthetic benchmark changes the paper materially because it forces TrustStack to behave like an evaluation system rather than a demo architecture. The main empirical pattern is not subtle: once evidence is retrieved, TrustStack is relatively strong at maintaining traceability, calibration, and explicit risk signaling, but much weaker at preserving high grounding scores under sparse evidence, lexical drift, and negative-control prompts. That finding is useful because it points to the real engineering bottleneck. The next improvement target is not score formatting, UI polish, or artifact export. It is retrieval quality under difficult corpus conditions.
+
+\TrustSubsection{What the Results Actually Show}
+The raw scores in the synthetic benchmark should not be interpreted as absolute measures of trustworthiness. They are better interpreted as evidence that the TrustStack evaluation stack reacts in the expected direction when corpus quality changes. Aligned evidence scored highest, sparse evidence scored lowest, and the contradictory and unsafe packets remained in the review band rather than collapsing to a pass. This pattern is exactly what an evidence-first evaluator should do: reward traceable support, penalize weak grounding, and continue to surface review conditions even when claims are otherwise well supported.
+
+The case-level matrices deepen that interpretation. The easiest probes were the grounded retrieval prompts, which remained in the review band across nearly all corpus conditions. The hardest probes were the out-of-scope abstention prompt, the citation-audit prompt, and the multi-point synthesis probe. This indicates that TrustStack is already better at direct evidence recall than at robust abstention and broad synthesis. For a trustworthy AI system, that is a consequential distinction. Direct question answering is often the easiest part of the task; deciding when not to answer and how to summarize a fragmented corpus is where failure becomes operationally expensive.
+
+\TrustSubsection{Why Grounding Dominates the Failure Surface}
+Grounding and retrieval emerged as the weakest category in the synthetic benchmark by a large margin. This is not an incidental result. The benchmark was intentionally designed so that some datasets would preserve lexical similarity while corrupting semantic trust. The off-scope drift packet, for example, contains operational language, warnings, and procedural tone, but not the specific restart-safety semantics the prompts require. Likewise, the sparse memo packet contains enough surface overlap to retrieve text, but not enough detail to support a high-confidence answer. In both cases, TrustStack's lower grounding score is correctly signaling that lexical retrieval alone is insufficient.
+
+This matters for system design because a weaker evaluation system might still produce fluent answers with well-formed citations under the same conditions. TrustStack, by contrast, couples retrieval quality to later dimensions such as evidence sufficiency, abstention, and explanation. That coupling is one of the central design choices in the framework. The system is not trying to isolate downstream answer quality from upstream evidence weakness. It is trying to expose the fact that downstream confidence should degrade when upstream support degrades.
+
+\TrustSubsection{Implications for a Local-First Evaluator}
+The local-first constraint shapes both the strengths and the limitations of the current system. On the positive side, deterministic lexical retrieval and extractive fallback generation make the benchmark reproducible and auditable. Every number in the paper can be regenerated from checked-in synthetic corpora without external services. This is a strong property for academic reporting and for security-sensitive evaluation workflows. On the negative side, the same constraint means the current benchmark is not yet a test of best-available retrieval or best-available generation. It is a test of TrustStack's evaluation logic under a stable local runtime.
+
+That distinction is important when positioning the system for conference review. The right claim is not that TrustStack has already solved trustworthy AI evaluation in the large. The right claim is that TrustStack provides a concrete, reproducible, local-first scaffold for inspecting groundedness, traceability, and operator reviewability. The synthetic benchmark validates the scaffold. Future work can then replace individual retrieval or generation components without changing the core evaluation protocol.
+
+\TrustSection{Expanded Evaluation Agenda}
+The synthetic benchmark is a necessary first step, but a conference-grade evaluation program should include multiple complementary study families. TrustStack is now in a position where those studies can be specified concretely rather than described abstractly.
+
+\begin{table*}[t]
+  \caption{Recommended next-stage evaluation program for TrustStack}
+  \label{tab:expanded-eval-agenda}
+  \centering
+  \rowcolors{2}{TrustStackSoftBlue}{white}
+  \begin{tabular}{p{0.19\linewidth}p{0.21\linewidth}p{0.22\linewidth}p{0.28\linewidth}}
+    \toprule
+    \rowcolor{TrustStackBlue!12}
+    \textcolor{TrustStackBlue}{Study Family} & \textcolor{TrustStackBlue}{Primary Goal} & \textcolor{TrustStackBlue}{Core Metrics} & \textcolor{TrustStackBlue}{Why It Matters} \\
+    \midrule
+    External grounded-answer corpora & Measure whether TrustStack scores correlate with benchmark answer quality beyond synthetic data. & verdict agreement, citation coverage, supported-claim ratio, abstention accuracy & Moves the paper from controlled synthetic evidence into public benchmark comparison. \\
+    Retrieval ablations & Isolate how much score degradation comes from retrieval depth, lexical drift, and source diversity. & category deltas, risk-flag prevalence, negative-control error rate & Clarifies whether grounding failures are caused by the evaluator or by upstream evidence access. \\
+    Adversarial prompt suites & Test robustness to misleading, leading, or instruction-conflicting questions. & fail-safe rate, unsafe-answer rate, contradiction detection rate & Evaluates whether TrustStack catches misuse patterns that ordinary demos rarely surface. \\
+    Human analyst studies & Measure whether users can make better trust judgments using TrustStack than using a chat interface alone. & task accuracy, review time, calibration, reviewer agreement & Connects backend metrics to actual decision quality for human operators. \\
+    Longitudinal corpus drift tests & Measure how scores change as documents age, conflict, or accumulate revisions over time. & score stability, change-point detection, unsupported-claim growth & Matters for real operational deployments where documents are never static. \\
+    Cross-model comparison & Hold the corpus fixed and compare how different generation models behave under the same TrustStack protocol. & final score, category spread, risk flags per model & Turns TrustStack into a practical benchmarking harness for model selection. \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+The table above is intentionally operational. Each row can be translated into a benchmark harness, a set of fixtures, and a report artifact. This is important because many trustworthy-AI papers remain at the level of broad desiderata. TrustStack is already closer to an executable evaluation protocol: each proposed study family can be expressed as a combination of corpora, prompts, runtime settings, and report outputs. That makes the path from prototype to publishable empirical program substantially clearer.
+
+There is also a strategic benefit to this staged agenda. Synthetic testing, public benchmark evaluation, and human analyst studies should not be treated as substitutes for one another. Synthetic tests are best for stressor isolation and reproducibility. External corpora are best for comparability. Human studies are best for validating whether the explanation layer actually improves trust judgment. TrustStack is only persuasive as a full system if all three eventually align.
+
+\TrustSection{Deployment-Oriented Interpretation}
+An evaluation system is only useful if its output changes what an operator does. TrustStack therefore has to be understood not merely as a scoring pipeline, but as a control layer that sits between raw model output and downstream operational use. The benchmark results reported earlier matter because they show where that control layer is likely to succeed and where it will still require human caution.
+
+\begin{table*}[t]
+  \caption{Representative deployment settings for TrustStack-style evaluation}
+  \label{tab:deployment-settings}
+  \centering
+  \rowcolors{2}{TrustStackSoftBlue}{white}
+  \begin{tabular}{p{0.18\linewidth}p{0.24\linewidth}p{0.22\linewidth}p{0.24\linewidth}}
+    \toprule
+    \rowcolor{TrustStackBlue!12}
+    \textcolor{TrustStackBlue}{Setting} & \textcolor{TrustStackBlue}{Primary Risk} & \textcolor{TrustStackBlue}{TrustStack Focus} & \textcolor{TrustStackBlue}{Operator Value} \\
+    \midrule
+    Enterprise policy QA & Using stale or partial internal policies as if they were complete. & citation traceability, claim support, coverage & Helps reviewers distinguish answer fluency from actual policy support. \\
+    Safety-critical procedures & Overconfident procedural guidance that should remain under human supervision. & operational-risk flags, abstention, contradiction checks & Makes unsafe or under-supported procedure suggestions easier to catch before action. \\
+    Academic evidence synthesis & Summaries that mix support, omission, and speculation. & synthesis probes, citation audit, supported-claim ratio & Gives analysts a structured way to inspect whether a synthesis is faithful to the corpus. \\
+    Model comparison and procurement & Choosing a model based only on answer style or latency. & standardized suite scores, reproducibility metadata, batch benchmarking & Converts model selection into a repeatable evidence-based comparison process. \\
+    Compliance and audit preparation & Inability to justify why a system output was accepted or rejected. & report artifacts, run history, dataset labels & Produces retained artifacts that can be attached to internal review or audit workflows. \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+The table is included because the value of TrustStack depends on context. In low-stakes informational settings, a review verdict may be acceptable friction. In high-stakes procedural settings, the same review verdict may appropriately force escalation to a human subject-matter expert. This means the practical meaning of a score is partly organizational. TrustStack does not eliminate that judgment; it tries to structure it. That is a more honest framing than claiming that a single scalar threshold can define trust across every domain.
+
+There is also an organizational implication for local-first deployment. Teams often want two things at once: auditable trust judgments and minimal data movement. TrustStack's current architecture supports that tradeoff directly. Documents remain local, evaluation logic is inspectable, and export artifacts can be attached to internal reports without requiring a cloud-dependent evaluation backend. The benchmark results do not prove that such a deployment is complete, but they do show that the basic local-first control loop is viable enough to study seriously.
+
+\TrustSection{Threats to Validity}
+Several threats to validity apply to the present report. First, the benchmark uses synthetic corpora written to stress specific properties of the evaluation stack. This is appropriate for internal stress testing, but it may overrepresent cleanly isolated failure modes compared to the messier mixtures found in real organizational corpora. Second, the current runtime uses lexical retrieval and extractive fallback generation, which improves reproducibility but underestimates the behavior of stronger semantic retrieval stacks and larger instruction-tuned models.
+
+Third, the current evaluation standard is still partly heuristic. Claim support, contradiction notes, and safety flags are implemented as pragmatic local checks rather than as formal entailment or policy-verification models. The benefit is transparency and local deployability. The cost is that some errors will be caught coarsely rather than semantically. Finally, the paper currently evaluates TrustStack as an evaluator, not as a human decision aid. Until analyst studies are performed, we cannot claim that better backend diagnostics automatically translate into better human trust judgments.
+
 \TrustSection{Limitations}
 TrustStack currently evaluates groundedness relative to the uploaded corpus, not objective world truth. If the corpus is incomplete, outdated, or internally inconsistent, the system can still return a well-structured but ultimately limited evaluation. The synthetic benchmark makes this visible: even the best-aligned corpus remained in the \emph{review} band because negative-control prompts and retrieval-heavy probes still exposed brittleness. Likewise, the contradiction and claim-support checks are heuristic rather than formal entailment models. This is a pragmatic choice for local-first operation, but it limits semantic precision.
 

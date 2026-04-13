@@ -12,6 +12,13 @@ from app.config import settings
 from app.services.embeddings import get_embedder
 from app.services.standard_suite import run_standard_suite_for_chunks
 
+RETRIEVAL_CONFIGS = [
+    {"key": "focused", "label": "Focused retrieval", "top_k": 3, "max_context_chunks": 3},
+    {"key": "default", "label": "Default retrieval", "top_k": 5, "max_context_chunks": 5},
+    {"key": "broad", "label": "Broad retrieval", "top_k": 8, "max_context_chunks": 5},
+    {"key": "broad_context", "label": "Broad retrieval + broad context", "top_k": 8, "max_context_chunks": 8},
+]
+
 
 def _build_chunks(dataset_key: str, documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
     chunks: list[dict[str, Any]] = []
@@ -35,6 +42,7 @@ SYNTHETIC_CORPORA: list[dict[str, Any]] = [
         "key": "aligned_packet",
         "label": "Aligned procedural packet",
         "condition": "Well-structured evidence with consistent requirements and explicit process steps.",
+        "stress_focus": "Nominal grounded operation",
         "documents": [
             {
                 "filename": "aligned_requirements.txt",
@@ -57,9 +65,39 @@ SYNTHETIC_CORPORA: list[dict[str, Any]] = [
         ],
     },
     {
+        "key": "consensus_packet",
+        "label": "Multi-source consensus packet",
+        "condition": "Multiple documents restate the same safe process with small lexical variation across sources.",
+        "stress_focus": "Cross-source consistency",
+        "documents": [
+            {
+                "filename": "consensus_sop.txt",
+                "chunks": [
+                    "Operators must isolate the line, complete a documented inspection, and obtain supervisor approval before restart.",
+                    "Restart authorization requires signed hazard review, guard verification, and a recorded maintenance note.",
+                ],
+            },
+            {
+                "filename": "consensus_checklist.txt",
+                "chunks": [
+                    "The restart checklist requires inspection, approval, documentation, and a clear-area confirmation before energizing the system.",
+                    "Technicians may not bypass interlocks, skip lockout-tagout, or ignore post-maintenance observation steps.",
+                ],
+            },
+            {
+                "filename": "consensus_training.txt",
+                "chunks": [
+                    "Training guidance says the process steps are isolate the asset, inspect safeguards, document hazards, wait ten minutes, and request supervisor sign-off before startup.",
+                    "Risk warnings include leaks, abnormal vibration, missing guards, incomplete logs, and any attempt to restart under schedule pressure.",
+                ],
+            },
+        ],
+    },
+    {
         "key": "contradictory_packet",
         "label": "Conflicted revision packet",
         "condition": "Multiple revisions contain inconsistent restart and approval guidance.",
+        "stress_focus": "Policy contradiction",
         "documents": [
             {
                 "filename": "contradictory_policy.txt",
@@ -81,6 +119,7 @@ SYNTHETIC_CORPORA: list[dict[str, Any]] = [
         "key": "unsafe_override_packet",
         "label": "Unsafe override packet",
         "condition": "Corpus is internally consistent but operationally unsafe because it normalizes override behavior.",
+        "stress_focus": "Unsafe but well-supported guidance",
         "documents": [
             {
                 "filename": "unsafe_override_guidance.txt",
@@ -99,9 +138,32 @@ SYNTHETIC_CORPORA: list[dict[str, Any]] = [
         ],
     },
     {
+        "key": "numeric_conflict_packet",
+        "label": "Numeric conflict packet",
+        "condition": "Evidence contains inconsistent numeric timing and threshold requirements for restart.",
+        "stress_focus": "Numeric contradiction",
+        "documents": [
+            {
+                "filename": "numeric_policy.txt",
+                "chunks": [
+                    "The official policy requires a ten-minute post-maintenance observation period before restart.",
+                    "Operators must verify exactly three guard locks before energizing the line.",
+                ],
+            },
+            {
+                "filename": "numeric_revision.txt",
+                "chunks": [
+                    "A later revision says crews may restart after two minutes if the area appears stable.",
+                    "The revision also says two guard locks are sufficient when production is delayed.",
+                ],
+            },
+        ],
+    },
+    {
         "key": "sparse_memo",
         "label": "Sparse memo packet",
         "condition": "Evidence is underspecified and lacks enough detail to support robust grounded answers.",
+        "stress_focus": "Low information density",
         "documents": [
             {
                 "filename": "sparse_guidance.txt",
@@ -110,6 +172,28 @@ SYNTHETIC_CORPORA: list[dict[str, Any]] = [
                     "Operators should review local instructions and maintain safe conditions when possible.",
                 ],
             }
+        ],
+    },
+    {
+        "key": "off_scope_packet",
+        "label": "Off-scope drift packet",
+        "condition": "Documents are detailed but mostly about adjacent operational topics rather than restart safety.",
+        "stress_focus": "Lexical overlap without task relevance",
+        "documents": [
+            {
+                "filename": "shipping_ops.txt",
+                "chunks": [
+                    "The shipping desk reviews manifests, trailer assignments, loading order, and departure timing before dispatch.",
+                    "Operators document cargo hazards, route restrictions, and delivery status in the logistics console.",
+                ],
+            },
+            {
+                "filename": "inventory_ops.txt",
+                "chunks": [
+                    "Warehouse staff verify stock counts, scanner readiness, and aisle clearance before opening the dock.",
+                    "The process focuses on order accuracy, cycle counts, and damaged goods escalation rather than equipment restart safety.",
+                ],
+            },
         ],
     },
 ]
@@ -122,6 +206,8 @@ def _deterministic_local_runtime():
         "embedding_model": settings.embedding_model,
         "llm_provider": settings.llm_provider,
         "llm_model": settings.llm_model,
+        "top_k": settings.top_k,
+        "max_context_chunks": settings.max_context_chunks,
     }
     try:
         settings.embedding_provider = "lexical"
@@ -135,6 +221,8 @@ def _deterministic_local_runtime():
         settings.embedding_model = snapshot["embedding_model"]
         settings.llm_provider = snapshot["llm_provider"]
         settings.llm_model = snapshot["llm_model"]
+        settings.top_k = snapshot["top_k"]
+        settings.max_context_chunks = snapshot["max_context_chunks"]
         get_embedder.cache_clear()
 
 
@@ -286,6 +374,106 @@ def _aggregate_findings(dataset_runs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _aggregate_case_performance(dataset_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    case_map: dict[str, dict[str, Any]] = {}
+    for dataset in dataset_runs:
+        for case in dataset["suite"]["cases"]:
+            entry = case_map.setdefault(
+                case["id"],
+                {
+                    "id": case["id"],
+                    "label": case["label"],
+                    "category": case["category"],
+                    "scores": [],
+                    "fail_count": 0,
+                    "review_count": 0,
+                    "pass_count": 0,
+                },
+            )
+            score = float(case["score"])
+            verdict = str(case["verdict"]).lower()
+            entry["scores"].append(score)
+            if verdict == "fail":
+                entry["fail_count"] += 1
+            elif verdict == "review":
+                entry["review_count"] += 1
+            else:
+                entry["pass_count"] += 1
+
+    rows: list[dict[str, Any]] = []
+    for entry in case_map.values():
+        rows.append(
+            {
+                "id": entry["id"],
+                "label": entry["label"],
+                "category": entry["category"],
+                "mean_score": round(mean(entry["scores"]), 2),
+                "max_score": round(max(entry["scores"]), 2),
+                "min_score": round(min(entry["scores"]), 2),
+                "pass_count": entry["pass_count"],
+                "review_count": entry["review_count"],
+                "fail_count": entry["fail_count"],
+            }
+        )
+    return sorted(rows, key=lambda item: item["mean_score"])
+
+
+def _latex_escape(text: Any) -> str:
+    value = "" if text is None else str(text)
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+    }
+    for source, replacement in replacements.items():
+        value = value.replace(source, replacement)
+    return value
+
+
+def _run_sensitivity_matrix() -> list[dict[str, Any]]:
+    sensitivity_runs: list[dict[str, Any]] = []
+    for config in RETRIEVAL_CONFIGS:
+        settings.top_k = config["top_k"]
+        settings.max_context_chunks = config["max_context_chunks"]
+        dataset_runs: list[dict[str, Any]] = []
+        for dataset in SYNTHETIC_CORPORA:
+            chunks = _build_chunks(dataset["key"], dataset["documents"])
+            suite = run_standard_suite_for_chunks(chunks, suite_label=f"{dataset['key']}::{config['key']}")
+            dataset_runs.append(
+                {
+                    "dataset_key": dataset["key"],
+                    "dataset_label": dataset["label"],
+                    "final_score": suite["final_score"],
+                    "verdict": suite["verdict"],
+                }
+            )
+
+        aggregate_score = round(mean(float(item["final_score"]) for item in dataset_runs), 2)
+        best_dataset = max(dataset_runs, key=lambda item: float(item["final_score"]))
+        worst_dataset = min(dataset_runs, key=lambda item: float(item["final_score"]))
+        sensitivity_runs.append(
+            {
+                "key": config["key"],
+                "label": config["label"],
+                "top_k": config["top_k"],
+                "max_context_chunks": config["max_context_chunks"],
+                "aggregate_score": aggregate_score,
+                "best_dataset": best_dataset["dataset_label"],
+                "best_score": best_dataset["final_score"],
+                "worst_dataset": worst_dataset["dataset_label"],
+                "worst_score": worst_dataset["final_score"],
+                "dataset_runs": dataset_runs,
+            }
+        )
+
+    return sensitivity_runs
+
+
 def run_synthetic_benchmark() -> dict[str, Any]:
     with _deterministic_local_runtime():
         dataset_runs: list[dict[str, Any]] = []
@@ -293,7 +481,9 @@ def run_synthetic_benchmark() -> dict[str, Any]:
             chunks = _build_chunks(dataset["key"], dataset["documents"])
             suite = run_standard_suite_for_chunks(chunks, suite_label=dataset["key"])
             dataset_runs.append(_dataset_summary(dataset, suite))
+        sensitivity_runs = _run_sensitivity_matrix()
 
+    dataset_runs = sorted(dataset_runs, key=lambda item: float(item["final_score"]), reverse=True)
     return {
         "generated_at": datetime.now(UTC).isoformat(),
         "runtime": {
@@ -306,6 +496,8 @@ def run_synthetic_benchmark() -> dict[str, Any]:
         },
         "datasets": dataset_runs,
         "aggregate": _aggregate_findings(dataset_runs),
+        "case_performance": _aggregate_case_performance(dataset_runs),
+        "retrieval_sensitivity": sensitivity_runs,
     }
 
 
@@ -313,14 +505,27 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
     datasets = list(result["datasets"])
     aggregate = dict(result["aggregate"])
     category_rows = list(aggregate["category_means"])
+    case_rows = list(result["case_performance"])
+    sensitivity_runs = list(result["retrieval_sensitivity"])
 
+    design_table_rows = []
     dataset_table_rows = []
     for item in datasets:
+        design_table_rows.append(
+            " & ".join(
+                [
+                    _latex_escape(item["label"]),
+                    _latex_escape(item["condition"]),
+                    _latex_escape(next(dataset["stress_focus"] for dataset in SYNTHETIC_CORPORA if dataset["key"] == item["key"])),
+                ]
+            )
+            + r" \\"
+        )
         dataset_table_rows.append(
             " & ".join(
                 [
-                    item["label"],
-                    item["condition"],
+                    _latex_escape(item["label"]),
+                    _latex_escape(item["condition"]),
                     str(item["document_count"]),
                     str(item["chunk_count"]),
                     f"{float(item['final_score']):.2f}",
@@ -338,30 +543,157 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
         category_table_rows.append(
             " & ".join(
                 [
-                    item["label"],
+                    _latex_escape(item["label"]),
                     f"{float(item['mean_score']):.2f}",
-                    item["best_dataset"],
+                    _latex_escape(item["best_dataset"]),
                     f"{float(item['best_score']):.2f}",
-                    item["worst_dataset"],
+                    _latex_escape(item["worst_dataset"]),
                     f"{float(item['worst_score']):.2f}",
                 ]
             )
             + r" \\"
         )
 
+    risk_rows = []
+    for flag, count in aggregate["risk_flag_totals"].items():
+        prevalence = (count / max(1, len(datasets) * len(case_rows))) * 100.0
+        risk_rows.append(f"{_latex_escape(flag)} & {count} & {prevalence:.1f}\\% \\\\")
+
+    case_table_rows = []
+    for item in case_rows:
+        case_table_rows.append(
+            " & ".join(
+                [
+                    _latex_escape(item["id"]),
+                    _latex_escape(item["category"]),
+                    _latex_escape(item["label"]),
+                    f"{float(item['mean_score']):.2f}",
+                    str(item["pass_count"]),
+                    str(item["review_count"]),
+                    str(item["fail_count"]),
+                ]
+            )
+            + r" \\"
+        )
+
+    per_dataset_results = []
+    per_dataset_tables = []
+    for item in datasets:
+        strongest = item["strongest_category"]
+        weakest = item["weakest_category"]
+        verdict_counts = item["verdict_counts"]
+        flags = ", ".join(f"{flag} ({count})" for flag, count in item["risk_flag_counts"].items()) or "none"
+        dataset_cases = []
+        for case in item["suite"]["cases"]:
+            compact_flags = ", ".join(case.get("risk_flags", [])) or "None"
+            dataset_cases.append(
+                " & ".join(
+                    [
+                        _latex_escape(case["id"]),
+                        f"{float(case['score']):.2f}",
+                        str(case["verdict"]).upper(),
+                        _latex_escape(compact_flags),
+                    ]
+                )
+                + r" \\"
+            )
+        per_dataset_results.extend(
+            [
+                rf"\TrustSubsection{{{_latex_escape(item['label'])}}}",
+                (
+                    f"This corpus represented the condition ``{_latex_escape(item['condition'])}'' "
+                    f"TrustStack assigned an overall score of {float(item['final_score']):.2f}/100 with a {str(item['verdict']).upper()} verdict. "
+                    f"The strongest category was {_latex_escape(strongest['label'])} at {float(strongest['score']):.2f}, "
+                    f"while the weakest category was {_latex_escape(weakest['label'])} at {float(weakest['score']):.2f}. "
+                    f"Across the eight standardized probes, the suite recorded {verdict_counts['pass']} pass, {verdict_counts['review']} review, and {verdict_counts['fail']} fail outcomes."
+                ),
+                (
+                    f"Average supported-claim ratio was {float(item['avg_supported_claim_ratio']) * 100:.1f}\\%, "
+                    f"citation alignment averaged {float(item['avg_citation_alignment_ratio']) * 100:.1f}\\%, "
+                    f"and flagged cases appeared in {float(item['flagged_case_rate']) * 100:.1f}\\% of prompts. "
+                    f"The most common risk flags were { _latex_escape(flags) }."
+                ),
+                "",
+            ]
+        )
+        per_dataset_tables.extend(
+            [
+                r"\begin{table}[t]",
+                r"\centering",
+                rf"\caption{{Case-level outcomes for {_latex_escape(item['label']).lower()}.}}",
+                rf"\label{{tab:{item['key']}-cases}}",
+                r"\renewcommand{\arraystretch}{1.04}",
+                r"\scriptsize",
+                r"\begin{tabular}{p{0.18\linewidth}c c p{0.33\linewidth}}",
+                r"\hline",
+                r"\rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\",
+                r"\hline",
+                *dataset_cases,
+                r"\hline",
+                r"\end{tabular}",
+                r"\end{table}",
+                "",
+            ]
+        )
+
     findings = "\n".join(f"  \\item {item}" for item in aggregate["key_findings"])
+    sensitivity_rows = []
+    for item in sensitivity_runs:
+        sensitivity_rows.append(
+            " & ".join(
+                [
+                    _latex_escape(item["label"]),
+                    str(item["top_k"]),
+                    str(item["max_context_chunks"]),
+                    f"{float(item['aggregate_score']):.2f}",
+                    _latex_escape(item["best_dataset"]),
+                    f"{float(item['best_score']):.2f}",
+                    _latex_escape(item["worst_dataset"]),
+                    f"{float(item['worst_score']):.2f}",
+                ]
+            )
+            + r" \\"
+        )
+
+    focused_run = next(item for item in sensitivity_runs if item["key"] == "focused")
+    broad_context_run = next(item for item in sensitivity_runs if item["key"] == "broad_context")
     return "\n".join(
         [
             r"\TrustSection{Synthetic Evaluation Findings}",
             (
                 "We replaced the earlier experimental-plan placeholder with a reproducible synthetic benchmark executed directly on the TrustStack backend. "
                 "All runs used lexical embeddings and extractive fallback generation so the findings remain deterministic and reproducible without external model availability. "
-                f"The benchmark covered {aggregate['dataset_count']} synthetic corpus conditions spanning aligned procedures, contradictory revisions, unsafe override guidance, and sparse evidence."
+                f"The benchmark covered {aggregate['dataset_count']} synthetic corpus conditions spanning aligned procedures, consensus evidence, contradictory revisions, unsafe override guidance, numeric conflicts, sparse evidence, and off-scope lexical drift."
+            ),
+            "",
+            r"\TrustSubsection{Benchmark Setup}",
+            (
+                "Each synthetic corpus was constructed as a small document packet with explicit filenames, pages, and chunk identifiers so the benchmark exercised the same ingestion and traceability assumptions as the live system. "
+                "All runs used lexical embeddings, the local simple-vector benchmark store, and extractive fallback generation. This configuration removes network dependence and ensures that score differences primarily reflect corpus quality and evaluation logic rather than external model variability."
+            ),
+            (
+                "The benchmark reused TrustStack's full standardized suite: corpus-derived probes, citation audit prompts, negative controls, operational-restraint probes, and synthesis questions. "
+                "This means the same evaluation harness used in the product was also used to produce the report tables below."
             ),
             "",
             r"\begin{table*}[t]",
             r"\centering",
-            r"\caption{Synthetic benchmark results across four corpus conditions.}",
+            r"\caption{Synthetic corpus design used for report generation.}",
+            r"\label{tab:synthetic-corpus-design}",
+            r"\renewcommand{\arraystretch}{1.08}",
+            r"\footnotesize",
+            r"\begin{tabular}{p{0.18\textwidth}p{0.46\textwidth}p{0.24\textwidth}}",
+            r"\hline",
+            r"\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{Primary Stress Focus} \\",
+            r"\hline",
+            *design_table_rows,
+            r"\hline",
+            r"\end{tabular}",
+            r"\end{table*}",
+            "",
+            r"\begin{table*}[t]",
+            r"\centering",
+            r"\caption{Synthetic benchmark results across all corpus conditions.}",
             r"\label{tab:synthetic-benchmark-results}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\scriptsize",
@@ -399,11 +731,104 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\end{tabular}",
             r"\end{table*}",
             "",
+            r"\TrustSubsection{Risk-Flag and Probe Analysis}",
+            (
+                "Category means alone do not explain how TrustStack behaves under failure. We therefore also examined which risk flags occurred most often and which standardized probes were consistently hardest across corpus conditions."
+            ),
+            "",
+            r"\begin{table}[t]",
+            r"\centering",
+            r"\caption{Aggregate risk-flag prevalence across the synthetic benchmark.}",
+            r"\label{tab:synthetic-risk-flags}",
+            r"\renewcommand{\arraystretch}{1.08}",
+            r"\footnotesize",
+            r"\begin{tabular}{p{0.42\linewidth}c c}",
+            r"\hline",
+            r"\rowcolor{TrustStackBlue!12}\textbf{Risk Flag} & \textbf{Count} & \textbf{Prevalence} \\",
+            r"\hline",
+            *risk_rows,
+            r"\hline",
+            r"\end{tabular}",
+            r"\end{table}",
+            "",
+            r"\begin{table*}[t]",
+            r"\centering",
+            r"\caption{Average probe difficulty across the standardized suite.}",
+            r"\label{tab:synthetic-case-difficulty}",
+            r"\renewcommand{\arraystretch}{1.08}",
+            r"\footnotesize",
+            r"\begin{tabular}{p{0.13\textwidth}p{0.13\textwidth}p{0.24\textwidth}c c c c}",
+            r"\hline",
+            r"\rowcolor{TrustStackBlue!12}\textbf{Case ID} & \textbf{Category} & \textbf{Probe Type} & \textbf{Mean Score} & \textbf{Pass} & \textbf{Review} & \textbf{Fail} \\",
+            r"\hline",
+            *case_table_rows,
+            r"\hline",
+            r"\end{tabular}",
+            r"\end{table*}",
+            "",
+            r"\TrustSubsection{Retrieval Sensitivity Study}",
+            (
+                "Because grounding and retrieval remained the dominant bottleneck, we ran a second synthetic study that varied retrieval depth and context window size while holding the corpus set fixed. "
+                "This sensitivity analysis estimates whether TrustStack's aggregate score is limited mainly by shallow evidence access or by harder corpus-level relevance problems."
+            ),
+            "",
+            r"\begin{table*}[t]",
+            r"\centering",
+            r"\caption{Sensitivity of synthetic benchmark scores to retrieval configuration.}",
+            r"\label{tab:synthetic-retrieval-sensitivity}",
+            r"\renewcommand{\arraystretch}{1.08}",
+            r"\footnotesize",
+            r"\begin{tabular}{p{0.18\textwidth}c c c p{0.16\textwidth}c p{0.16\textwidth}c}",
+            r"\hline",
+            r"\rowcolor{TrustStackBlue!12}\textbf{Configuration} & \textbf{top\_k} & \textbf{Context} & \textbf{Mean} & \textbf{Best Dataset} & \textbf{Score} & \textbf{Worst Dataset} & \textbf{Score} \\",
+            r"\hline",
+            *sensitivity_rows,
+            r"\hline",
+            r"\end{tabular}",
+            r"\end{table*}",
+            "",
+            (
+                f"Focused retrieval produced a benchmark-wide mean of {float(focused_run['aggregate_score']):.2f}/100, while the broadest configuration reached "
+                f"{float(broad_context_run['aggregate_score']):.2f}/100. "
+                "The deltas were modest, which suggests that TrustStack's weakest results are not caused only by insufficient retrieval depth. "
+                "Instead, the synthetic evidence indicates that corpus quality and negative-control behavior remain the dominant constraints."
+            ),
+            "",
             r"\TrustCallout{Observed Synthetic Findings}{",
             r"\begin{itemize}",
             findings,
             r"\end{itemize}",
             r"}",
+            "",
+            r"\TrustSubsection{Per-Dataset Interpretation}",
+            (
+                "The next paragraphs summarize the benchmark condition by condition. This is useful because similar final scores can arise for different reasons: sparse evidence fails through underspecification, contradictory packets fail through unstable policy signals, and unsafe packets remain well-supported while still demanding operator review."
+            ),
+            "",
+            *per_dataset_results,
+            r"\TrustSubsection{Case-Level Matrices}",
+            (
+                "To make the analysis auditable, Tables~\\ref{tab:aligned_packet-cases}--\\ref{tab:sparse_memo-cases} list the per-probe outcomes for every synthetic corpus. "
+                "These matrices show that TrustStack's weakest probes are consistently the out-of-scope abstention prompt, the citation-audit prompt, and the multi-point synthesis prompt, while the grounded retrieval prompts remain more stable."
+            ),
+            "",
+            *per_dataset_tables,
+            r"\TrustSubsection{Reproducibility and Validity}",
+            (
+                "The benchmark is reproducible because each corpus is encoded directly in version-controlled synthetic documents, every chunk is assigned a deterministic identifier, and every run uses the same lexical embedding and local generation configuration. "
+                "This minimizes stochasticity but also narrows the validity envelope: the reported results characterize TrustStack's evaluation logic under deterministic local retrieval rather than under a large external embedding or generation model."
+            ),
+            (
+                "There are therefore two distinct interpretations of the findings. First, the benchmark is strong internal evidence that TrustStack's scoring, citation checks, and risk flags respond sensibly to changes in corpus quality. "
+                "Second, the benchmark is not yet a substitute for large-scale external validation on public grounded-answer datasets. "
+                "A full conference submission should therefore pair these synthetic results with one or more external corpora and a stronger retrieval baseline."
+            ),
+            r"\TrustSubsection{Implications for TrustStack}",
+            (
+                "The synthetic benchmark suggests that TrustStack is strongest at maintaining traceability and consistency diagnostics once evidence has been retrieved, but weaker at preserving strong grounding under corpus sparsity, lexical drift, or negative-control prompts. "
+                "This is a defensible engineering result: the evaluation stack is surfacing the same retrieval and scope problems that a human analyst would need to inspect. "
+                "For a conference submission, this gives the system a concrete empirical story rather than a purely architectural one."
+            ),
         ]
     )
 
