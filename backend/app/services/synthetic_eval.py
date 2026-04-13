@@ -19,6 +19,51 @@ RETRIEVAL_CONFIGS = [
     {"key": "broad_context", "label": "Broad retrieval + broad context", "top_k": 8, "max_context_chunks": 8},
 ]
 
+FLAG_DISPLAY_NAMES = {
+    "LOW_RETRIEVAL_SUPPORT": "Low retrieval support",
+    "INSUFFICIENT_EVIDENCE": "Insufficient evidence",
+    "OPERATIONAL_ADVICE_REQUIRES_HUMAN_REVIEW": "Human review required",
+}
+
+CASE_ID_DISPLAY_NAMES = {
+    "grounded-1": "G1",
+    "grounded-2": "G2",
+    "grounded-3": "G3",
+    "grounded-4": "G4",
+    "audit-citations": "AUD",
+    "safety-negative-control": "SAFE",
+    "out-of-scope-negative-control": "OOS",
+    "coverage-synthesis": "SYN",
+}
+
+CATEGORY_DISPLAY_NAMES = {
+    "grounding": "Grounding",
+    "auditability": "Audit",
+    "safety": "Safety",
+    "consistency": "Consistency",
+    "coverage": "Coverage",
+}
+
+DATASET_TABLE_LABELS = {
+    "aligned_packet": "Aligned packet",
+    "consensus_packet": "Consensus packet",
+    "contradictory_packet": "Conflicted packet",
+    "numeric_conflict_packet": "Numeric conflict",
+    "off_scope_packet": "Off-scope drift",
+    "unsafe_override_packet": "Unsafe override",
+    "sparse_memo": "Sparse memo",
+}
+
+DATASET_CONDITION_LABELS = {
+    "aligned_packet": "Aligned procedural evidence",
+    "consensus_packet": "Consensus evidence across sources",
+    "contradictory_packet": "Contradictory restart guidance",
+    "numeric_conflict_packet": "Conflicting numeric thresholds",
+    "off_scope_packet": "Detailed but off-scope material",
+    "unsafe_override_packet": "Unsafe but internally consistent guidance",
+    "sparse_memo": "Underspecified sparse evidence",
+}
+
 
 def _build_chunks(dataset_key: str, documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
     chunks: list[dict[str, Any]] = []
@@ -435,6 +480,32 @@ def _latex_escape(text: Any) -> str:
     return value
 
 
+def _display_flag(flag: str) -> str:
+    return FLAG_DISPLAY_NAMES.get(flag, flag.replace("_", " ").title())
+
+
+def _display_flags(flags: list[str]) -> str:
+    if not flags:
+        return "None"
+    return ", ".join(_display_flag(flag) for flag in flags)
+
+
+def _display_case_id(case_id: str) -> str:
+    return CASE_ID_DISPLAY_NAMES.get(case_id, case_id)
+
+
+def _display_category(category: str) -> str:
+    return CATEGORY_DISPLAY_NAMES.get(category, category.title())
+
+
+def _display_dataset_label(dataset_key: str, default: str) -> str:
+    return DATASET_TABLE_LABELS.get(dataset_key, default)
+
+
+def _display_dataset_condition(dataset_key: str, default: str) -> str:
+    return DATASET_CONDITION_LABELS.get(dataset_key, default)
+
+
 def _run_sensitivity_matrix() -> list[dict[str, Any]]:
     sensitivity_runs: list[dict[str, Any]] = []
     for config in RETRIEVAL_CONFIGS:
@@ -524,8 +595,8 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
         dataset_table_rows.append(
             " & ".join(
                 [
-                    _latex_escape(item["label"]),
-                    _latex_escape(item["condition"]),
+                    _latex_escape(_display_dataset_label(item["key"], item["label"])),
+                    _latex_escape(_display_dataset_condition(item["key"], item["condition"])),
                     str(item["document_count"]),
                     str(item["chunk_count"]),
                     f"{float(item['final_score']):.2f}",
@@ -545,9 +616,9 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
                 [
                     _latex_escape(item["label"]),
                     f"{float(item['mean_score']):.2f}",
-                    _latex_escape(item["best_dataset"]),
+                    _latex_escape(_display_dataset_label(next(dataset["key"] for dataset in datasets if dataset["label"] == item["best_dataset"]), item["best_dataset"])),
                     f"{float(item['best_score']):.2f}",
-                    _latex_escape(item["worst_dataset"]),
+                    _latex_escape(_display_dataset_label(next(dataset["key"] for dataset in datasets if dataset["label"] == item["worst_dataset"]), item["worst_dataset"])),
                     f"{float(item['worst_score']):.2f}",
                 ]
             )
@@ -557,15 +628,15 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
     risk_rows = []
     for flag, count in aggregate["risk_flag_totals"].items():
         prevalence = (count / max(1, len(datasets) * len(case_rows))) * 100.0
-        risk_rows.append(f"{_latex_escape(flag)} & {count} & {prevalence:.1f}\\% \\\\")
+        risk_rows.append(f"{_latex_escape(_display_flag(flag))} & {count} & {prevalence:.1f}\\% \\\\")
 
     case_table_rows = []
     for item in case_rows:
         case_table_rows.append(
             " & ".join(
                 [
-                    _latex_escape(item["id"]),
-                    _latex_escape(item["category"]),
+                    _latex_escape(_display_case_id(item["id"])),
+                    _latex_escape(_display_category(item["category"])),
                     _latex_escape(item["label"]),
                     f"{float(item['mean_score']):.2f}",
                     str(item["pass_count"]),
@@ -582,14 +653,14 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
         strongest = item["strongest_category"]
         weakest = item["weakest_category"]
         verdict_counts = item["verdict_counts"]
-        flags = ", ".join(f"{flag} ({count})" for flag, count in item["risk_flag_counts"].items()) or "none"
+        flags = ", ".join(f"{_display_flag(flag)} ({count})" for flag, count in item["risk_flag_counts"].items()) or "none"
         dataset_cases = []
         for case in item["suite"]["cases"]:
-            compact_flags = ", ".join(case.get("risk_flags", [])) or "None"
+            compact_flags = _display_flags(case.get("risk_flags", []))
             dataset_cases.append(
                 " & ".join(
                     [
-                        _latex_escape(case["id"]),
+                        _latex_escape(_display_case_id(case["id"])),
                         f"{float(case['score']):.2f}",
                         str(case["verdict"]).upper(),
                         _latex_escape(compact_flags),
@@ -624,7 +695,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
                 rf"\label{{tab:{item['key']}-cases}}",
                 r"\renewcommand{\arraystretch}{1.04}",
                 r"\scriptsize",
-                r"\begin{tabular}{p{0.18\linewidth}c c p{0.33\linewidth}}",
+                r"\begin{tabular}{C{0.11\linewidth}C{0.11\linewidth}C{0.14\linewidth}L{0.42\linewidth}}",
                 r"\hline",
                 r"\rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\",
                 r"\hline",
@@ -646,9 +717,9 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
                     str(item["top_k"]),
                     str(item["max_context_chunks"]),
                     f"{float(item['aggregate_score']):.2f}",
-                    _latex_escape(item["best_dataset"]),
+                    _latex_escape(_display_dataset_label(next(dataset["key"] for dataset in datasets if dataset["label"] == item["best_dataset"]), item["best_dataset"])),
                     f"{float(item['best_score']):.2f}",
-                    _latex_escape(item["worst_dataset"]),
+                    _latex_escape(_display_dataset_label(next(dataset["key"] for dataset in datasets if dataset["label"] == item["worst_dataset"]), item["worst_dataset"])),
                     f"{float(item['worst_score']):.2f}",
                 ]
             )
@@ -682,7 +753,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\label{tab:synthetic-corpus-design}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\footnotesize",
-            r"\begin{tabular}{p{0.18\textwidth}p{0.46\textwidth}p{0.24\textwidth}}",
+            r"\begin{tabular}{@{}L{0.19\textwidth}L{0.43\textwidth}L{0.26\textwidth}@{}}",
             r"\hline",
             r"\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{Primary Stress Focus} \\",
             r"\hline",
@@ -697,9 +768,9 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\label{tab:synthetic-benchmark-results}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\scriptsize",
-            r"\begin{tabular}{p{0.13\textwidth}p{0.25\textwidth}c c c c c c c}",
+            r"\begin{tabular}{@{}L{0.11\textwidth}L{0.17\textwidth}C{0.04\textwidth}C{0.05\textwidth}C{0.06\textwidth}C{0.07\textwidth}C{0.09\textwidth}C{0.09\textwidth}C{0.09\textwidth}@{}}",
             r"\hline",
-            r"\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{Docs} & \textbf{Chunks} & \textbf{Final} & \textbf{Verdict} & \textbf{Claim Support} & \textbf{Citation Align.} & \textbf{Flagged Cases} \\",
+            r"\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{D} & \textbf{C} & \textbf{Score} & \textbf{Band} & \textbf{Claim \%} & \textbf{Cite \%} & \textbf{Flagged \%} \\",
             r"\hline",
             *dataset_table_rows,
             r"\hline",
@@ -722,7 +793,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\label{tab:synthetic-category-means}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\footnotesize",
-            r"\begin{tabular}{p{0.27\textwidth}c p{0.18\textwidth}c p{0.18\textwidth}c}",
+            r"\begin{tabular}{@{}L{0.24\textwidth}C{0.10\textwidth}L{0.16\textwidth}C{0.08\textwidth}L{0.16\textwidth}C{0.08\textwidth}@{}}",
             r"\hline",
             r"\rowcolor{TrustStackBlue!12}\textbf{Category} & \textbf{Mean Score} & \textbf{Best Dataset} & \textbf{Score} & \textbf{Worst Dataset} & \textbf{Score} \\",
             r"\hline",
@@ -742,7 +813,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\label{tab:synthetic-risk-flags}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\footnotesize",
-            r"\begin{tabular}{p{0.42\linewidth}c c}",
+            r"\begin{tabular}{@{}L{0.46\linewidth}C{0.14\linewidth}C{0.18\linewidth}@{}}",
             r"\hline",
             r"\rowcolor{TrustStackBlue!12}\textbf{Risk Flag} & \textbf{Count} & \textbf{Prevalence} \\",
             r"\hline",
@@ -757,7 +828,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\label{tab:synthetic-case-difficulty}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\footnotesize",
-            r"\begin{tabular}{p{0.13\textwidth}p{0.13\textwidth}p{0.24\textwidth}c c c c}",
+            r"\begin{tabular}{@{}C{0.08\textwidth}L{0.11\textwidth}L{0.23\textwidth}C{0.10\textwidth}C{0.07\textwidth}C{0.08\textwidth}C{0.07\textwidth}@{}}",
             r"\hline",
             r"\rowcolor{TrustStackBlue!12}\textbf{Case ID} & \textbf{Category} & \textbf{Probe Type} & \textbf{Mean Score} & \textbf{Pass} & \textbf{Review} & \textbf{Fail} \\",
             r"\hline",
@@ -778,7 +849,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             r"\label{tab:synthetic-retrieval-sensitivity}",
             r"\renewcommand{\arraystretch}{1.08}",
             r"\footnotesize",
-            r"\begin{tabular}{p{0.18\textwidth}c c c p{0.16\textwidth}c p{0.16\textwidth}c}",
+            r"\begin{tabular}{@{}L{0.19\textwidth}C{0.06\textwidth}C{0.07\textwidth}C{0.07\textwidth}L{0.14\textwidth}C{0.08\textwidth}L{0.14\textwidth}C{0.08\textwidth}@{}}",
             r"\hline",
             r"\rowcolor{TrustStackBlue!12}\textbf{Configuration} & \textbf{top\_k} & \textbf{Context} & \textbf{Mean} & \textbf{Best Dataset} & \textbf{Score} & \textbf{Worst Dataset} & \textbf{Score} \\",
             r"\hline",
