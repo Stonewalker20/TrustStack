@@ -167,6 +167,9 @@ http://127.0.0.1:8000
 | `POST /query` | Run a grounded query and receive answer, evidence, score, risks, and explanation |
 | `GET /runs` | Retrieve recent evaluation history |
 | `GET /documents` | Retrieve indexed document list |
+| `POST /evaluation/standard-run` | Run the TrustStack standardized suite over the active indexed corpus |
+| `POST /evaluation/standard-run/batch` | Compare TrustStack across each indexed source file independently |
+| `POST /evaluation/real-benchmark` | Run TrustStack against real benchmark datasets such as FEVER, SciFact, and HotpotQA |
 
 ---
 
@@ -203,6 +206,12 @@ The backend suite currently covers:
 - ingest validation
 - query success and failure paths
 - run history retrieval
+
+Real benchmark datasets:
+
+- install `backend/requirements-optional.txt` to enable Hugging Face dataset loading
+- or place normalized JSONL benchmark files in `backend/data/benchmarks/`
+- supported benchmark keys currently include `fever`, `scifact`, and `hotpotqa`
 - real Mongo-backed ingest, query, document, and run-history integration
 - hit extraction
 - confidence scoring

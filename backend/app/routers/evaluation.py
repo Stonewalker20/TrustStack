@@ -1,12 +1,15 @@
 from fastapi import APIRouter, HTTPException
 
 from app.schemas import (
+    RealBenchmarkRequest,
+    RealBenchmarkResponse,
     StandardBatchBenchmarkResponse,
     StandardReportArtifactsRequest,
     StandardReportArtifactsResponse,
     StandardTestRunResponse,
 )
 from app.services.report_export import build_report_artifacts
+from app.services.real_benchmark import run_real_dataset_benchmark
 from app.services.standard_suite import run_standard_batch_benchmark, run_standard_suite
 
 router = APIRouter(tags=["evaluation"])
@@ -55,3 +58,14 @@ def run_standardized_batch_benchmark():
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Batch benchmark failed: {exc}") from exc
     return StandardBatchBenchmarkResponse(**result)
+
+
+@router.post("/evaluation/real-benchmark", response_model=RealBenchmarkResponse)
+def run_real_benchmark(request: RealBenchmarkRequest):
+    try:
+        result = run_real_dataset_benchmark(dataset_keys=request.dataset_keys, sample_limit=request.sample_limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Real benchmark failed: {exc}") from exc
+    return RealBenchmarkResponse(**result)

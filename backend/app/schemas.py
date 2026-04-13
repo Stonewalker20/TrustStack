@@ -242,3 +242,51 @@ class StandardReportArtifactsResponse(BaseModel):
     latex_category_table: str
     latex_case_table: str
     appendix_markdown: str
+
+
+class RealBenchmarkRequest(BaseModel):
+    dataset_keys: list[str] = Field(default_factory=lambda: ["fever", "scifact", "hotpotqa"], min_length=1)
+    sample_limit: int = Field(default=10, ge=1, le=100)
+
+
+class RealBenchmarkDatasetResult(BaseModel):
+    dataset_key: str
+    dataset_label: str
+    task_type: str
+    example_count: int
+    task_metric_label: str
+    task_metric_score: float
+    truststack_score: float
+    supported_claim_ratio: float
+    citation_alignment_ratio: float
+    flagged_case_rate: float
+    verdict: str
+
+
+class RealBenchmarkCaseResult(BaseModel):
+    dataset_key: str
+    dataset_label: str
+    task_type: str
+    example_id: str
+    question: str
+    predicted_answer: str
+    gold_answer: str | None = None
+    gold_label: str | None = None
+    task_score: float
+    task_metric_label: str
+    truststack_score: float
+    verdict: str
+    supported_claim_ratio: float | None = None
+    citation_alignment_ratio: float | None = None
+    risk_flags: list[str]
+
+
+class RealBenchmarkResponse(BaseModel):
+    framework: EvaluationFramework
+    generated_at: str
+    dataset_runs: list[RealBenchmarkDatasetResult]
+    aggregate_score: float
+    aggregate_task_metric: float
+    verdict: str
+    recommended_actions: list[str]
+    cases: list[RealBenchmarkCaseResult]

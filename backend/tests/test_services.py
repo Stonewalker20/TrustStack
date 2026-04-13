@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from app.services.evaluation import build_evaluation_report
 from app.services.explanations import build_query_explanation
+from app.services.real_benchmark import run_real_dataset_benchmark
 from app.services.rag import _extract_hits, _rebuild_index_from_chunks
 from app.services.report_export import build_report_artifacts
 from app.services.risk import build_risk_flags, summarize_trust
@@ -296,6 +297,69 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertEqual(len(result["dataset_runs"]), 2)
         self.assertIn("aggregate_score", result)
+
+    def test_run_real_dataset_benchmark_aggregates_real_examples(self):
+        examples = [
+            {
+                "dataset_key": "fever",
+                "dataset_label": "FEVER",
+                "task_type": "verification",
+                "example_id": "1",
+                "question": "Claim: The policy requires inspection. Based only on the evidence, is this claim supported, contradicted, or not enough information?",
+                "chunks": [{"chunk_uid": "c1", "filename": "fever_1.txt", "page_num": 1, "text": "The policy requires inspection before startup."}],
+                "gold_answer": None,
+                "gold_label": "supported",
+                "metadata": {},
+            },
+            {
+                "dataset_key": "hotpotqa",
+                "dataset_label": "HotpotQA",
+                "task_type": "qa",
+                "example_id": "2",
+                "question": "What is required before startup?",
+                "chunks": [{"chunk_uid": "c2", "filename": "hotpot_2.txt", "page_num": 1, "text": "Inspection is required before startup."}],
+                "gold_answer": "inspection",
+                "gold_label": None,
+                "metadata": {},
+            },
+        ]
+
+        with patch("app.services.real_benchmark.load_real_benchmark_examples") as load_examples_mock, \
+             patch("app.services.real_benchmark.retrieve_hits") as retrieve_hits_mock, \
+             patch("app.services.real_benchmark.get_embedder") as get_embedder_mock, \
+             patch("app.services.real_benchmark._answer_from_hits") as answer_from_hits_mock:
+            from app.services.real_datasets import RealBenchmarkExample
+
+            load_examples_mock.side_effect = [
+                [RealBenchmarkExample(**examples[0])],
+                [RealBenchmarkExample(**examples[1])],
+            ]
+            fake_embedder = Mock()
+            fake_embedder.embed_texts.return_value = [[0.1, 0.2, 0.3]]
+            get_embedder_mock.return_value = fake_embedder
+            retrieve_hits_mock.return_value = [{"source": "x", "page": 1, "chunk_id": "c1", "score": 0.9, "text": "support text"}]
+            answer_from_hits_mock.side_effect = [
+                {
+                    "answer": "Supported by the evidence.",
+                    "citations": ["c1"],
+                    "risk_flags": [],
+                    "evaluation": {"overall_score": 82.0, "verdict": "pass", "claims": [{"status": "supported", "supporting_chunk_ids": ["c1"]}]},
+                },
+                {
+                    "answer": "inspection",
+                    "citations": ["c2"],
+                    "risk_flags": ["LOW_RETRIEVAL_SUPPORT"],
+                    "evaluation": {"overall_score": 74.0, "verdict": "review", "claims": [{"status": "supported", "supporting_chunk_ids": ["c2"]}]},
+                },
+            ]
+
+            result = run_real_dataset_benchmark(dataset_keys=["fever", "hotpotqa"], sample_limit=1)
+
+        self.assertEqual(len(result["dataset_runs"]), 2)
+        self.assertEqual(result["dataset_runs"][0]["dataset_key"], "fever")
+        self.assertIn("aggregate_task_metric", result)
+        self.assertEqual(len(result["cases"]), 2)
+        self.assertIn(result["verdict"], {"pass", "review", "fail"})
 
 
 if __name__ == "__main__":

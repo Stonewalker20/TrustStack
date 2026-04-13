@@ -672,6 +672,66 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(len(payload["dataset_runs"]), 1)
         self.assertEqual(payload["aggregate_score"], 84.2)
 
+    def test_real_benchmark_endpoint_returns_dataset_runs(self):
+        fake_benchmark = {
+            "framework": {
+                "name": "TrustStack Evaluation Standard",
+                "version": "2.0",
+                "description": "desc",
+                "score_range": "0-100",
+                "pass_threshold": 80.0,
+                "review_threshold": 60.0,
+                "dimensions": [],
+            },
+            "generated_at": "2026-04-13T00:00:00+00:00",
+            "dataset_runs": [
+                {
+                    "dataset_key": "fever",
+                    "dataset_label": "FEVER",
+                    "task_type": "verification",
+                    "example_count": 5,
+                    "task_metric_label": "label_accuracy",
+                    "task_metric_score": 0.8,
+                    "truststack_score": 74.6,
+                    "supported_claim_ratio": 0.9,
+                    "citation_alignment_ratio": 0.85,
+                    "flagged_case_rate": 0.4,
+                    "verdict": "review",
+                }
+            ],
+            "aggregate_score": 74.6,
+            "aggregate_task_metric": 0.8,
+            "verdict": "review",
+            "recommended_actions": ["Inspect weak citation alignment before publication."],
+            "cases": [
+                {
+                    "dataset_key": "fever",
+                    "dataset_label": "FEVER",
+                    "task_type": "verification",
+                    "example_id": "1",
+                    "question": "Claim: x",
+                    "predicted_answer": "supported",
+                    "gold_answer": None,
+                    "gold_label": "supported",
+                    "task_score": 1.0,
+                    "task_metric_label": "label_accuracy",
+                    "truststack_score": 81.0,
+                    "verdict": "pass",
+                    "supported_claim_ratio": 1.0,
+                    "citation_alignment_ratio": 1.0,
+                    "risk_flags": [],
+                }
+            ],
+        }
+
+        with patch("app.routers.evaluation.run_real_dataset_benchmark", return_value=fake_benchmark):
+            response = self.client.post("/evaluation/real-benchmark", json={"dataset_keys": ["fever"], "sample_limit": 5})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["dataset_runs"][0]["dataset_key"], "fever")
+        self.assertEqual(payload["aggregate_task_metric"], 0.8)
+
 
 if __name__ == "__main__":
     unittest.main()
