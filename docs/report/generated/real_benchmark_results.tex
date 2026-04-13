@@ -1,0 +1,48 @@
+\TrustSection{Real Benchmark Evaluation}
+To reduce the validity threat of relying on synthetic corpora alone, TrustStack was also evaluated on normalized subsets of public grounded-answer benchmarks. These subsets are frozen into the repository so the reported results remain reproducible without requiring live network access at paper-compilation time.
+The current external benchmark slice covers scientific claim verification and multi-hop question answering. These tasks pressure complementary properties of TrustStack: whether it can score evidence-backed label judgments on structured claims, and whether it can preserve groundedness under answer synthesis across multiple supporting passages.
+
+\begin{table*}[t]
+\centering
+\caption{Real benchmark results on checked-in public dataset subsets.}
+\label{tab:real-benchmark-results}
+\renewcommand{\arraystretch}{1.08}
+\footnotesize
+\begin{tabular}{@{}L{0.11\textwidth}L{0.10\textwidth}C{0.05\textwidth}C{0.08\textwidth}C{0.08\textwidth}C{0.08\textwidth}C{0.09\textwidth}C{0.09\textwidth}C{0.09\textwidth}@{}}
+\hline
+\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Metric} & \textbf{N} & \textbf{Task} & \textbf{Trust} & \textbf{Cal Gap} & \textbf{Claim \%} & \textbf{Cite \%} & \textbf{Flagged \%} \\
+\hline
+HotpotQA & answer\_f1 & 5 & 0.032 & 73.90 & 0.707 & 46.7\% & 80.0\% & 0.0\% \\
+SciFact & label\_accuracy & 4 & 0.250 & 52.29 & 0.545 & 6.2\% & 87.5\% & 75.0\% \\
+\hline
+\end{tabular}
+\end{table*}
+
+Across 2 public benchmark subsets and 9 total examples, TrustStack averaged 63.09/100 while the task-level benchmark metric averaged 0.141. Mean supported-claim ratio reached 26.5\%, mean citation alignment reached 83.8\%, flagged-case prevalence was 37.5\%, and the mean calibration gap between benchmark task success and TrustStack score was 0.626. The case-level correlation between benchmark success and normalized TrustStack score was -0.524.
+
+The strongest public subset under the current local runtime was HotpotQA at 73.90/100, while SciFact scored 52.29/100. This result matters because it exposes a real external-validity stress case: TrustStack preserves strong citation alignment on public tasks, but the current local runtime still shows a weak relationship between task success and final trust score.
+
+\begin{table*}[t]
+\centering
+\caption{Case-level real benchmark outcomes used for the paper.}
+\label{tab:real-benchmark-cases}
+\renewcommand{\arraystretch}{1.05}
+\scriptsize
+\begin{tabular}{@{}L{0.10\textwidth}L{0.08\textwidth}C{0.08\textwidth}C{0.08\textwidth}C{0.08\textwidth}L{0.18\textwidth}L{0.20\textwidth}@{}}
+\hline
+\rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{ID} & \textbf{Task} & \textbf{Trust} & \textbf{Verdict} & \textbf{Gold} & \textbf{Predicted} \\
+\hline
+SciFact & 1 & 0.000 & 42.95 & FAIL & not\_enough\_info & supported \\
+SciFact & 3 & 0.000 & 58.82 & FAIL & supported & unknown \\
+SciFact & 5 & 1.000 & 45.48 & FAIL & supported & supported \\
+SciFact & 13 & 0.000 & 61.90 & REVIEW & not\_enough\_info & unknown \\
+HotpotQA & 5a8b57..1371 & 0.000 & 74.95 & REVIEW & yes & Much of his work is in the a... \\
+HotpotQA & 5a8c75..36b6 & 0.000 & 77.18 & REVIEW & Chief of Protocol & Kiss and Tell is a 1945 Amer... \\
+HotpotQA & 5a85ea..06a8 & 0.032 & 74.53 & REVIEW & Animorphs & Animorphs is a science fanta... \\
+HotpotQA & 5adbf0..385a & 0.000 & 73.99 & REVIEW & no & A popular tourist site, the ... \\
+HotpotQA & 5a8e3e..d48d & 0.128 & 68.84 & REVIEW & Greenwich Village, New York ... & In 1926 the Society was form... \\
+\hline
+\end{tabular}
+\end{table*}
+
+The public benchmark results narrow a major threat to validity in the earlier draft: the system is no longer evaluated only on internally constructed stress packets. At the same time, these results should still be interpreted as a subset study rather than a final leaderboard claim. The value of the section is that TrustStack now demonstrates evidence-traceable behavior on external tasks, not that the present local runtime exhausts the performance ceiling of stronger semantic retrieval or larger generation models.

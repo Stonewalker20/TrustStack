@@ -131,42 +131,49 @@ def _fever_examples(sample_limit: int) -> list[RealBenchmarkExample]:
 
 def _scifact_examples(sample_limit: int) -> list[RealBenchmarkExample]:
     load_dataset = _load_hf_datasets_module()
-    split = load_dataset("allenai/scifact", split="validation[:{}]".format(sample_limit))
+    claims = load_dataset("allenai/scifact", "claims", split="validation[:{}]".format(sample_limit), trust_remote_code=True)
+    corpus = load_dataset("allenai/scifact", "corpus", split="train", trust_remote_code=True)
+    corpus_by_id = {int(row["doc_id"]): row for row in corpus}
     examples: list[RealBenchmarkExample] = []
-    for row in split:
-        abstracts = row.get("evidence_abstracts") or row.get("abstract") or []
-        if isinstance(abstracts, str):
-            abstracts = [abstracts]
+    seen_example_ids: set[str] = set()
+    for row in claims:
+        example_id = str(row["id"])
+        if example_id in seen_example_ids:
+            continue
+        seen_example_ids.add(example_id)
+        cited_doc_ids = [int(doc_id) for doc_id in row.get("cited_doc_ids", [])]
         chunks = [
             {
-                "filename": f"scifact_{row['id']}.txt",
+                "filename": f"scifact_{doc_id}.txt",
                 "page_num": index + 1,
-                "text": abstract,
+                "text": " ".join(corpus_by_id[doc_id].get("abstract", [])),
             }
-            for index, abstract in enumerate(abstracts)
-            if abstract
+            for index, doc_id in enumerate(cited_doc_ids)
+            if doc_id in corpus_by_id and corpus_by_id[doc_id].get("abstract")
         ]
         if not chunks:
             continue
-        label_map = {"SUPPORT": "supported", "CONTRADICT": "contradicted", "NOT_ENOUGH_INFO": "not_enough_info"}
+        label_map = {"SUPPORT": "supported", "CONTRADICT": "contradicted", "NOT_ENOUGH_INFO": "not_enough_info", "": "not_enough_info"}
         examples.append(
             RealBenchmarkExample(
                 dataset_key="scifact",
                 dataset_label="SciFact",
                 task_type="verification",
-                example_id=str(row["id"]),
+                example_id=example_id,
                 question=f"Claim: {row['claim']}. Based only on the evidence, is this claim supported, contradicted, or not enough information?",
-                chunks=_normalize_chunks("scifact", str(row["id"]), chunks),
-                gold_label=label_map.get(str(row.get("label", "")).upper(), "not_enough_info"),
+                chunks=_normalize_chunks("scifact", example_id, chunks),
+                gold_label=label_map.get(str(row.get("evidence_label", "")).upper(), "not_enough_info"),
                 metadata={"source": "huggingface:allenai/scifact"},
             )
         )
+        if len(examples) >= sample_limit:
+            break
     return examples
 
 
 def _hotpotqa_examples(sample_limit: int) -> list[RealBenchmarkExample]:
     load_dataset = _load_hf_datasets_module()
-    split = load_dataset("hotpot_qa", "distractor", split="validation[:{}]".format(sample_limit))
+    split = load_dataset("hotpot_qa", "distractor", split="validation[:{}]".format(sample_limit), trust_remote_code=True)
     examples: list[RealBenchmarkExample] = []
     for row in split:
         contexts = row.get("context", {})
@@ -184,9 +191,9 @@ def _hotpotqa_examples(sample_limit: int) -> list[RealBenchmarkExample]:
                 dataset_key="hotpotqa",
                 dataset_label="HotpotQA",
                 task_type="qa",
-                example_id=str(row["_id"]),
+                example_id=str(row.get("_id", row.get("id"))),
                 question=str(row["question"]),
-                chunks=_normalize_chunks("hotpotqa", str(row["_id"]), chunks),
+                chunks=_normalize_chunks("hotpotqa", str(row.get("_id", row.get("id"))), chunks),
                 gold_answer=str(row.get("answer", "")),
                 metadata={"source": "huggingface:hotpot_qa"},
             )

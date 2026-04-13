@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from app.services.evaluation import build_evaluation_report
 from app.services.explanations import build_query_explanation
 from app.services.real_benchmark import run_real_dataset_benchmark
+from app.services.real_benchmark_report import render_real_benchmark_report_latex
 from app.services.rag import _extract_hits, _rebuild_index_from_chunks
 from app.services.report_export import build_report_artifacts
 from app.services.risk import build_risk_flags, summarize_trust
@@ -360,6 +361,73 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertIn("aggregate_task_metric", result)
         self.assertEqual(len(result["cases"]), 2)
         self.assertIn(result["verdict"], {"pass", "review", "fail"})
+
+    def test_render_real_benchmark_report_latex_contains_tables(self):
+        result = {
+            "framework": {"name": "TrustStack Evaluation Standard", "version": "2.0", "description": "desc", "score_range": "0-100", "pass_threshold": 80.0, "review_threshold": 60.0, "dimensions": []},
+            "generated_at": "2026-04-13T00:00:00+00:00",
+            "dataset_runs": [
+                {
+                    "dataset_key": "scifact",
+                    "dataset_label": "SciFact",
+                    "task_type": "verification",
+                    "example_count": 2,
+                    "task_metric_label": "label_accuracy",
+                    "task_metric_score": 0.5,
+                    "truststack_score": 72.0,
+                    "supported_claim_ratio": 0.75,
+                    "citation_alignment_ratio": 0.5,
+                    "flagged_case_rate": 0.5,
+                    "verdict": "review",
+                }
+            ],
+            "aggregate_score": 72.0,
+            "aggregate_task_metric": 0.5,
+            "verdict": "review",
+            "recommended_actions": [],
+            "cases": [
+                {
+                    "dataset_key": "scifact",
+                    "dataset_label": "SciFact",
+                    "task_type": "verification",
+                    "example_id": "1",
+                    "question": "Claim: X",
+                    "predicted_answer": "supported",
+                    "gold_answer": None,
+                    "gold_label": "supported",
+                    "task_score": 1.0,
+                    "task_metric_label": "label_accuracy",
+                    "truststack_score": 80.0,
+                    "verdict": "pass",
+                    "supported_claim_ratio": 1.0,
+                    "citation_alignment_ratio": 1.0,
+                    "risk_flags": [],
+                },
+                {
+                    "dataset_key": "scifact",
+                    "dataset_label": "SciFact",
+                    "task_type": "verification",
+                    "example_id": "2",
+                    "question": "Claim: Y",
+                    "predicted_answer": "contradicted",
+                    "gold_answer": None,
+                    "gold_label": "supported",
+                    "task_score": 0.0,
+                    "task_metric_label": "label_accuracy",
+                    "truststack_score": 64.0,
+                    "verdict": "review",
+                    "supported_claim_ratio": 0.5,
+                    "citation_alignment_ratio": 0.0,
+                    "risk_flags": ["LOW_RETRIEVAL_SUPPORT"],
+                },
+            ],
+        }
+
+        latex = render_real_benchmark_report_latex(result)
+
+        self.assertIn(r"\TrustSection{Real Benchmark Evaluation}", latex)
+        self.assertIn(r"\label{tab:real-benchmark-results}", latex)
+        self.assertIn(r"\label{tab:real-benchmark-cases}", latex)
 
 
 if __name__ == "__main__":

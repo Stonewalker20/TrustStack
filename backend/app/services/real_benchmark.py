@@ -99,8 +99,8 @@ def _build_store_for_example(example: RealBenchmarkExample):
 
 def _format_question(example: RealBenchmarkExample) -> str:
     if example.task_type == "verification":
-        return example.question
-    return example.question
+        return example.question + " Respond with exactly one label: supported, contradicted, or not enough information."
+    return example.question + " Answer with the shortest grounded phrase possible. If the evidence is insufficient, answer: not enough information."
 
 
 def _run_example(example: RealBenchmarkExample) -> RealBenchmarkCaseResult:
