@@ -24,6 +24,59 @@ It combines:
 
 ---
 
+## Course Project Fit
+
+TrustStack is a comprehensive model-evaluation and grounded-AI analysis project for CSI-4130/5130. It fits the course brief in three ways:
+
+- `Comprehensive Model Evaluation`
+  TrustStack evaluates generative AI outputs with a standardized evidence-first scoring framework, traceability checks, contradiction analysis, and benchmarkable report artifacts.
+- `Application Development with Modern AI`
+  The system is a working full-stack application with a browser frontend, FastAPI backend, MongoDB persistence, retrieval, local model integration, and reproducible export/report paths.
+- `Real-World Problem Focus`
+  The project targets a practical deployment problem: users often receive fluent AI outputs without a reliable way to judge whether those outputs are sufficiently grounded to trust.
+
+---
+
+## Problem Statement
+
+Modern LLM systems are easy to demo but difficult to trust. In policy, research, safety, and compliance settings, users need more than an answer: they need evidence traceability, contradiction checks, confidence calibration, and explicit guidance on whether the response is safe to operationalize.
+
+TrustStack addresses that problem by treating trust as a first-class evaluation output rather than a vague subjective impression.
+
+---
+
+## Proposed Method
+
+TrustStack uses a local-first retrieval and evaluation workflow:
+
+1. ingest user evidence and chunk it into indexed passages
+2. retrieve the most relevant passages for a question
+3. generate a grounded answer with citations
+4. score the answer with the TrustStack Evaluation Standard v2.0
+5. return evidence diagnostics, risk flags, explanations, and exportable report artifacts
+
+This makes the system both an application and an evaluation framework.
+
+---
+
+## Data Sources
+
+TrustStack currently uses two categories of data:
+
+- user-uploaded evidence files in `.pdf`, `.docx`, `.txt`, and `.md`
+- controlled benchmark corpora for evaluation
+
+Benchmark support currently includes:
+
+- synthetic evidence packets for reproducible stress testing
+- `FEVER` for claim verification
+- `SciFact` for scientific claim verification
+- `HotpotQA` for multi-hop grounded question answering
+
+The backend supports normalized local benchmark files in `backend/data/benchmarks/` and optional Hugging Face dataset loading for supported public datasets.
+
+---
+
 ## Feature Map
 
 ### Frontend Experience
@@ -236,6 +289,44 @@ Production-like smoke coverage now includes:
 
 ---
 
+## Evaluation Summary
+
+TrustStack currently evaluates:
+
+- retrieval relevance
+- evidence sufficiency
+- citation traceability
+- claim support
+- contradiction risk
+- completeness
+- honesty and abstention
+- answer discipline
+- safety and operational risk
+- calibration and consistency
+
+The repository also includes:
+
+- backend unit tests
+- real Mongo integration tests
+- browser E2E tests
+- served-stack smoke tests
+- synthetic benchmark generation for the IEEE report
+- real benchmark support for FEVER, SciFact, and HotpotQA
+
+---
+
+## Presentation Assets
+
+The in-class presentation is supported by:
+
+- the interactive frontend in `frontend/`
+- the final report PDF in `docs/report/main.pdf`
+- the planet-view presentation flow built into the frontend experience
+
+Before final course submission, add the public link for the recorded presentation video to this README.
+
+---
+
 ## Environment Notes
 
 Important backend settings in `backend/.env`:
@@ -314,3 +405,21 @@ If you are working on the repo next, the highest-leverage areas are:
 2. backend integration tests against a real database
 3. richer frontend rendering of the backend explanation payload
 4. tighter ingestion and retrieval observability
+
+---
+
+## Citations & Acknowledgements
+
+TrustStack builds on published work and open-source tools. Key research references are documented in [references.bib](docs/report/references.bib) and cited in the final report. Major software and dataset dependencies include:
+
+- FastAPI
+- React and Vite
+- MongoDB
+- ChromaDB
+- Ollama
+- Hugging Face datasets
+- FEVER
+- SciFact
+- HotpotQA
+
+The final report source is in [main.tex](docs/report/main.tex) and the compiled PDF is in [main.pdf](docs/report/main.pdf). All benchmark tables in the report are generated from project artifacts rather than manually transcribed.

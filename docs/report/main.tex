@@ -78,6 +78,13 @@ The technical design builds on established retrieval-augmented generation and ha
 \end{enumerate}
 }
 
+\TrustSection{Related Work}
+TrustStack is grounded in three adjacent lines of work. First, retrieval-augmented generation establishes the core architectural premise that model outputs should be conditioned on retrieved evidence rather than unconstrained parametric recall \cite{lewis2020rag,gao2023ragsurvey}. TrustStack adopts this premise, but shifts the emphasis from answer production to answer inspection. The contribution is therefore not just a retrieval pipeline, but an evidence-first scoring and reporting layer wrapped around that pipeline.
+
+Second, the project is motivated by the hallucination and reliability literature, which shows that fluent outputs can remain misleading, unsupported, or operationally unsafe even when they appear plausible \cite{ji2023survey}. TrustStack addresses this by explicitly scoring contradiction risk, abstention behavior, evidence sufficiency, and citation traceability instead of relying on answer fluency alone. The system is therefore designed to expose failure modes that traditional demos often suppress.
+
+Third, the project is informed by structured evaluation practice for generative systems, where prompts, judgments, score dimensions, and artifacts need to be reproducible enough to compare models and configurations across runs \cite{openai2024evals}. TrustStack extends that perspective into a local-first evaluation workflow with report export, reproducibility metadata, and batch benchmarking. In that sense, the system sits between a research evaluation harness and an operator-facing review tool.
+
 \TrustSection{Problem Setting}
 TrustStack assumes a corpus of uploaded evidence, a user question, and a model-generated answer conditioned on retrieved context. The system does not attempt to solve open-domain truth verification. Instead, it asks whether the answer is justified \emph{with respect to the indexed evidence currently available}. This is a narrower but more defensible setting for enterprise, academic, and operational review workflows.
 
@@ -93,7 +100,15 @@ The practical failure modes in this setting are familiar:
 
 TrustStack is built to expose each of these failure modes rather than hide them behind a single scalar score.
 
-\TrustSection{System Overview}
+\TrustSection{Data}
+TrustStack operates over two data families. The first is user-provided evidence: uploaded PDF, DOCX, TXT, and Markdown files that are parsed, chunked, indexed, and stored for interactive evaluation. This dataset family is central to the live system because it defines the evidence boundary against which groundedness is judged.
+
+The second data family is benchmark-oriented. For controlled experimentation, the current report uses seven version-controlled synthetic corpus conditions spanning aligned procedures, consensus evidence, contradictory revisions, numeric conflicts, unsafe override guidance, sparse evidence, and off-scope lexical drift. These corpora were intentionally designed to stress retrieval, abstention, contradiction handling, and evidence synthesis under known conditions.
+
+In addition to the synthetic benchmark used in the present report, the backend now supports real benchmark ingestion for FEVER, SciFact, and HotpotQA through a dedicated benchmark runner. These datasets are appropriate because they pressure claim verification, scientific evidence reasoning, and multi-hop question answering, respectively \cite{thorne2018fever,wadden2020scifact,yang2018hotpotqa}. The current report does not yet include a full empirical section over those public datasets because the local benchmark path depends on dataset availability in the runtime environment, but the system has been extended to support that evaluation protocol directly.
+
+\TrustSection{Methods}
+\TrustSubsection{System Architecture}
 The TrustStack pipeline contains five operational layers:
 \begin{enumerate}
   \item \textbf{Evidence Intake}: user uploads are parsed, chunked, and persisted.
@@ -124,7 +139,7 @@ The TrustStack pipeline contains five operational layers:
   \end{tabular}
 \end{table}
 
-\TrustSection{TrustStack Evaluation Standard v2.0}
+\TrustSubsection{TrustStack Evaluation Standard v2.0}
 The TrustStack Evaluation Standard v2.0 is a weighted framework that converts a single answer into an evidence-first evaluation report. Table~\ref{tab:dimensions} summarizes the ten dimensions currently implemented.
 The report structure is aligned with structured evaluation practices in which each score is paired with a rationale, diagnostics, and a review-oriented interpretation \cite{openai2024evals}.
 
@@ -171,7 +186,7 @@ The score bands are defined as:
   \item \textbf{Fail}: score $< 60$
 \end{itemize}
 
-\TrustSection{Standardized Test Suite}
+\TrustSubsection{Standardized Test Suite}
 In addition to single-query evaluation, TrustStack now runs a standardized suite that evaluates the current corpus and runtime stack through a set of grounded probes. The suite includes:
 \begin{itemize}
   \item direct evidence retrieval prompts derived from the corpus;
@@ -197,12 +212,12 @@ TrustStack now produces a structured report artifact alongside the live score. T
 
 The standardized suite also supports batch benchmarking across uploaded datasets by running the same probe set against each evidence source independently. Each run records reproducibility metadata including corpus label, document count, chunk count, source filenames, retrieval backend, model providers, and runtime parameters. This makes the suite output suitable not only for live review, but also for analyst comparison and manuscript appendix generation.
 
-\TrustSection{Operator Interface}
+\TrustSubsection{Operator Interface}
 TrustStack exposes its evaluation workflow through an operator-facing review interface rather than a conventional chat-only surface. The interface is structured around the same stages used by the backend pipeline: evidence intake, runtime querying, evidence review, score interpretation, historical comparison, and export. This matters because the user is not merely consuming an answer. Instead, the user is asked to inspect whether a generated answer is sufficiently supported to justify operational use.
 
 The interface is therefore designed around three principles. First, every trust judgment should remain traceable to retrieved evidence. Second, every score should be paired with diagnostics that explain what raised or lowered confidence. Third, evaluation outputs should be reusable beyond the immediate interaction, including benchmarking, analyst review, and manuscript export. In practice, this means the frontend behaves as an inspection layer over the standardized backend evaluation process rather than as a thin wrapper around generation alone. The interface exposes these stages in a stable sequence that supports both operator review and formal explanation.
 
-\TrustSection{Implementation and Verification}
+\TrustSubsection{Implementation and Verification}
 TrustStack is built as a local-first system. MongoDB stores documents, chunks, and run history. The backend exposes ingestion, document listing, sample-question generation, query, run history, standardized-suite execution, batch benchmark, and report-export routes. The frontend consumes those routes through a single API layer and renders an operator-facing inspection workflow for evidence, evaluation, and reporting.
 
 Verification currently operates at four levels:
@@ -215,6 +230,7 @@ Verification currently operates at four levels:
 
 This layered verification strategy matters because TrustStack is itself an evaluation product. If the system is intended to judge groundedness and traceability, its own ingest, retrieval, explanation, and persistence paths must be tested with equal rigor.
 
+\TrustSection{Experiments and Results}
 \input{generated/synthetic_results.tex}
 
 \TrustSection{Discussion}
@@ -300,6 +316,9 @@ The current interface is still optimized for explanation and review rather than 
 
 \TrustSection{Conclusion}
 TrustStack reframes trustworthy AI interaction as an evidence-first evaluation problem. Instead of returning an answer alone, the system returns a score, a rationale, a set of diagnostics, and a review path. The synthetic benchmark reported here shows that the current implementation already discriminates meaningfully between aligned, contradictory, unsafe, and sparse corpora, with the largest weakness concentrated in grounding and retrieval rather than in downstream score formatting. By combining a local-first architecture, a standardized evaluation framework, and an operator-facing inspection interface, TrustStack provides a concrete path toward AI systems that can be inspected before they are trusted.
+
+\TrustSection{Citations and Acknowledgements}
+TrustStack builds on open research and open-source software. The retrieval-augmented generation framing, hallucination discussion, and structured evaluation perspective are attributed in the bibliography. The implemented system also relies on widely used engineering tools including FastAPI, React, Vite, MongoDB, ChromaDB, Ollama, and Hugging Face datasets. Public benchmark support in the backend currently targets FEVER, SciFact, and HotpotQA, which are cited as dataset sources in this paper. All generated report tables in this submission were produced from benchmark artifacts written by the project code rather than manual transcription.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
