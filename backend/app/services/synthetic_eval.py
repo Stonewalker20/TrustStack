@@ -732,7 +732,7 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
         [
             r"\TrustSection{Synthetic Evaluation Findings}",
             (
-                "We replaced the earlier experimental-plan placeholder with a reproducible synthetic benchmark executed directly on the TrustStack backend. "
+                "This section reports a reproducible synthetic benchmark executed directly on the TrustStack backend. "
                 "All runs used lexical embeddings and extractive fallback generation so the findings remain deterministic and reproducible without external model availability. "
                 f"The benchmark covered {aggregate['dataset_count']} synthetic corpus conditions spanning aligned procedures, consensus evidence, contradictory revisions, unsafe override guidance, numeric conflicts, sparse evidence, and off-scope lexical drift."
             ),
@@ -892,13 +892,13 @@ def render_synthetic_report_latex(result: dict[str, Any]) -> str:
             (
                 "There are therefore two distinct interpretations of the findings. First, the benchmark is strong internal evidence that TrustStack's scoring, citation checks, and risk flags respond sensibly to changes in corpus quality. "
                 "Second, the benchmark is not yet a substitute for large-scale external validation on public grounded-answer datasets. "
-                "A full conference submission should therefore pair these synthetic results with one or more external corpora and a stronger retrieval baseline."
+                "The synthetic results should therefore be read as controlled evidence for evaluator behavior rather than as a complete claim of generalization across every corpus domain."
             ),
             r"\TrustSubsection{Implications for TrustStack}",
             (
                 "The synthetic benchmark suggests that TrustStack is strongest at maintaining traceability and consistency diagnostics once evidence has been retrieved, but weaker at preserving strong grounding under corpus sparsity, lexical drift, or negative-control prompts. "
                 "This is a defensible engineering result: the evaluation stack is surfacing the same retrieval and scope problems that a human analyst would need to inspect. "
-                "For a conference submission, this gives the system a concrete empirical story rather than a purely architectural one."
+                "The benchmark therefore gives the system a concrete empirical story rather than a purely architectural one."
             ),
         ]
     )

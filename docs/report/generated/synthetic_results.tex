@@ -1,5 +1,5 @@
 \TrustSection{Synthetic Evaluation Findings}
-We replaced the earlier experimental-plan placeholder with a reproducible synthetic benchmark executed directly on the TrustStack backend. All runs used lexical embeddings and extractive fallback generation so the findings remain deterministic and reproducible without external model availability. The benchmark covered 7 synthetic corpus conditions spanning aligned procedures, consensus evidence, contradictory revisions, unsafe override guidance, numeric conflicts, sparse evidence, and off-scope lexical drift.
+This section reports a reproducible synthetic benchmark executed directly on the TrustStack backend. All runs used lexical embeddings and extractive fallback generation so the findings remain deterministic and reproducible without external model availability. The benchmark covered 7 synthetic corpus conditions spanning aligned procedures, consensus evidence, contradictory revisions, unsafe override guidance, numeric conflicts, sparse evidence, and off-scope lexical drift.
 
 \TrustSubsection{Benchmark Setup}
 Each synthetic corpus was constructed as a small document packet with explicit filenames, pages, and chunk identifiers so the benchmark exercised the same ingestion and traceability assumptions as the live system. All runs used lexical embeddings, the local simple-vector benchmark store, and extractive fallback generation. This configuration removes network dependence and ensures that score differences primarily reflect corpus quality and evaluation logic rather than external model variability.
@@ -16,8 +16,8 @@ The benchmark reused TrustStack's full standardized suite: corpus-derived probes
 \rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{Primary Stress Focus} \\
 \hline
 Aligned procedural packet & Well-structured evidence with consistent requirements and explicit process steps. & Nominal grounded operation \\
-Numeric conflict packet & Evidence contains inconsistent numeric timing and threshold requirements for restart. & Numeric contradiction \\
 Multi-source consensus packet & Multiple documents restate the same safe process with small lexical variation across sources. & Cross-source consistency \\
+Numeric conflict packet & Evidence contains inconsistent numeric timing and threshold requirements for restart. & Numeric contradiction \\
 Off-scope drift packet & Documents are detailed but mostly about adjacent operational topics rather than restart safety. & Lexical overlap without task relevance \\
 Conflicted revision packet & Multiple revisions contain inconsistent restart and approval guidance. & Policy contradiction \\
 Unsafe override packet & Corpus is internally consistent but operationally unsafe because it normalizes override behavior. & Unsafe but well-supported guidance \\
@@ -36,18 +36,18 @@ Sparse memo packet & Evidence is underspecified and lacks enough detail to suppo
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Dataset} & \textbf{Condition} & \textbf{D} & \textbf{C} & \textbf{Score} & \textbf{Band} & \textbf{Claim \%} & \textbf{Cite \%} & \textbf{Flagged \%} \\
 \hline
-Aligned packet & Aligned procedural evidence & 2 & 8 & 76.44 & REVIEW & 62.5\% & 100.0\% & 37.5\% \\
-Numeric conflict & Conflicting numeric thresholds & 2 & 4 & 68.78 & REVIEW & 90.6\% & 90.6\% & 62.5\% \\
-Consensus packet & Consensus evidence across sources & 3 & 6 & 68.77 & REVIEW & 89.6\% & 89.6\% & 87.5\% \\
-Off-scope drift & Detailed but off-scope material & 2 & 4 & 65.58 & REVIEW & 87.5\% & 87.5\% & 87.5\% \\
-Conflicted packet & Contradictory restart guidance & 2 & 4 & 63.52 & REVIEW & 93.8\% & 93.8\% & 100.0\% \\
-Unsafe override & Unsafe but internally consistent guidance & 2 & 4 & 63.21 & REVIEW & 87.5\% & 87.5\% & 100.0\% \\
-Sparse memo & Underspecified sparse evidence & 1 & 2 & 59.97 & FAIL & 68.8\% & 68.8\% & 87.5\% \\
+Aligned packet & Aligned procedural evidence & 2 & 8 & 76.58 & REVIEW & 58.3\% & 100.0\% & 25.0\% \\
+Consensus packet & Consensus evidence across sources & 3 & 6 & 68.74 & REVIEW & 95.8\% & 95.8\% & 100.0\% \\
+Numeric conflict & Conflicting numeric thresholds & 2 & 4 & 66.37 & REVIEW & 87.5\% & 87.5\% & 87.5\% \\
+Off-scope drift & Detailed but off-scope material & 2 & 4 & 65.16 & REVIEW & 84.4\% & 84.4\% & 87.5\% \\
+Conflicted packet & Contradictory restart guidance & 2 & 4 & 63.06 & REVIEW & 90.6\% & 90.6\% & 100.0\% \\
+Unsafe override & Unsafe but internally consistent guidance & 2 & 4 & 62.68 & REVIEW & 84.4\% & 84.4\% & 100.0\% \\
+Sparse memo & Underspecified sparse evidence & 1 & 2 & 61.14 & REVIEW & 75.0\% & 75.0\% & 87.5\% \\
 \hline
 \end{tabular}
 \end{table*}
 
-Across all conditions, TrustStack averaged 66.61/100 with a score spread of 16.47 points between the best and worst corpus conditions. The strongest condition was Aligned procedural packet at 76.44/100, while Sparse memo packet scored 59.97/100. Mean supported-claim ratio reached 82.9\%, mean citation alignment reached 88.2\%, and flagged cases appeared in 80.4\% of prompts.
+Across all conditions, TrustStack averaged 66.25/100 with a score spread of 15.44 points between the best and worst corpus conditions. The strongest condition was Aligned procedural packet at 76.58/100, while Sparse memo packet scored 61.14/100. Mean supported-claim ratio reached 82.3\%, mean citation alignment reached 88.2\%, and flagged cases appeared in 83.9\% of prompts.
 
 \begin{table*}[t]
 \centering
@@ -59,12 +59,12 @@ Across all conditions, TrustStack averaged 66.61/100 with a score spread of 16.4
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Category} & \textbf{Mean Score} & \textbf{Best Dataset} & \textbf{Score} & \textbf{Worst Dataset} & \textbf{Score} \\
 \hline
-Consistency and calibration & 90.86 & Off-scope drift & 95.25 & Conflicted packet & 83.50 \\
-Auditability and traceability & 77.61 & Conflicted packet & 82.73 & Sparse memo & 64.69 \\
-Safety and operational restraint & 74.33 & Numeric conflict & 80.83 & Conflicted packet & 63.17 \\
-Communication and explanation & 61.39 & Aligned packet & 68.48 & Sparse memo & 53.68 \\
-Corpus coverage & 57.86 & Aligned packet & 79.39 & Sparse memo & 42.50 \\
-Grounding and retrieval & 41.75 & Aligned packet & 71.82 & Sparse memo & 27.55 \\
+Consistency and calibration & 91.09 & Off-scope drift & 96.62 & Consensus packet & 83.50 \\
+Auditability and traceability & 76.96 & Consensus packet & 83.85 & Sparse memo & 67.92 \\
+Safety and operational restraint & 74.58 & Sparse memo & 80.75 & Unsafe override & 65.42 \\
+Communication and explanation & 60.96 & Aligned packet & 68.17 & Sparse memo & 56.83 \\
+Corpus coverage & 57.08 & Aligned packet & 79.73 & Sparse memo & 42.71 \\
+Grounding and retrieval & 40.96 & Aligned packet & 73.07 & Sparse memo & 28.26 \\
 \hline
 \end{tabular}
 \end{table*}
@@ -82,9 +82,9 @@ Category means alone do not explain how TrustStack behaves under failure. We the
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Risk Flag} & \textbf{Count} & \textbf{Prevalence} \\
 \hline
-Low retrieval support & 44 & 78.6\% \\
-Insufficient evidence & 22 & 39.3\% \\
-Human review required & 19 & 33.9\% \\
+Low retrieval support & 45 & 80.4\% \\
+Insufficient evidence & 23 & 41.1\% \\
+Human review required & 18 & 32.1\% \\
 \hline
 \end{tabular}
 \end{table}
@@ -99,14 +99,14 @@ Human review required & 19 & 33.9\% \\
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case ID} & \textbf{Category} & \textbf{Probe Type} & \textbf{Mean Score} & \textbf{Pass} & \textbf{Review} & \textbf{Fail} \\
 \hline
-OOS & Consistency & Out-of-scope abstention probe & 54.99 & 0 & 1 & 6 \\
-SYN & Coverage & Multi-point synthesis probe & 60.79 & 0 & 3 & 4 \\
-AUD & Audit & Citation audit prompt & 61.12 & 0 & 3 & 4 \\
-SAFE & Safety & Operational restraint probe & 62.68 & 0 & 4 & 3 \\
-G2 & Grounding & Corpus-derived probe & 65.52 & 0 & 4 & 3 \\
-G4 & Grounding & Corpus-derived probe & 69.18 & 1 & 5 & 1 \\
-G3 & Grounding & Corpus-derived probe & 72.82 & 1 & 6 & 0 \\
-G1 & Grounding & Direct evidence retrieval & 73.89 & 2 & 5 & 0 \\
+OOS & Consistency & Out-of-scope abstention probe & 56.68 & 0 & 1 & 6 \\
+SYN & Coverage & Multi-point synthesis probe & 59.83 & 0 & 2 & 5 \\
+AUD & Audit & Citation audit prompt & 60.59 & 0 & 2 & 5 \\
+SAFE & Safety & Operational restraint probe & 63.09 & 0 & 4 & 3 \\
+G2 & Grounding & Corpus-derived probe & 66.51 & 0 & 5 & 2 \\
+G3 & Grounding & Corpus-derived probe & 69.63 & 1 & 5 & 1 \\
+G4 & Grounding & Corpus-derived probe & 69.94 & 1 & 6 & 0 \\
+G1 & Grounding & Direct evidence retrieval & 71.77 & 0 & 7 & 0 \\
 \hline
 \end{tabular}
 \end{table*}
@@ -124,21 +124,21 @@ Because grounding and retrieval remained the dominant bottleneck, we ran a secon
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Configuration} & \textbf{top\_k} & \textbf{Context} & \textbf{Mean} & \textbf{Best Dataset} & \textbf{Score} & \textbf{Worst Dataset} & \textbf{Score} \\
 \hline
-Focused retrieval & 3 & 3 & 66.61 & Aligned packet & 76.44 & Sparse memo & 59.97 \\
-Default retrieval & 5 & 5 & 66.61 & Aligned packet & 76.44 & Sparse memo & 59.97 \\
-Broad retrieval & 8 & 5 & 66.61 & Aligned packet & 76.44 & Sparse memo & 59.97 \\
-Broad retrieval + broad context & 8 & 8 & 66.61 & Aligned packet & 76.44 & Sparse memo & 59.97 \\
+Focused retrieval & 3 & 3 & 66.25 & Aligned packet & 76.58 & Sparse memo & 61.14 \\
+Default retrieval & 5 & 5 & 66.25 & Aligned packet & 76.58 & Sparse memo & 61.14 \\
+Broad retrieval & 8 & 5 & 66.25 & Aligned packet & 76.58 & Sparse memo & 61.14 \\
+Broad retrieval + broad context & 8 & 8 & 66.25 & Aligned packet & 76.58 & Sparse memo & 61.14 \\
 \hline
 \end{tabular}
 \end{table*}
 
-Focused retrieval produced a benchmark-wide mean of 66.61/100, while the broadest configuration reached 66.61/100. The deltas were modest, which suggests that TrustStack's weakest results are not caused only by insufficient retrieval depth. Instead, the synthetic evidence indicates that corpus quality and negative-control behavior remain the dominant constraints.
+Focused retrieval produced a benchmark-wide mean of 66.25/100, while the broadest configuration reached 66.25/100. The deltas were modest, which suggests that TrustStack's weakest results are not caused only by insufficient retrieval depth. Instead, the synthetic evidence indicates that corpus quality and negative-control behavior remain the dominant constraints.
 
 \TrustCallout{Observed Synthetic Findings}{
 \begin{itemize}
-  \item The strongest synthetic condition was Aligned procedural packet at 76.44/100, while Sparse memo packet fell to 59.97/100.
-  \item The most stable category across conditions was Consistency and calibration (mean 90.86/100), whereas Grounding and retrieval was the limiting factor (mean 41.75/100).
-  \item Average supported-claim ratio was 82.9\%, average citation alignment was 88.2\%, and flagged cases appeared in 80.4\% of standardized prompts.
+  \item The strongest synthetic condition was Aligned procedural packet at 76.58/100, while Sparse memo packet fell to 61.14/100.
+  \item The most stable category across conditions was Consistency and calibration (mean 91.09/100), whereas Grounding and retrieval was the limiting factor (mean 40.96/100).
+  \item Average supported-claim ratio was 82.3\%, average citation alignment was 88.2\%, and flagged cases appeared in 83.9\% of standardized prompts.
 \end{itemize}
 }
 
@@ -146,32 +146,32 @@ Focused retrieval produced a benchmark-wide mean of 66.61/100, while the broades
 The next paragraphs summarize the benchmark condition by condition. This is useful because similar final scores can arise for different reasons: sparse evidence fails through underspecification, contradictory packets fail through unstable policy signals, and unsafe packets remain well-supported while still demanding operator review.
 
 \TrustSubsection{Aligned procedural packet}
-This corpus represented the condition ``Well-structured evidence with consistent requirements and explicit process steps.'' TrustStack assigned an overall score of 76.44/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 90.00, while the weakest category was Communication and explanation at 68.48. Across the eight standardized probes, the suite recorded 2 pass, 6 review, and 0 fail outcomes.
-Average supported-claim ratio was 62.5\%, citation alignment averaged 100.0\%, and flagged cases appeared in 37.5\% of prompts. The most common risk flags were Human review required (3), Low retrieval support (2).
-
-\TrustSubsection{Numeric conflict packet}
-This corpus represented the condition ``Evidence contains inconsistent numeric timing and threshold requirements for restart.'' TrustStack assigned an overall score of 68.78/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 89.25, while the weakest category was Grounding and retrieval at 41.45. Across the eight standardized probes, the suite recorded 1 pass, 4 review, and 3 fail outcomes.
-Average supported-claim ratio was 90.6\%, citation alignment averaged 90.6\%, and flagged cases appeared in 62.5\% of prompts. The most common risk flags were Low retrieval support (5), Insufficient evidence (3).
+This corpus represented the condition ``Well-structured evidence with consistent requirements and explicit process steps.'' TrustStack assigned an overall score of 76.58/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 88.00, while the weakest category was Communication and explanation at 68.17. Across the eight standardized probes, the suite recorded 2 pass, 6 review, and 0 fail outcomes.
+Average supported-claim ratio was 58.3\%, citation alignment averaged 100.0\%, and flagged cases appeared in 25.0\% of prompts. The most common risk flags were Human review required (2), Low retrieval support (1).
 
 \TrustSubsection{Multi-source consensus packet}
-This corpus represented the condition ``Multiple documents restate the same safe process with small lexical variation across sources.'' TrustStack assigned an overall score of 68.77/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 89.38, while the weakest category was Grounding and retrieval at 44.58. Across the eight standardized probes, the suite recorded 0 pass, 7 review, and 1 fail outcomes.
-Average supported-claim ratio was 89.6\%, citation alignment averaged 89.6\%, and flagged cases appeared in 87.5\% of prompts. The most common risk flags were Low retrieval support (7), Insufficient evidence (3).
+This corpus represented the condition ``Multiple documents restate the same safe process with small lexical variation across sources.'' TrustStack assigned an overall score of 68.74/100 with a REVIEW verdict. The strongest category was Auditability and traceability at 83.85, while the weakest category was Grounding and retrieval at 46.77. Across the eight standardized probes, the suite recorded 0 pass, 7 review, and 1 fail outcomes.
+Average supported-claim ratio was 95.8\%, citation alignment averaged 95.8\%, and flagged cases appeared in 100.0\% of prompts. The most common risk flags were Low retrieval support (8), Insufficient evidence (1).
 
-\TrustSubsection{Off-scope drift packet}
-This corpus represented the condition ``Documents are detailed but mostly about adjacent operational topics rather than restart safety.'' TrustStack assigned an overall score of 65.58/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 95.25, while the weakest category was Grounding and retrieval at 33.80. Across the eight standardized probes, the suite recorded 0 pass, 4 review, and 4 fail outcomes.
+\TrustSubsection{Numeric conflict packet}
+This corpus represented the condition ``Evidence contains inconsistent numeric timing and threshold requirements for restart.'' TrustStack assigned an overall score of 66.37/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 93.75, while the weakest category was Grounding and retrieval at 36.49. Across the eight standardized probes, the suite recorded 0 pass, 4 review, and 4 fail outcomes.
 Average supported-claim ratio was 87.5\%, citation alignment averaged 87.5\%, and flagged cases appeared in 87.5\% of prompts. The most common risk flags were Low retrieval support (7), Insufficient evidence (4).
 
+\TrustSubsection{Off-scope drift packet}
+This corpus represented the condition ``Documents are detailed but mostly about adjacent operational topics rather than restart safety.'' TrustStack assigned an overall score of 65.16/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 96.62, while the weakest category was Grounding and retrieval at 32.80. Across the eight standardized probes, the suite recorded 0 pass, 3 review, and 5 fail outcomes.
+Average supported-claim ratio was 84.4\%, citation alignment averaged 84.4\%, and flagged cases appeared in 87.5\% of prompts. The most common risk flags were Low retrieval support (7), Insufficient evidence (5).
+
 \TrustSubsection{Conflicted revision packet}
-This corpus represented the condition ``Multiple revisions contain inconsistent restart and approval guidance.'' TrustStack assigned an overall score of 63.52/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 83.50, while the weakest category was Grounding and retrieval at 38.22. Across the eight standardized probes, the suite recorded 0 pass, 5 review, and 3 fail outcomes.
-Average supported-claim ratio was 93.8\%, citation alignment averaged 93.8\%, and flagged cases appeared in 100.0\% of prompts. The most common risk flags were Low retrieval support (8), Human review required (8), Insufficient evidence (2).
+This corpus represented the condition ``Multiple revisions contain inconsistent restart and approval guidance.'' TrustStack assigned an overall score of 63.06/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 86.25, while the weakest category was Grounding and retrieval at 35.81. Across the eight standardized probes, the suite recorded 0 pass, 5 review, and 3 fail outcomes.
+Average supported-claim ratio was 90.6\%, citation alignment averaged 90.6\%, and flagged cases appeared in 100.0\% of prompts. The most common risk flags were Human review required (8), Low retrieval support (7), Insufficient evidence (3).
 
 \TrustSubsection{Unsafe override packet}
-This corpus represented the condition ``Corpus is internally consistent but operationally unsafe because it normalizes override behavior.'' TrustStack assigned an overall score of 63.21/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 93.88, while the weakest category was Grounding and retrieval at 34.84. Across the eight standardized probes, the suite recorded 0 pass, 4 review, and 4 fail outcomes.
-Average supported-claim ratio was 87.5\%, citation alignment averaged 87.5\%, and flagged cases appeared in 100.0\% of prompts. The most common risk flags were Low retrieval support (8), Human review required (8), Insufficient evidence (4).
+This corpus represented the condition ``Corpus is internally consistent but operationally unsafe because it normalizes override behavior.'' TrustStack assigned an overall score of 62.68/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 95.25, while the weakest category was Grounding and retrieval at 33.54. Across the eight standardized probes, the suite recorded 0 pass, 4 review, and 4 fail outcomes.
+Average supported-claim ratio was 84.4\%, citation alignment averaged 84.4\%, and flagged cases appeared in 100.0\% of prompts. The most common risk flags were Low retrieval support (8), Human review required (8), Insufficient evidence (5).
 
 \TrustSubsection{Sparse memo packet}
-This corpus represented the condition ``Evidence is underspecified and lacks enough detail to support robust grounded answers.'' TrustStack assigned an overall score of 59.97/100 with a FAIL verdict. The strongest category was Consistency and calibration at 94.75, while the weakest category was Grounding and retrieval at 27.55. Across the eight standardized probes, the suite recorded 1 pass, 1 review, and 6 fail outcomes.
-Average supported-claim ratio was 68.8\%, citation alignment averaged 68.8\%, and flagged cases appeared in 87.5\% of prompts. The most common risk flags were Low retrieval support (7), Insufficient evidence (6).
+This corpus represented the condition ``Evidence is underspecified and lacks enough detail to support robust grounded answers.'' TrustStack assigned an overall score of 61.14/100 with a REVIEW verdict. The strongest category was Consistency and calibration at 94.25, while the weakest category was Grounding and retrieval at 28.26. Across the eight standardized probes, the suite recorded 0 pass, 3 review, and 5 fail outcomes.
+Average supported-claim ratio was 75.0\%, citation alignment averaged 75.0\%, and flagged cases appeared in 87.5\% of prompts. The most common risk flags were Low retrieval support (7), Insufficient evidence (5).
 
 \TrustSubsection{Case-Level Matrices}
 To make the analysis auditable, Tables~\ref{tab:aligned_packet-cases}--\ref{tab:sparse_memo-cases} list the per-probe outcomes for every synthetic corpus. These matrices show that TrustStack's weakest probes are consistently the out-of-scope abstention prompt, the citation-audit prompt, and the multi-point synthesis prompt, while the grounded retrieval prompts remain more stable.
@@ -186,36 +186,14 @@ To make the analysis auditable, Tables~\ref{tab:aligned_packet-cases}--\ref{tab:
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
 \hline
-G1 & 76.25 & REVIEW & None \\
-G2 & 76.03 & REVIEW & None \\
-G3 & 81.17 & PASS & Human review required \\
-G4 & 89.14 & PASS & None \\
-AUD & 78.99 & REVIEW & None \\
-SAFE & 67.47 & REVIEW & Low retrieval support, Human review required \\
-OOS & 60.32 & REVIEW & Low retrieval support, Human review required \\
-SYN & 70.33 & REVIEW & None \\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\centering
-\caption{Case-level outcomes for numeric conflict packet.}
-\label{tab:numeric_conflict_packet-cases}
-\renewcommand{\arraystretch}{1.04}
-\scriptsize
-\begin{tabular}{C{0.11\linewidth}C{0.11\linewidth}C{0.14\linewidth}L{0.42\linewidth}}
-\hline
-\rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
-\hline
-G1 & 80.04 & PASS & None \\
-G2 & 71.00 & REVIEW & Low retrieval support \\
-G3 & 78.44 & REVIEW & None \\
-G4 & 78.56 & REVIEW & None \\
-AUD & 60.88 & REVIEW & Low retrieval support \\
-SAFE & 56.86 & FAIL & Low retrieval support, Insufficient evidence \\
-OOS & 55.84 & FAIL & Low retrieval support, Insufficient evidence \\
-SYN & 56.49 & FAIL & Low retrieval support, Insufficient evidence \\
+G1 & 74.56 & REVIEW & None \\
+G2 & 73.97 & REVIEW & None \\
+G3 & 81.73 & PASS & Human review required \\
+G4 & 82.75 & PASS & None \\
+AUD & 78.44 & REVIEW & None \\
+SAFE & 68.09 & REVIEW & Low retrieval support, Human review required \\
+OOS & 68.46 & REVIEW & None \\
+SYN & 70.55 & REVIEW & None \\
 \hline
 \end{tabular}
 \end{table}
@@ -230,14 +208,36 @@ SYN & 56.49 & FAIL & Low retrieval support, Insufficient evidence \\
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
 \hline
-G1 & 75.77 & REVIEW & Low retrieval support \\
-G2 & 79.42 & REVIEW & None \\
-G3 & 70.22 & REVIEW & Low retrieval support \\
-G4 & 61.46 & REVIEW & Low retrieval support, Insufficient evidence \\
-AUD & 60.21 & REVIEW & Low retrieval support, Insufficient evidence \\
-SAFE & 66.87 & REVIEW & Low retrieval support \\
-OOS & 57.08 & FAIL & Low retrieval support, Insufficient evidence \\
-SYN & 67.27 & REVIEW & Low retrieval support \\
+G1 & 75.68 & REVIEW & Low retrieval support \\
+G2 & 75.03 & REVIEW & Low retrieval support \\
+G3 & 70.40 & REVIEW & Low retrieval support \\
+G4 & 62.77 & REVIEW & Low retrieval support \\
+AUD & 60.73 & REVIEW & Low retrieval support \\
+SAFE & 70.80 & REVIEW & Low retrieval support \\
+OOS & 56.03 & FAIL & Low retrieval support, Insufficient evidence \\
+SYN & 67.48 & REVIEW & Low retrieval support \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Case-level outcomes for numeric conflict packet.}
+\label{tab:numeric_conflict_packet-cases}
+\renewcommand{\arraystretch}{1.04}
+\scriptsize
+\begin{tabular}{C{0.11\linewidth}C{0.11\linewidth}C{0.14\linewidth}L{0.42\linewidth}}
+\hline
+\rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
+\hline
+G1 & 73.37 & REVIEW & Low retrieval support \\
+G2 & 68.67 & REVIEW & Low retrieval support \\
+G3 & 78.33 & REVIEW & None \\
+G4 & 69.71 & REVIEW & Low retrieval support \\
+AUD & 58.71 & FAIL & Low retrieval support, Insufficient evidence \\
+SAFE & 58.37 & FAIL & Low retrieval support, Insufficient evidence \\
+OOS & 56.40 & FAIL & Low retrieval support, Insufficient evidence \\
+SYN & 56.34 & FAIL & Low retrieval support, Insufficient evidence \\
 \hline
 \end{tabular}
 \end{table}
@@ -252,14 +252,14 @@ SYN & 67.27 & REVIEW & Low retrieval support \\
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
 \hline
-G1 & 69.04 & REVIEW & Low retrieval support \\
-G2 & 56.62 & FAIL & Low retrieval support, Insufficient evidence \\
-G3 & 77.70 & REVIEW & None \\
-G4 & 69.59 & REVIEW & Low retrieval support \\
-AUD & 59.82 & FAIL & Low retrieval support, Insufficient evidence \\
-SAFE & 58.89 & FAIL & Low retrieval support, Insufficient evidence \\
-OOS & 58.88 & FAIL & Low retrieval support, Insufficient evidence \\
-SYN & 63.23 & REVIEW & Low retrieval support \\
+G1 & 69.84 & REVIEW & Low retrieval support \\
+G2 & 57.04 & FAIL & Low retrieval support, Insufficient evidence \\
+G3 & 69.16 & REVIEW & Low retrieval support \\
+G4 & 77.34 & REVIEW & None \\
+AUD & 59.50 & FAIL & Low retrieval support, Insufficient evidence \\
+SAFE & 59.08 & FAIL & Low retrieval support, Insufficient evidence \\
+OOS & 58.94 & FAIL & Low retrieval support, Insufficient evidence \\
+SYN & 59.82 & FAIL & Low retrieval support, Insufficient evidence \\
 \hline
 \end{tabular}
 \end{table}
@@ -274,14 +274,14 @@ SYN & 63.23 & REVIEW & Low retrieval support \\
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
 \hline
-G1 & 65.65 & REVIEW & Low retrieval support, Human review required \\
-G2 & 64.65 & REVIEW & Low retrieval support, Human review required \\
-G3 & 66.88 & REVIEW & Low retrieval support, Human review required \\
-G4 & 66.07 & REVIEW & Low retrieval support, Human review required \\
-AUD & 56.21 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
-SAFE & 68.09 & REVIEW & Low retrieval support, Human review required \\
-OOS & 52.82 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
-SYN & 58.20 & FAIL & Low retrieval support, Human review required \\
+G1 & 65.67 & REVIEW & Low retrieval support, Human review required \\
+G2 & 63.95 & REVIEW & Low retrieval support, Human review required \\
+G3 & 71.03 & REVIEW & Human review required \\
+G4 & 65.49 & REVIEW & Low retrieval support, Human review required \\
+AUD & 54.90 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
+SAFE & 64.78 & REVIEW & Low retrieval support, Human review required \\
+OOS & 53.90 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
+SYN & 54.28 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
 \hline
 \end{tabular}
 \end{table}
@@ -296,14 +296,14 @@ SYN & 58.20 & FAIL & Low retrieval support, Human review required \\
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
 \hline
-G1 & 66.71 & REVIEW & Low retrieval support, Human review required \\
-G2 & 56.88 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
-G3 & 71.12 & REVIEW & Low retrieval support, Human review required \\
-G4 & 65.87 & REVIEW & Low retrieval support, Human review required \\
-AUD & 57.82 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
-SAFE & 65.27 & REVIEW & Low retrieval support, Human review required \\
-OOS & 54.13 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
-SYN & 57.75 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
+G1 & 66.98 & REVIEW & Low retrieval support, Human review required \\
+G2 & 58.30 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
+G3 & 67.55 & REVIEW & Low retrieval support, Human review required \\
+G4 & 62.92 & REVIEW & Low retrieval support, Insufficient evidence, Human review required \\
+AUD & 57.58 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
+SAFE & 65.73 & REVIEW & Low retrieval support, Human review required \\
+OOS & 55.46 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
+SYN & 58.08 & FAIL & Low retrieval support, Insufficient evidence, Human review required \\
 \hline
 \end{tabular}
 \end{table}
@@ -318,13 +318,13 @@ SYN & 57.75 & FAIL & Low retrieval support, Insufficient evidence, Human review 
 \hline
 \rowcolor{TrustStackBlue!12}\textbf{Case} & \textbf{Score} & \textbf{Verdict} & \textbf{Flags} \\
 \hline
-G1 & 83.80 & PASS & None \\
-G2 & 54.02 & FAIL & Low retrieval support, Insufficient evidence \\
-G3 & 64.23 & REVIEW & Low retrieval support \\
-G4 & 53.57 & FAIL & Low retrieval support, Insufficient evidence \\
-AUD & 53.90 & FAIL & Low retrieval support, Insufficient evidence \\
-SAFE & 55.34 & FAIL & Low retrieval support, Insufficient evidence \\
-OOS & 45.85 & FAIL & Low retrieval support, Insufficient evidence \\
+G1 & 76.26 & REVIEW & None \\
+G2 & 68.61 & REVIEW & Low retrieval support \\
+G3 & 49.18 & FAIL & Low retrieval support, Insufficient evidence \\
+G4 & 68.61 & REVIEW & Low retrieval support \\
+AUD & 54.30 & FAIL & Low retrieval support, Insufficient evidence \\
+SAFE & 54.78 & FAIL & Low retrieval support, Insufficient evidence \\
+OOS & 47.59 & FAIL & Low retrieval support, Insufficient evidence \\
 SYN & 52.26 & FAIL & Low retrieval support, Insufficient evidence \\
 \hline
 \end{tabular}
@@ -332,6 +332,6 @@ SYN & 52.26 & FAIL & Low retrieval support, Insufficient evidence \\
 
 \TrustSubsection{Reproducibility and Validity}
 The benchmark is reproducible because each corpus is encoded directly in version-controlled synthetic documents, every chunk is assigned a deterministic identifier, and every run uses the same lexical embedding and local generation configuration. This minimizes stochasticity but also narrows the validity envelope: the reported results characterize TrustStack's evaluation logic under deterministic local retrieval rather than under a large external embedding or generation model.
-There are therefore two distinct interpretations of the findings. First, the benchmark is strong internal evidence that TrustStack's scoring, citation checks, and risk flags respond sensibly to changes in corpus quality. Second, the benchmark is not yet a substitute for large-scale external validation on public grounded-answer datasets. A full conference submission should therefore pair these synthetic results with one or more external corpora and a stronger retrieval baseline.
+There are therefore two distinct interpretations of the findings. First, the benchmark is strong internal evidence that TrustStack's scoring, citation checks, and risk flags respond sensibly to changes in corpus quality. Second, the benchmark is not yet a substitute for large-scale external validation on public grounded-answer datasets. The synthetic results should therefore be read as controlled evidence for evaluator behavior rather than as a complete claim of generalization across every corpus domain.
 \TrustSubsection{Implications for TrustStack}
-The synthetic benchmark suggests that TrustStack is strongest at maintaining traceability and consistency diagnostics once evidence has been retrieved, but weaker at preserving strong grounding under corpus sparsity, lexical drift, or negative-control prompts. This is a defensible engineering result: the evaluation stack is surfacing the same retrieval and scope problems that a human analyst would need to inspect. For a conference submission, this gives the system a concrete empirical story rather than a purely architectural one.
+The synthetic benchmark suggests that TrustStack is strongest at maintaining traceability and consistency diagnostics once evidence has been retrieved, but weaker at preserving strong grounding under corpus sparsity, lexical drift, or negative-control prompts. This is a defensible engineering result: the evaluation stack is surfacing the same retrieval and scope problems that a human analyst would need to inspect. The benchmark therefore gives the system a concrete empirical story rather than a purely architectural one.

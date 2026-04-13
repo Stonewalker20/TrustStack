@@ -48,8 +48,8 @@
 \title{TrustStack: A Local-First, Evidence-Grounded Evaluation Standard for Trustworthy AI}
 
 \author{
-\IEEEauthorblockN{Anonymous Submission}
-\IEEEauthorblockA{Prepared in IEEE conference format for TrustStack system review}
+\IEEEauthorblockN{Cordell Stonecipher}
+\IEEEauthorblockA{TrustStack Research Project}
 }
 
 \begin{document}
@@ -57,7 +57,7 @@
 \maketitle
 
 \begin{abstract}
-TrustStack is a local-first system for evaluating whether AI outputs are grounded, auditable, and safe enough to trust in operational settings. The system combines document ingestion, retrieval-augmented response generation, structured confidence scoring, risk labeling, operator-facing explanation, and report-artifact export into a single evaluation workflow. This paper introduces the \emph{TrustStack Evaluation Standard v2.0}, a weighted, evidence-first framework that scores answers across retrieval relevance, evidence sufficiency, citation traceability, claim support, contradiction risk, completeness, abstention behavior, answer discipline, safety risk, and calibration. We also describe an operator-facing review interface that exposes the full standardized suite, generates IEEE-ready export artifacts, and returns an aggregate score breakdown with reproducibility metadata. To ground the discussion empirically, we executed a deterministic synthetic benchmark across four corpus conditions: aligned procedures, contradictory revisions, unsafe override guidance, and sparse evidence. Under lexical retrieval and extractive fallback generation, TrustStack scores ranged from 72.85/100 on the aligned corpus to 58.49/100 on the sparse corpus, while grounding and retrieval emerged as the dominant limiting factor with a mean category score of 41.09/100. The result is a system intended not merely to answer questions, but to teach users how trust should be inspected before AI output is operationalized.
+TrustStack is a local-first system for evaluating whether AI outputs are grounded, auditable, and safe enough to trust in operational settings. The system combines document ingestion, retrieval-augmented response generation, structured confidence scoring, risk labeling, operator-facing explanation, and report-artifact export into a single evaluation workflow. This paper introduces the \emph{TrustStack Evaluation Standard v2.0}, a weighted, evidence-first framework that scores answers across retrieval relevance, evidence sufficiency, citation traceability, claim support, contradiction risk, completeness, abstention behavior, answer discipline, safety risk, and calibration. We also describe a review interface that exposes the full standardized suite, generates IEEE-ready export artifacts, and returns an aggregate score breakdown with reproducibility metadata. To ground the discussion empirically, we executed a deterministic synthetic benchmark across seven corpus conditions spanning aligned procedures, multi-source consensus evidence, contradictory revisions, unsafe override guidance, numeric conflicts, sparse evidence, and off-scope lexical drift. Under lexical retrieval and extractive fallback generation, TrustStack scores ranged from 76.44/100 on the aligned corpus to 59.97/100 on the sparse corpus, while grounding and retrieval emerged as the dominant limiting factor with a mean category score of 41.75/100. The result is a system intended not merely to answer questions, but to teach users how trust should be inspected before AI output is operationalized.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -164,7 +164,7 @@ Each answer is also accompanied by:
 The evaluation report is intentionally structured so that the same output can support live UI review, conference slides, and manuscript-ready artifact export. In practice, the report now behaves like a reusable evidence packet rather than a transient chat summary.
 }
 
-The score bands are currently defined as:
+The score bands are defined as:
 \begin{itemize}
   \item \textbf{Pass}: score $\geq 80$
   \item \textbf{Review}: score $\geq 60$ and $< 80$
@@ -200,9 +200,7 @@ The standardized suite also supports batch benchmarking across uploaded datasets
 \TrustSection{Operator Interface}
 TrustStack exposes its evaluation workflow through an operator-facing review interface rather than a conventional chat-only surface. The interface is structured around the same stages used by the backend pipeline: evidence intake, runtime querying, evidence review, score interpretation, historical comparison, and export. This matters because the user is not merely consuming an answer. Instead, the user is asked to inspect whether a generated answer is sufficiently supported to justify operational use.
 
-The interface is therefore designed around three principles. First, every trust judgment should remain traceable to retrieved evidence. Second, every score should be paired with diagnostics that explain what raised or lowered confidence. Third, evaluation outputs should be reusable beyond the immediate interaction, including benchmarking, analyst review, and manuscript export. In practice, this means the frontend behaves as an inspection layer over the standardized backend evaluation process rather than as a thin wrapper around generation alone.
-
-For presentation and teaching use, the same interface can also be organized into a nine-part academic narrative: motivation, system architecture, runtime evaluation loop, evidence review, score interpretation, benchmarking, full-stack integration, methodology, and exportable artifacts. This ordering mirrors the structure of a conference-style systems talk and keeps the live demonstration aligned with the written report. The important point is not the visual arrangement itself, but the fact that the interface already exposes the underlying stages in a sequence that supports both operator review and formal explanation.
+The interface is therefore designed around three principles. First, every trust judgment should remain traceable to retrieved evidence. Second, every score should be paired with diagnostics that explain what raised or lowered confidence. Third, evaluation outputs should be reusable beyond the immediate interaction, including benchmarking, analyst review, and manuscript export. In practice, this means the frontend behaves as an inspection layer over the standardized backend evaluation process rather than as a thin wrapper around generation alone. The interface exposes these stages in a stable sequence that supports both operator review and formal explanation.
 
 \TrustSection{Implementation and Verification}
 TrustStack is built as a local-first system. MongoDB stores documents, chunks, and run history. The backend exposes ingestion, document listing, sample-question generation, query, run history, standardized-suite execution, batch benchmark, and report-export routes. The frontend consumes those routes through a single API layer and renders an operator-facing inspection workflow for evidence, evaluation, and reporting.
@@ -235,7 +233,7 @@ This matters for system design because a weaker evaluation system might still pr
 \TrustSubsection{Implications for a Local-First Evaluator}
 The local-first constraint shapes both the strengths and the limitations of the current system. On the positive side, deterministic lexical retrieval and extractive fallback generation make the benchmark reproducible and auditable. Every number in the paper can be regenerated from checked-in synthetic corpora without external services. This is a strong property for academic reporting and for security-sensitive evaluation workflows. On the negative side, the same constraint means the current benchmark is not yet a test of best-available retrieval or best-available generation. It is a test of TrustStack's evaluation logic under a stable local runtime.
 
-That distinction is important when positioning the system for conference review. The right claim is not that TrustStack has already solved trustworthy AI evaluation in the large. The right claim is that TrustStack provides a concrete, reproducible, local-first scaffold for inspecting groundedness, traceability, and operator reviewability. The synthetic benchmark validates the scaffold. Future work can then replace individual retrieval or generation components without changing the core evaluation protocol.
+That distinction is important for interpreting the contribution correctly. TrustStack does not claim to solve trustworthy AI evaluation in the large. It provides a concrete, reproducible, local-first framework for inspecting groundedness, traceability, and operator reviewability. The synthetic benchmark validates that framework and shows that stronger retrieval and semantic checking can be added later without changing the core evaluation protocol.
 
 \TrustSection{Expanded Evaluation Agenda}
 The synthetic benchmark is a necessary first step, but a conference-grade evaluation program should include multiple complementary study families. TrustStack is now in a position where those studies can be specified concretely rather than described abstractly.
@@ -298,13 +296,10 @@ Third, the current evaluation standard is still partly heuristic. Claim support,
 \TrustSection{Limitations}
 TrustStack currently evaluates groundedness relative to the uploaded corpus, not objective world truth. If the corpus is incomplete, outdated, or internally inconsistent, the system can still return a well-structured but ultimately limited evaluation. The synthetic benchmark makes this visible: even the best-aligned corpus remained in the \emph{review} band because negative-control prompts and retrieval-heavy probes still exposed brittleness. Likewise, the contradiction and claim-support checks are heuristic rather than formal entailment models. This is a pragmatic choice for local-first operation, but it limits semantic precision.
 
-The current interface is still optimized for explanation and demonstration rather than dense analyst workflows, even though the backend now exports report-ready artifacts, per-case citation alignment metrics, batch benchmark summaries, and reproducibility metadata. Future work should therefore focus less on raw score export and more on stronger retrieval models, deeper semantic entailment checks, denser analyst review tooling, and larger empirical evaluations across external benchmark corpora.
+The current interface is still optimized for explanation and review rather than dense analyst workflows, even though the backend now exports report-ready artifacts, per-case citation alignment metrics, batch benchmark summaries, and reproducibility metadata. The next empirical phase should therefore focus less on raw score export and more on stronger retrieval models, deeper semantic entailment checks, denser analyst review tooling, and larger evaluations across external benchmark corpora.
 
 \TrustSection{Conclusion}
 TrustStack reframes trustworthy AI interaction as an evidence-first evaluation problem. Instead of returning an answer alone, the system returns a score, a rationale, a set of diagnostics, and a review path. The synthetic benchmark reported here shows that the current implementation already discriminates meaningfully between aligned, contradictory, unsafe, and sparse corpora, with the largest weakness concentrated in grounding and retrieval rather than in downstream score formatting. By combining a local-first architecture, a standardized evaluation framework, and an operator-facing inspection interface, TrustStack provides a concrete path toward AI systems that can be inspected before they are trusted.
-
-\TrustSection{Acknowledgment}
-This document is structured as a conference-style system paper scaffold. Final camera-ready submission details and author metadata should be updated before submission, but the empirical synthetic results, generated tables, and export artifacts now come directly from checked-in benchmark outputs rather than manual transcription.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
