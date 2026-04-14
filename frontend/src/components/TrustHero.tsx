@@ -118,16 +118,35 @@ export function TrustHero({
 
         <div className={`hero-journey-card ${overviewMode ? 'hero-journey-card--hidden' : ''}`}>
           <div className="hero-journey-shell">
+            <div className="presentation-frame presentation-frame--header">
+              <div className="presentation-frame__accent" />
+              <div className="presentation-frame__header-inner">
+                <div className="presentation-frame__header-copy">
+                  <span className="presentation-frame__kicker">{activeNode?.eyebrow ?? 'TrustStack walkthrough'}</span>
+                  <strong>{activeNode?.reportSection ?? activeNode?.planet ?? 'Presentation'}</strong>
+                </div>
+                <span className="presentation-frame__planet">{activeNode?.planet ?? 'TrustStack'}</span>
+              </div>
+            </div>
             <div className="hero-journey-topline">
               <div className="eyebrow">{activeNode?.planet ?? 'Journey'}</div>
               <div className="hero-journey-meta">
-                <span>{activeNode?.eyebrow ?? 'TrustStack walkthrough'}</span>
-                <strong>
-                  {activeIndex + 1} / {nodes.length}
-                </strong>
+                <span>{activeNode?.reportFigureCaption ?? 'Academic presentation slide'}</span>
               </div>
             </div>
             <div className="hero-journey-body">{detailPanel}</div>
+            <div className="presentation-frame presentation-frame--footer">
+              <div className="presentation-frame__footer-text">
+                <span>Oakland University</span>
+                <span>School of Engineering and Computer Science</span>
+              </div>
+              <div className="presentation-frame__footer-page">
+                {activeIndex + 1} / {nodes.length}
+              </div>
+              <div className="presentation-frame__footer-brand" aria-hidden="true">
+                <img src="/ou-oakland-logo.png" alt="" />
+              </div>
+            </div>
           </div>
         </div>
 
