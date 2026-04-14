@@ -38,6 +38,13 @@
 \setbeamercolor{footline}{fg=white,bg=oublack}
 
 \newcommand{\oaklandwordmarkpath}{../../frontend/public/ou-oakland-logo.png}
+\newcommand{\oaklandbrandbadge}{%
+  \tikz[baseline=(box.base)]{
+    \node[rounded corners=4pt, fill=oustone, inner xsep=3pt, inner ysep=2pt] (box) {%
+      \IfFileExists{\oaklandwordmarkpath}{\includegraphics[height=0.34cm]{\oaklandwordmarkpath}}{\scriptsize\bfseries OU}%
+    };
+  }%
+}
 
 \setbeamertemplate{background canvas}{%
   \begin{tikzpicture}[remember picture,overlay]
@@ -74,8 +81,7 @@
         \centering\raisebox{0.265cm}{\scriptsize\insertframenumber/\inserttotalframenumber}
       \end{minipage}%
       \begin{minipage}[c][0.54cm][c]{0.12\paperwidth}
-        \centering
-        \IfFileExists{\oaklandwordmarkpath}{\includegraphics[height=0.46cm]{\oaklandwordmarkpath}}{\color{white}\scriptsize\bfseries OU}
+        \centering\raisebox{0.20cm}{\oaklandbrandbadge}
       \end{minipage}%
     \end{beamercolorbox}%
   }%
@@ -123,6 +129,7 @@
   {\color{ougray}\small School of Engineering and Computer Science\par}
   {\color{ougray}\small \insertdate\par}
   \vfill
+  \vspace*{1.1cm}
   \begin{center}
     \IfFileExists{\oaklandwordmarkpath}{\includegraphics[width=0.2\linewidth]{\oaklandwordmarkpath}}{\Large Oakland University}
   \end{center}
