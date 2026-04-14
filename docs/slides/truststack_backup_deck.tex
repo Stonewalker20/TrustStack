@@ -157,46 +157,46 @@
 \end{frame}
 
 \begin{frame}{2. Related Work and Contribution}
-  \slidelead{TrustStack sits between retrieval-augmented generation, hallucination analysis, and structured evaluation frameworks. The contribution is not a new base model. It is a new evidence-first evaluation layer around existing generation pipelines.}
+  \slidelead{Most AI systems focus on generating answers. TrustStack focuses on checking whether those answers deserve trust.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.32\textwidth}
     \begin{block}{RAG systems}
-      Model outputs should be conditioned on retrieved evidence rather than unconstrained recall.
+      Pull evidence before answering.
     \end{block}
     \column{0.32\textwidth}
     \begin{block}{Reliability research}
-      Plausible answers can still be unsupported, unsafe, or operationally misleading.
+      Good sounding text can still be wrong.
     \end{block}
     \column{0.32\textwidth}
     \begin{block}{Evaluation frameworks}
-      Reproducible prompts, dimensions, judgments, and exportable artifacts matter.
+      Teams need repeatable scoring and reports.
     \end{block}
   \end{columns}
   \vspace{0.6em}
   \begin{block}{TrustStack contribution}
-      TrustStack integrates these threads into one local-first workflow centered on answer inspection rather than answer appearance.
+      One local-first workflow that checks evidence, scores trust, and produces report-ready outputs.
   \end{block}
 \end{frame}
 
 \begin{frame}{3. Data}
-  \slidelead{The evaluation uses two data families: live evidence uploaded by the user and benchmark-oriented corpora used to stress the system under reproducible conditions.}
+  \slidelead{TrustStack evaluates AI with both real user evidence and benchmark data.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.48\textwidth}
     \begin{block}{Live evidence path}
       \small
       \begin{itemize}
         \item PDF, DOCX, TXT, and Markdown uploads
-        \item Parsed, chunked, indexed, and stored in MongoDB
-        \item Used for real-time evidence-grounded question answering
+        \item Split into chunks and stored in MongoDB
+        \item Used for grounded question answering
       \end{itemize}
     \end{block}
     \column{0.48\textwidth}
     \begin{block}{Benchmark path}
       \small
       \begin{itemize}
-        \item Seven synthetic stress-test packets
-        \item Checked-in public benchmark subsets: SciFact and HotpotQA
-        \item Same evaluation protocol applied across both paths
+        \item Seven synthetic stress tests
+        \item Public slices from SciFact and HotpotQA
+        \item Same scoring logic across all cases
       \end{itemize}
     \end{block}
   \end{columns}
@@ -209,7 +209,7 @@
 \end{frame}
 
 \begin{frame}{4. Methods and System Architecture}
-  \slidelead{TrustStack is implemented as a five-layer pipeline so each stage can be validated independently and each failure can be localized.}
+  \slidelead{The system follows a simple five-step pipeline so users can see where trust is gained or lost.}
   \begin{block}{Pipeline}
     \centering
     \metricpill{tsblue}{1. Ingest}\hspace{0.4em}
@@ -224,9 +224,9 @@
     \begin{block}{Implementation}
       \small
       \begin{itemize}
-        \item MongoDB-backed documents, chunks, and run history
-        \item Retrieval via vector or lexical fallback
-        \item Grounded answer generation with deterministic fallback mode
+        \item MongoDB stores documents, chunks, and run history
+        \item Retrieval uses vector search or lexical fallback
+        \item Answers remain grounded with deterministic fallback
       \end{itemize}
     \end{block}
     \column{0.48\textwidth}
@@ -242,12 +242,12 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{5. TrustStack Evaluation Standard v2.0}
-  \slidelead{The TrustStack Evaluation Standard converts one answer into an evidence-first review packet rather than a single opaque score.}
+\begin{frame}[shrink=4]{5. TrustStack Evaluation Standard v2.0}
+  \slidelead{TrustStack turns one answer into a full review record instead of a single hidden score.}
   \begin{block}{Ten scored dimensions}
-    Retrieval relevance, evidence sufficiency, citation traceability, claim support, contradiction risk, completeness, abstention behavior, answer discipline, safety risk, and calibration.
+    Retrieval, support, citation traceability, claims, contradiction, completeness, abstention, discipline, safety, and calibration.
   \end{block}
-  \vspace{0.5em}
+  \vspace{0.3em}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.32\textwidth}
     \statcard{Verdicts}{Pass / Review / Fail}
@@ -256,40 +256,52 @@
     \column{0.32\textwidth}
     \statcard{Output}{Reproducible report artifact}
   \end{columns}
-  \vspace{0.6em}
+  \vspace{0.35em}
     \begin{block}{Why this matters}
-      The system shows \emph{why} confidence moved, what evidence was missing, and when human review is required.
+      The user can see why confidence changed, what support was missing, and when review is required.
     \end{block}
 \end{frame}
 
-\begin{frame}[shrink=8]{6. Synthetic Benchmark Findings}
-  \slidelead{The synthetic benchmark tests whether TrustStack reacts sensibly when the evidence environment changes under controlled conditions.}
+\begin{frame}[shrink=4]{6. Synthetic Benchmark Findings}
+  \slidelead{Synthetic tests answer one question: does the score move the right way when evidence quality changes?}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.52\textwidth}
-    \begin{block}{Synthetic evaluation design}
-      Seven corpus conditions stress aligned evidence, contradiction, sparse evidence, lexical drift, unsafe procedural advice, and consensus-style multi-document overlap.
+    \begin{block}{What was stressed}
+      \small
+      aligned evidence, contradictions, sparse support, lexical drift, and unsafe advice.
     \end{block}
-    \begin{block}{Interpretation}
-      The benchmark does not claim absolute trustworthiness. It tests whether scores move in the expected direction when evidence quality changes.
+    \begin{block}{Main takeaway}
+      TrustStack responds in the correct direction: stronger evidence raises the score and weaker evidence lowers it.
     \end{block}
     \column{0.44\textwidth}
-    \statcard{Best synthetic score}{76.44 / 100}
-    \vspace{0.45em}
-    \statcard{Worst synthetic score}{59.97 / 100}
-    \vspace{0.45em}
-    \statcard{Weakest category}{Grounding + retrieval}
+    \statcard{Best case}{76.44 / 100}
+    \vspace{0.4em}
+    \statcard{Worst case}{59.97 / 100}
+    \vspace{0.4em}
+    \statcard{Main bottleneck}{Grounding + retrieval}
   \end{columns}
+\vspace{0.2em}
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \fill[tsteal!28] (0,0) rectangle (2.65,0.34);
+  \fill[ougold!35] (3.0,0) rectangle (5.1,0.34);
+  \fill[tswarn!28] (5.45,0) rectangle (7.55,0.34);
+  \node[anchor=south,font=\scriptsize] at (1.325,0.38) {Strong};
+  \node[anchor=south,font=\scriptsize] at (4.05,0.38) {Mixed};
+  \node[anchor=south,font=\scriptsize] at (6.5,0.38) {Weak};
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
-\begin{frame}[shrink=6]{7. External Benchmark Findings}
-  \slidelead{TrustStack was also evaluated on checked-in public benchmark subsets from SciFact and HotpotQA, extending the evaluation beyond internally authored stress corpora.}
+\begin{frame}{7. External Benchmark Findings}
+  \slidelead{Public benchmarks test whether the same evaluation logic still works outside our own synthetic setup.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.48\textwidth}
     \begin{block}{What this demonstrates}
-      The paper no longer relies only on internally authored synthetic corpora. External benchmark slices show that the same score and verdict logic can operate on public tasks while preserving reproducible diagnostics.
+      The system now runs on public tasks, not only internal tests.
     \end{block}
     \begin{block}{Interpretation}
-      Citation alignment is already strong, and the remaining spread between trust score and task metric identifies the clearest next optimization target for retrieval and semantic answer quality.
+      Traceability is already strong. Retrieval and answer quality remain the next clear optimization target.
     \end{block}
     \column{0.48\textwidth}
     \statcard{Aggregate TrustStack score}{63.09 / 100}
@@ -300,34 +312,44 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[shrink=6]{8. Validity and Next-Stage Readiness}
-  \slidelead{A defensible AI project should define both what has been demonstrated and where the platform is ready to scale next.}
+\begin{frame}[shrink=2]{8. Validity and Next-Stage Readiness}
+  \slidelead{The current version is a strong baseline: measurable, reproducible, and ready for stronger next-stage validation.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.49\textwidth}
-    \begin{block}{Current baseline}
+    \begin{block}{What is already strong}
       \small
       \begin{itemize}
-        \item Local lexical retrieval provides a stable, reproducible starting point.
-        \item Extractive fallback generation keeps the runtime transparent and auditable.
-        \item Human analyst studies are a clear next validation stage.
+        \item Reproducible local runtime
+        \item Explicit scoring and risk logic
+        \item Real benchmark coverage
       \end{itemize}
     \end{block}
     \column{0.49\textwidth}
-    \begin{block}{Why the platform is credible}
+    \begin{block}{What comes next}
       \small
       \begin{itemize}
-        \item The evaluation is explicit, measured, and tied to concrete next experiments.
-        \item The paper now includes real external benchmarks, not just synthetic data.
-        \item The evaluation and export stack is reproducible end to end.
+        \item stronger retrieval models
+        \item richer human-study evaluation
+        \item broader public benchmark coverage
       \end{itemize}
     \end{block}
   \end{columns}
+\vspace{0.35em}
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[draw=ouline, fill=tssoft, rounded corners=6pt, minimum width=2.2cm, minimum height=0.8cm] (a) at (0,0) {\small Baseline};
+  \node[draw=ouline, fill=tssoft, rounded corners=6pt, minimum width=2.2cm, minimum height=0.8cm] (b) at (3.0,0) {\small Benchmarks};
+  \node[draw=ouline, fill=tssoft, rounded corners=6pt, minimum width=2.2cm, minimum height=0.8cm] (c) at (6.0,0) {\small Human studies};
+  \draw[ougold, line width=1.2pt, ->] (a) -- (b);
+  \draw[ougold, line width=1.2pt, ->] (b) -- (c);
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
-\begin{frame}[shrink=4]{9. Conclusion}
-  \slidelead{TrustStack contributes a reusable workflow for grounded evaluation, benchmarking, and reporting.}
+\begin{frame}{9. Conclusion}
+  \slidelead{TrustStack makes AI trust easier to inspect, measure, and report.}
   \begin{block}{Main contribution}
-    TrustStack is valuable not because it makes AI look more persuasive, but because it makes trust inspectable. It connects live evidence review, a formal evaluation standard, synthetic benchmarking, public-benchmark evaluation, and exportable IEEE-ready artifacts into one coherent system.
+    It connects live evidence review, formal scoring, benchmark evaluation, and report-ready artifacts into one coherent workflow.
   \end{block}
   \vspace{0.6em}
   \begin{columns}[T,totalwidth=\textwidth]
