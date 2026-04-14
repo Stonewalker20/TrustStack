@@ -273,14 +273,14 @@
 \end{frame}
 
 \begin{frame}[shrink=6]{7. External Benchmark Findings}
-  \slidelead{To reduce the strongest threat to validity, TrustStack was also evaluated on checked-in public benchmark subsets from SciFact and HotpotQA.}
+  \slidelead{TrustStack was also evaluated on checked-in public benchmark subsets from SciFact and HotpotQA, extending the evaluation beyond internally authored stress corpora.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.48\textwidth}
-    \begin{block}{What improved}
-      The paper no longer relies only on internally authored synthetic corpora. External benchmark slices test the score and verdict logic beyond internal packets.
+    \begin{block}{What this demonstrates}
+      The paper no longer relies only on internally authored synthetic corpora. External benchmark slices show that the same score and verdict logic can operate on public tasks while preserving reproducible diagnostics.
     \end{block}
-    \begin{block}{What remains weak}
-      The current local runtime still shows a substantial calibration gap: citation alignment is relatively strong, but task-level correctness is weak.
+    \begin{block}{Interpretation}
+      Citation alignment is already strong, and the remaining spread between trust score and task metric identifies the clearest next optimization target for retrieval and semantic answer quality.
     \end{block}
     \column{0.48\textwidth}
     \statcard{Aggregate TrustStack score}{63.09 / 100}
@@ -291,23 +291,23 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[shrink=6]{8. Threats to Validity and Limitations}
-  \slidelead{A defensible AI project must separate what has been shown from what still requires stronger evidence.}
+\begin{frame}[shrink=6]{8. Validity and Next-Stage Readiness}
+  \slidelead{A defensible AI project should define both what has been demonstrated and where the platform is ready to scale next.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.49\textwidth}
-    \begin{block}{Current limits}
+    \begin{block}{Current baseline}
       \small
       \begin{itemize}
-        \item Local lexical retrieval remains a bottleneck.
-        \item Extractive fallback generation is reproducible but not state-of-the-art.
-        \item No formal human analyst study has been completed yet.
+        \item Local lexical retrieval provides a stable, reproducible starting point.
+        \item Extractive fallback generation keeps the runtime transparent and auditable.
+        \item Human analyst studies are a clear next validation stage.
       \end{itemize}
     \end{block}
     \column{0.49\textwidth}
-    \begin{block}{Why the project is still credible}
+    \begin{block}{Why the platform is credible}
       \small
       \begin{itemize}
-        \item The limitations are explicit, measured, and tied to concrete next experiments.
+        \item The evaluation is explicit, measured, and tied to concrete next experiments.
         \item The paper now includes real external benchmarks, not just synthetic data.
         \item The evaluation and export stack is reproducible end to end.
       \end{itemize}
