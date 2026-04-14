@@ -38,10 +38,11 @@
 \setbeamercolor{footline}{fg=white,bg=oublack}
 
 \newcommand{\oaklandwordmarkpath}{../../frontend/public/ou-oakland-logo.png}
+\newcommand{\oaklandlogopath}{images/oakland_university_logo-freelogovectors.net_.png}
 \newcommand{\oaklandbrandbadge}{%
   \tikz[baseline=(box.base)]{
     \node[rounded corners=4pt, fill=oustone, inner xsep=3pt, inner ysep=2pt] (box) {%
-      \IfFileExists{\oaklandwordmarkpath}{\includegraphics[height=0.34cm]{\oaklandwordmarkpath}}{\scriptsize\bfseries OU}%
+      \IfFileExists{\oaklandlogopath}{\includegraphics[height=0.40cm]{\oaklandlogopath}}{\scriptsize\bfseries OU}%
     };
   }%
 }
@@ -131,7 +132,7 @@
   \vfill
   \vspace*{1.1cm}
   \begin{center}
-    \IfFileExists{\oaklandwordmarkpath}{\includegraphics[width=0.2\linewidth]{\oaklandwordmarkpath}}{\Large Oakland University}
+    \IfFileExists{\oaklandlogopath}{\includegraphics[height=1.2cm]{\oaklandlogopath}}{\Large Oakland University}
   \end{center}
 \end{frame}
 
