@@ -2002,6 +2002,32 @@ a {
   padding-bottom: 32px;
 }
 
+.hero-shell--presentation .hero-backdrop {
+  background:
+    radial-gradient(circle at 12% 16%, rgba(181, 154, 87, 0.14), transparent 22%),
+    radial-gradient(circle at 86% 18%, rgba(96, 165, 250, 0.12), transparent 24%),
+    radial-gradient(circle at 50% 78%, rgba(9, 20, 38, 0.74), transparent 36%),
+    linear-gradient(135deg, rgba(6, 11, 21, 0.28) 0%, rgba(9, 14, 26, 0.08) 42%, rgba(4, 7, 14, 0.46) 100%),
+    linear-gradient(180deg, rgba(3, 6, 12, 0.04), rgba(3, 6, 12, 0.32) 44%, rgba(3, 6, 12, 0.7) 100%);
+}
+
+.hero-shell--presentation .hero-visual-frame {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(181, 154, 87, 0.09), transparent 16%),
+    radial-gradient(circle at 82% 14%, rgba(59, 130, 246, 0.08), transparent 20%),
+    linear-gradient(180deg, rgba(4, 8, 16, 0.06), rgba(6, 10, 18, 0.18));
+}
+
+.hero-shell--presentation .hero-visual-overlay {
+  background:
+    radial-gradient(circle at 50% 32%, transparent 0%, rgba(5, 10, 18, 0.02) 36%, rgba(5, 10, 18, 0.16) 100%),
+    linear-gradient(180deg, rgba(227, 212, 165, 0.018), transparent 18%, rgba(5, 10, 18, 0.12) 56%, rgba(5, 10, 18, 0.24) 100%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 120px),
+    linear-gradient(rgba(255, 255, 255, 0.015) 0, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 120px);
+  background-size: auto, auto, 120px 120px, 120px 120px;
+  background-position: center, center, center, center;
+}
+
 .hero-grid--overview {
   display: grid;
   grid-template-columns: 1fr;
