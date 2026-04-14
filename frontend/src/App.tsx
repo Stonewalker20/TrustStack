@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { AnswerCard } from './components/AnswerCard'
 import { DocumentList } from './components/DocumentList'
+import { EvidencePanel } from './components/EvidencePanel'
 import { QueryBox } from './components/QueryBox'
-import { TrustHero } from './components/TrustHero'
+import { RiskPanel } from './components/RiskPanel'
+import { RunHistoryTable } from './components/RunHistoryTable'
 import { UploadPanel } from './components/UploadPanel'
 import { api } from './lib/api'
 import type {
@@ -13,489 +16,199 @@ import type {
   StandardTestRunResponse,
 } from './types'
 
-type PlanetSlide = {
-  id: string
-  eyebrow: string
-  planet: string
+function SummaryMetric({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="summary-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{helper}</small>
+    </div>
+  )
+}
+
+function WorkflowCard({
+  step,
+  title,
+  body,
+}: {
+  step: string
   title: string
-  summary: string
-  background: string
-  researchQuestion: string
-  truststackResponse: string
-  academicTakeaway: string
-  visualTitle: string
-  visualCaption: string
-  visualStats: { label: string; value: string }[]
-  visualFlow: string[]
-  reportSection: string
-  reportFigureCaption: string
+  body: string
+}) {
+  return (
+    <article className="workflow-card">
+      <div className="workflow-card__step">{step}</div>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  )
 }
 
-const PLANET_SLIDES: PlanetSlide[] = [
-  {
-    id: 'intro-mercury',
-    eyebrow: 'Slide 1 · Introduction',
-    planet: 'Mercury',
-    title: 'TrustStack frames trustworthy AI as an evidence-grounded evaluation problem.',
-    summary: 'The presentation opens with the central claim of the report: fluent model output is not enough in operational settings where users must judge whether an answer is safe, supported, and auditable.',
-    background: 'Large language models are easy to demonstrate but hard to trust. In policy, research, compliance, and safety workflows, the key question is not simply whether a model can answer quickly, but whether the answer can be inspected before it is used downstream.',
-    researchQuestion: 'How can a user determine whether an AI answer is trustworthy when conventional chat interfaces expose fluency but hide evidence quality, contradiction risk, and review conditions?',
-    truststackResponse: 'TrustStack addresses this by combining evidence ingestion, retrieval, answer generation, structured scoring, risk labeling, and explanation into one local-first evaluation workflow.',
-    academicTakeaway: 'The paper positions TrustStack as an evaluation system for operational trust rather than a wrapper that makes model output look more persuasive.',
-    visualTitle: 'Problem formulation',
-    visualCaption: 'The project begins by reframing trust from a subjective impression into a measurable evaluation target.',
-    visualStats: [
-      { label: 'Core task', value: 'Grounded trust review' },
-      { label: 'Primary risk', value: 'Unsupported confidence' },
-      { label: 'Decision basis', value: 'Evidence + diagnostics' },
-    ],
-    visualFlow: ['Question asked', 'Evidence inspected', 'Trust scored', 'Operator decides'],
-    reportSection: 'Introduction and Problem Setting',
-    reportFigureCaption: 'Opening slide mapping the trust problem to an evidence-first evaluation workflow.',
-  },
-  {
-    id: 'related-venus',
-    eyebrow: 'Slide 2 · Related Work',
-    planet: 'Venus',
-    title: 'TrustStack sits at the intersection of RAG, hallucination analysis, and structured evaluation.',
-    summary: 'This slide aligns the project with the report’s related-work section and explains where the contribution fits: not a new base model, but a new evidence-first review layer around existing generation pipelines.',
-    background: 'The report grounds TrustStack in three adjacent literatures: retrieval-augmented generation, hallucination and reliability analysis, and structured evaluation frameworks for generative systems. The novelty is the integration of these threads into a local-first review workflow.',
-    researchQuestion: 'How does TrustStack differ from prior retrieval pipelines, generic explainability tools, and model-evaluation harnesses?',
-    truststackResponse: 'TrustStack shifts emphasis from answer production to answer inspection by turning retrieval quality, evidence sufficiency, contradiction risk, and calibration into first-class outputs rather than hidden internal signals.',
-    academicTakeaway: 'The contribution is a systems-and-evaluation layer that operationalizes ideas from RAG and reliability research into a workflow an operator can actually use.',
-    visualTitle: 'Positioning in prior work',
-    visualCaption: 'The project contribution is defined by how it combines retrieval, reliability, and evaluation into one review surface.',
-    visualStats: [
-      { label: 'Lineage 1', value: 'RAG systems' },
-      { label: 'Lineage 2', value: 'Hallucination research' },
-      { label: 'Lineage 3', value: 'Structured evals' },
-    ],
-    visualFlow: ['Retrieve evidence', 'Detect failure modes', 'Score systematically', 'Review operationally'],
-    reportSection: 'Related Work',
-    reportFigureCaption: 'Related-work slide positioning TrustStack against adjacent retrieval and evaluation approaches.',
-  },
-  {
-    id: 'data-earth',
-    eyebrow: 'Slide 3 · Data',
-    planet: 'Earth',
-    title: 'The evaluation uses both uploaded evidence and benchmark-oriented corpora.',
-    summary: 'Earth now reflects the report’s data section: TrustStack operates over real user documents, synthetic stress corpora, and checked-in public benchmark subsets.',
-    background: 'The paper distinguishes between two data families. The first is user-provided evidence in PDF, DOCX, TXT, and Markdown form. The second is benchmark-oriented data, including seven synthetic stress conditions and normalized public subsets for SciFact and HotpotQA.',
-    researchQuestion: 'What data is required to evaluate trust in a way that is both operationally useful and experimentally reproducible?',
-    truststackResponse: 'TrustStack separates live evidence review from benchmark analysis while keeping both under the same ingestion, retrieval, and scoring protocol.',
-    academicTakeaway: 'This slide makes the dataset story defensible: the system is grounded in real evidence use cases, but the report also includes controlled and external evaluation datasets.',
-    visualTitle: 'Evaluation data families',
-    visualCaption: 'TrustStack uses separate but compatible data paths for live evidence, synthetic stress tests, and public benchmark subsets.',
-    visualStats: [
-      { label: 'Live corpus', value: 'User uploads' },
-      { label: 'Stress tests', value: '7 synthetic packets' },
-      { label: 'External data', value: 'SciFact + HotpotQA' },
-    ],
-    visualFlow: ['Upload evidence', 'Build benchmark slices', 'Run same evaluator', 'Compare outcomes'],
-    reportSection: 'Data',
-    reportFigureCaption: 'Data slide showing how live corpora and benchmark corpora feed the same TrustStack pipeline.',
-  },
-  {
-    id: 'methods-mars',
-    eyebrow: 'Slide 4 · Methods',
-    planet: 'Mars',
-    title: 'The TrustStack method is a five-layer pipeline from evidence intake to operator review.',
-    summary: 'Mars maps directly to the report’s methods section and architecture table: ingestion, retrieval, generation, evaluation, and review form the core system.',
-    background: 'The report describes TrustStack as a local-first full-stack system. MongoDB persists documents and runs, retrieval surfaces evidence chunks, generation produces the answer, and the evaluation layer converts that answer into a structured review artifact.',
-    researchQuestion: 'What system architecture is necessary if trust must remain inspectable from ingestion all the way to the final verdict?',
-    truststackResponse: 'TrustStack explicitly decomposes the workflow so each layer can be validated independently and so failure can be localized to retrieval, answer behavior, scoring, or explanation.',
-    academicTakeaway: 'The method is not a single prompt or a single score. It is a traceable pipeline whose layers correspond directly to the structure of the report.',
-    visualTitle: 'Five-layer method',
-    visualCaption: 'The methods slide summarizes the pipeline that carries evidence into a scored evaluation packet.',
-    visualStats: [
-      { label: 'Persistence', value: 'MongoDB runs + chunks' },
-      { label: 'Retrieval', value: 'Vector or lexical' },
-      { label: 'Review output', value: 'Scored packet' },
-    ],
-    visualFlow: ['Ingest', 'Retrieve', 'Generate', 'Evaluate', 'Review'],
-    reportSection: 'Methods and System Architecture',
-    reportFigureCaption: 'Methods slide showing the five-layer TrustStack pipeline.',
-  },
-  {
-    id: 'standard-jupiter',
-    eyebrow: 'Slide 5 · Evaluation Standard',
-    planet: 'Jupiter',
-    title: 'TrustStack Evaluation Standard v2.0 formalizes trust as a weighted multi-dimensional score.',
-    summary: 'Jupiter is no longer just a product result view. It now mirrors the paper’s formal methodology: ten weighted dimensions, explicit checks, claim diagnostics, verdict bands, and reproducibility metadata.',
-    background: 'For a trust system to be academically defensible, the score must be interpretable and reproducible. TrustStack therefore defines weighted dimensions for retrieval, evidence sufficiency, citation traceability, claim support, contradiction risk, completeness, abstention, discipline, safety, and calibration.',
-    researchQuestion: 'How can trust be operationalized as a measurable and reviewable standard instead of a vague intuition?',
-    truststackResponse: 'TrustStack Evaluation Standard v2.0 converts evidence-centered diagnostics into a structured score, a verdict band, explicit failure signals, and a next-step recommendation.',
-    academicTakeaway: 'This slide is the methodological core of the project. It explains what is being measured, why it is weighted, and how the final verdict is produced.',
-    visualTitle: 'Standard definition',
-    visualCaption: 'The standard makes trust inspectable by decomposing it into weighted dimensions and explicit checks.',
-    visualStats: [
-      { label: 'Dimensions', value: '10 weighted criteria' },
-      { label: 'Verdicts', value: 'Pass / Review / Fail' },
-      { label: 'Diagnostics', value: 'Claims + checks + flags' },
-    ],
-    visualFlow: ['Collect diagnostics', 'Score dimensions', 'Assign verdict', 'Recommend review'],
-    reportSection: 'TrustStack Evaluation Standard v2.0',
-    reportFigureCaption: 'Formal evaluation-standard slide summarizing dimensions, verdict bands, and diagnostics.',
-  },
-  {
-    id: 'synthetic-saturn',
-    eyebrow: 'Slide 6 · Synthetic Results',
-    planet: 'Saturn',
-    title: 'The synthetic benchmark shows that TrustStack reacts sensibly when corpus quality changes.',
-    summary: 'Saturn now aligns with the report’s synthetic evaluation findings: aligned evidence scores highest, sparse and off-scope evidence score lowest, and the benchmark clearly identifies where the next gains will come from.',
-    background: 'The synthetic benchmark matters because it isolates failure modes under controlled conditions. The seven corpus packets intentionally stress contradiction, lexical drift, unsafe guidance, sparse evidence, and multi-source agreement so the evaluator can be tested before it is generalized.',
-    researchQuestion: 'Does TrustStack’s scoring logic move in the right direction when the evidence environment becomes contradictory, sparse, or off-scope?',
-    truststackResponse: 'Under deterministic lexical retrieval and extractive fallback generation, TrustStack meaningfully separates aligned packets from degraded packets and shows that stronger semantic retrieval would provide the highest marginal improvement.',
-    academicTakeaway: 'The synthetic benchmark supports the claim that TrustStack behaves like an evaluator rather than a cosmetic scoring layer. It provides a measured roadmap for optimization instead of vague intuition.',
-    visualTitle: 'Synthetic benchmark',
-    visualCaption: 'Controlled stress tests show whether score movement follows changes in corpus quality.',
-    visualStats: [
-      { label: 'Best synthetic score', value: '76.44 / 100' },
-      { label: 'Worst synthetic score', value: '59.97 / 100' },
-      { label: 'Weakest category', value: 'Grounding + retrieval' },
-    ],
-    visualFlow: ['Stress corpus built', 'Suite executed', 'Scores compared', 'Failure surface identified'],
-    reportSection: 'Synthetic Evaluation Findings',
-    reportFigureCaption: 'Synthetic-results slide summarizing corpus conditions and the main score spread.',
-  },
-  {
-    id: 'external-uranus',
-    eyebrow: 'Slide 7 · External Benchmarks',
-    planet: 'Uranus',
-    title: 'Public benchmark results show that TrustStack already transfers beyond synthetic evaluation.',
-    summary: 'Uranus reflects the new report section added after the real benchmark pass. It shows that TrustStack is no longer evaluated only on synthetic data and that the public benchmark slice now identifies the clearest next optimization target.',
-    background: 'To narrow the biggest threat to validity, the report now includes checked-in SciFact and HotpotQA subsets. These external tasks pressure scientific claim verification and multi-hop question answering under the same evaluation pipeline used in the live system.',
-    researchQuestion: 'Does TrustStack’s trust score remain meaningful when the evaluator is run on public benchmarks instead of internally authored stress corpora?',
-    truststackResponse: 'The external slice shows strong citation alignment and a measurable spread to task-level performance, which is valuable because it turns the next engineering step into a quantified optimization target.',
-    academicTakeaway: 'This slide strengthens the project by showing that TrustStack now has external evidence and a clear path for improving semantic retrieval and calibration.',
-    visualTitle: 'Real benchmark slice',
-    visualCaption: 'Public-benchmark evaluation tests whether the trust signal survives beyond synthetic corpora.',
-    visualStats: [
-      { label: 'Aggregate trust score', value: '63.09 / 100' },
-      { label: 'Task metric', value: '0.141' },
-      { label: 'Citation alignment', value: '83.8%' },
-    ],
-    visualFlow: ['Public subset frozen', 'Evaluator rerun', 'Gap measured', 'Validity improved'],
-    reportSection: 'Real Benchmark Evaluation',
-    reportFigureCaption: 'External-results slide summarizing SciFact and HotpotQA benchmark findings.',
-  },
-  {
-    id: 'validity-neptune',
-    eyebrow: 'Slide 8 · Validity and Limitations',
-    planet: 'Neptune',
-    title: 'TrustStack is strongest when its baseline is reproducible and its next-stage upgrades are clearly defined.',
-    summary: 'Neptune now mirrors the report’s validity discussion instead of repeating the methods slide. It explains what the current baseline already demonstrates and why the next extensions are straightforward.',
-    background: 'After adding public benchmark results, the report now shows a reproducible local baseline, real external evidence, and a clear roadmap for stronger retrieval, richer semantic checking, and future analyst studies.',
-    researchQuestion: 'What capabilities has TrustStack already demonstrated, and what upgrades will most directly increase its performance envelope?',
-    truststackResponse: 'The current system already demonstrates reproducibility, evidence traceability, standardized export, and external benchmark coverage, while pointing directly to stronger semantic retrieval and analyst validation as the next phase.',
-    academicTakeaway: 'This slide improves the credibility of the presentation by showing that TrustStack is not blocked by ambiguity; it has a stable baseline and a measurable expansion path.',
-    visualTitle: 'Readiness envelope',
-    visualCaption: 'A stronger presentation frames validity as disciplined scope plus a visible path to scale.',
-    visualStats: [
-      { label: 'Stable baseline', value: 'Lexical + extractive' },
-      { label: 'Next validation', value: 'Analyst study' },
-      { label: 'Upgrade target', value: 'Semantic retrieval' },
-    ],
-    visualFlow: ['Baseline established', 'External evidence added', 'Upgrade path defined', 'Scale evaluation'],
-    reportSection: 'Validity and Next-Stage Readiness',
-    reportFigureCaption: 'Validity slide summarizing the current baseline and the next-stage expansion path.',
-  },
-  {
-    id: 'conclusion-pluto',
-    eyebrow: 'Slide 9 · Close',
-    planet: 'Pluto',
-    title: 'TrustStack contributes a reusable workflow for grounded evaluation, benchmarking, and reporting.',
-    summary: 'Pluto closes the deck by returning to the paper’s conclusion: TrustStack is useful because it produces structured trust artifacts, not just interactive model output.',
-    background: 'The strongest interpretation of the project is that it provides a coherent, local-first framework for inspecting groundedness, exporting repeatable results, and scaling toward stronger enterprise-grade evaluation workflows.',
-    researchQuestion: 'What should the audience leave with after the presentation: a demo impression, or a reproducible evaluation workflow they can analyze and extend?',
-    truststackResponse: 'TrustStack connects live evidence review, a formal evaluation standard, synthetic and public benchmarking, and exportable IEEE-ready artifacts into one end-to-end research system.',
-    academicTakeaway: 'The project’s main value is coherence: the interface, backend, benchmarks, and report now all express the same evaluation logic.',
-    visualTitle: 'Project takeaway',
-    visualCaption: 'The closing slide ties the system, the evaluation standard, and the report into one durable contribution.',
-    visualStats: [
-      { label: 'Main contribution', value: 'Evidence-first evaluator' },
-      { label: 'Empirical support', value: 'Synthetic + external' },
-      { label: 'Artifact', value: 'Report-ready outputs' },
-    ],
-    visualFlow: ['Question trust', 'Measure support', 'Benchmark reliably', 'Export evidence'],
-    reportSection: 'Conclusion',
-    reportFigureCaption: 'Conclusion slide aligning the final system contribution with the written report.',
-  },
-]
-
-function ScoreBreakdownPanel({
-  suiteResult,
-}: {
-  suiteResult: StandardTestRunResponse | null
-}) {
-  if (!suiteResult) {
-    return (
-      <div className="panel panel--glass">
-        <div className="panel-header">
-          <div>
-            <div className="eyebrow">TrustStack Standard</div>
-            <h3>Run the standardized suite to populate this breakdown.</h3>
-          </div>
-        </div>
-        <p className="muted">
-          Mission Control can execute the full TrustStack Evaluation Standard and return a final score, weighted category
-          breakdown, and recommended follow-up actions.
-        </p>
-      </div>
-    )
-  }
+function InsightPanel({ result }: { result: QueryResponse | null }) {
+  const evaluation = result?.evaluation
+  const explanation = result?.explanation
 
   return (
-    <div className="panel panel--glass">
-      <div className="panel-header">
+    <section className="content-card content-card--dense">
+      <div className="content-card__header">
         <div>
-          <div className="eyebrow">TrustStack Standard</div>
-          <h3>Overall suite score: {suiteResult.final_score}</h3>
+          <div className="eyebrow">Interpretation Layer</div>
+          <h2>Why the system reached this judgment</h2>
         </div>
-        <span className="badge badge--bright">{suiteResult.verdict.toUpperCase()}</span>
       </div>
-      <p className="muted">{suiteResult.summary}</p>
-      <div className="signal-stack">
-        {suiteResult.score_breakdown.map((category) => (
-          <div className="signal-row" key={category.key}>
-            <span>{category.label}</span>
-            <div className="signal-bar">
-              <div className="signal-bar-fill" style={{ width: `${category.score}%` }} />
-            </div>
-            <strong>{category.score}</strong>
+
+      {!result ? (
+        <p className="muted">
+          TrustStack explains the answer in plain language, highlights weak support, and tells the user what should be
+          reviewed before action is taken.
+        </p>
+      ) : (
+        <div className="insight-grid">
+          <div className="insight-card">
+            <h3>Overview</h3>
+            <p>{explanation?.overview ?? result.trust_summary}</p>
           </div>
-        ))}
-      </div>
-    </div>
+          <div className="insight-card">
+            <h3>Evidence Strength</h3>
+            <p>{explanation?.evidence_strength ?? 'Evidence strength will appear after the next run.'}</p>
+          </div>
+          <div className="insight-card">
+            <h3>Citation Coverage</h3>
+            <p>{explanation?.citation_coverage ?? 'Citation coverage will appear after the next run.'}</p>
+          </div>
+          <div className="insight-card">
+            <h3>Recommended Review</h3>
+            <p>{explanation?.review_recommendation ?? 'TrustStack will recommend the next review step once a run completes.'}</p>
+          </div>
+
+          {evaluation ? (
+            <div className="insight-card insight-card--wide">
+              <div className="content-card__header content-card__header--compact">
+                <div>
+                  <div className="eyebrow">Score Breakdown</div>
+                  <h3>{evaluation.overall_score}/100 overall trust score</h3>
+                </div>
+                <span className={`status-pill ${result.insufficient_evidence ? 'status-pill--warn' : 'status-pill--ok'}`}>
+                  {evaluation.verdict}
+                </span>
+              </div>
+              <div className="dimension-list">
+                {evaluation.dimensions.map((dimension) => (
+                  <div className="dimension-row" key={dimension.key}>
+                    <div>
+                      <strong>{dimension.label}</strong>
+                      <p>{dimension.rationale}</p>
+                    </div>
+                    <div className="dimension-row__meter">
+                      <div className="signal-bar">
+                        <div className="signal-bar-fill" style={{ width: `${dimension.score}%` }} />
+                      </div>
+                      <span>{dimension.score}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {explanation?.teaching_points?.length ? (
+            <div className="insight-card insight-card--wide">
+              <h3>What the user should learn from this result</h3>
+              <ul className="bullet-list">
+                {explanation.teaching_points.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </section>
   )
 }
 
-function StandardSlidePanel({
-  slide,
-  suiteResult,
-  documents,
-  runs,
-}: {
-  slide: PlanetSlide
-  suiteResult: StandardTestRunResponse | null
-  documents: DocumentItem[]
-  runs: RunItem[]
-}) {
-  const emphasisValue =
-    slide.planet === 'Mercury'
-      ? `${documents.length} document${documents.length === 1 ? '' : 's'} ready for evaluation`
-      : slide.planet === 'Jupiter' && suiteResult
-        ? `${suiteResult.final_score}/100 ${suiteResult.verdict.toUpperCase()}`
-        : slide.planet === 'Saturn'
-          ? `${runs.length} recorded evaluation run${runs.length === 1 ? '' : 's'}`
-          : slide.visualStats[0]?.value ?? ''
-
-  return (
-    <div className="presentation-slide">
-      <div className="presentation-slide__lead">
-        <div className="eyebrow">{slide.eyebrow}</div>
-        <h2>{slide.title}</h2>
-        <p>{slide.summary}</p>
-      </div>
-
-      <div className="presentation-slide__layout">
-        <div className="presentation-slide__panel presentation-slide__panel--wide">
-          <div className="eyebrow">Background</div>
-          <h3>Why this section matters</h3>
-          <p>{slide.background}</p>
-        </div>
-
-        <div className="presentation-slide__panel">
-          <div className="eyebrow">Research Question</div>
-          <h3>What problem is this slide answering?</h3>
-          <p>{slide.researchQuestion}</p>
-        </div>
-
-        <div className="presentation-slide__panel">
-          <div className="eyebrow">TrustStack Response</div>
-          <h3>How the system responds</h3>
-          <p>{slide.truststackResponse}</p>
-        </div>
-
-        <div className="presentation-slide__panel presentation-slide__panel--wide">
-          <div className="eyebrow">Academic Takeaway</div>
-          <h3>Claim for the audience</h3>
-          <p>{slide.academicTakeaway}</p>
-        </div>
-
-        <div className="presentation-slide__panel presentation-slide__panel--accent presentation-slide__visual">
-          <div className="presentation-slide__visual-head">
-            <div>
-              <div className="eyebrow">{slide.visualTitle}</div>
-              <h3>{emphasisValue}</h3>
-            </div>
-            <p>{slide.visualCaption}</p>
-          </div>
-
-          <div className="presentation-slide__stats">
-            {slide.visualStats.map((item) => (
-              <div className="presentation-slide__stat" key={`${slide.id}-${item.label}`}>
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-              </div>
-            ))}
-          </div>
-
-          <div className="presentation-slide__flow" aria-label="slide visual flow">
-            {slide.visualFlow.map((item, index) => (
-              <div className="presentation-slide__flow-item" key={`${slide.id}-flow-${item}`}>
-                <span>{item}</span>
-                {index < slide.visualFlow.length - 1 ? <i aria-hidden="true" /> : null}
-              </div>
-            ))}
-          </div>
-
-          <div className="presentation-slide__caption">{slide.reportFigureCaption}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MissionControlOverlay({
-  documents,
-  runs,
-  result,
-  signals,
-  sampleQuestions,
-  loading,
+function StandardSuitePanel({
   suiteLoading,
   suiteResult,
   reportArtifacts,
-  onSubmit,
-  onUploaded,
   onRunSuite,
 }: {
-  documents: DocumentItem[]
-  runs: RunItem[]
-  result: QueryResponse | null
-  signals: { label: string; value: number }[]
-  sampleQuestions: SampleQuestionItem[]
-  loading: boolean
   suiteLoading: boolean
   suiteResult: StandardTestRunResponse | null
   reportArtifacts: StandardReportArtifactsResponse | null
-  onSubmit: (question: string) => void
-  onUploaded: () => void
   onRunSuite: () => void
 }) {
-  const latestRun = runs[0] ?? null
-
   return (
-    <div className="control-center stack">
-      <div className="panel-header">
+    <section className="content-card content-card--dense">
+      <div className="content-card__header">
         <div>
-          <div className="eyebrow">Mission Control</div>
-          <h2>Run the TrustStack standard from one screen.</h2>
+          <div className="eyebrow">Standardized Evaluation</div>
+          <h2>Run the full TrustStack benchmark and review the score breakdown</h2>
         </div>
         <button className="primary primary--glow" onClick={onRunSuite} disabled={suiteLoading}>
-          {suiteLoading ? 'Running Standard…' : 'Run Standardized Tests'}
+          {suiteLoading ? 'Running Standard…' : 'Run Standard'}
         </button>
       </div>
+
       <p className="muted">
-        Mission Control is now the operator console for the formal TrustStack standard: upload evidence, run live
-        questions, execute the standardized suite, and capture the final score breakdown for the presentation and report.
+        This standard consolidates grounded QA, citation traceability, contradiction resistance, calibration, and
+        reporting quality into one reproducible evaluation pass.
       </p>
 
-      <div className="control-center-grid">
-        <div className="control-column">
-          <UploadPanel onUploaded={onUploaded} />
-          <DocumentList items={documents} />
-        </div>
-
-        <div className="control-column">
-          <QueryBox onSubmit={onSubmit} loading={loading} sampleQuestions={sampleQuestions} />
-          <div className="panel panel--glass">
-            <div className="panel-header">
-              <div>
-                <div className="eyebrow">Latest Response</div>
-                <h3>{result ? 'Current evaluation output' : 'Run a query to populate this panel'}</h3>
-              </div>
-              {result ? <span className="badge badge--bright">{result.confidence_score}</span> : null}
-            </div>
-            <p className="muted">
-              {result ? result.answer : 'Mission Control keeps the latest grounded answer visible while the standard suite runs.'}
-            </p>
+      {suiteResult ? (
+        <div className="suite-grid">
+          <div className="suite-hero">
+            <span>Final score</span>
+            <strong>{suiteResult.final_score}</strong>
+            <p>{suiteResult.summary}</p>
             <div className="pill-grid">
-              {(result?.citations ?? []).slice(0, 4).map((citation) => (
-                <span className="data-pill" key={citation}>
-                  {citation}
-                </span>
-              ))}
-              {!result ? <span className="data-pill">Awaiting live query</span> : null}
+              <span className="data-pill">{suiteResult.verdict}</span>
+              <span className="data-pill">{suiteResult.metadata.document_count} documents</span>
+              <span className="data-pill">{suiteResult.metadata.chunk_count} chunks</span>
             </div>
           </div>
-        </div>
 
-        <div className="control-column">
-          <ScoreBreakdownPanel suiteResult={suiteResult} />
-
-          <div className="panel panel--glass">
-            <div className="panel-header">
-              <div>
-                <div className="eyebrow">Report Export</div>
-                <h3>Generate report-ready artifacts.</h3>
-              </div>
-            </div>
-            <p className="muted">
-              {reportArtifacts?.executive_summary ??
-                'Run the standardized suite to generate an executive summary, IEEE LaTeX table snippets, and an appendix-style benchmark export.'}
-            </p>
-            {reportArtifacts ? (
-              <div className="pill-grid">
-                <span className="data-pill">LaTeX category table ready</span>
-                <span className="data-pill">LaTeX case table ready</span>
-                <span className="data-pill">Appendix markdown ready</span>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="panel panel--glass">
-            <div className="panel-header">
-              <div>
-                <div className="eyebrow">Trust Signals</div>
-                <h3>Read the current posture instantly.</h3>
-              </div>
-            </div>
-            {signals.map((signal) => (
-              <div className="signal-row" key={signal.label}>
-                <span>{signal.label}</span>
-                <div className="signal-bar">
-                  <div className="signal-bar-fill" style={{ width: `${signal.value}%` }} />
+          <div className="suite-breakdown">
+            {suiteResult.score_breakdown.map((category) => (
+              <div className="dimension-row" key={category.key}>
+                <div>
+                  <strong>{category.label}</strong>
+                  <p>{category.summary}</p>
                 </div>
-                <strong>{signal.value}</strong>
+                <div className="dimension-row__meter">
+                  <div className="signal-bar">
+                    <div className="signal-bar-fill" style={{ width: `${category.score}%` }} />
+                  </div>
+                  <span>{category.score}</span>
+                </div>
               </div>
             ))}
-            <div className="framework-note">
-              {result ? result.trust_summary : 'Run an evaluation to populate the live trust posture.'}
-            </div>
           </div>
 
-          <div className="panel panel--glass">
-            <div className="panel-header">
-              <div>
-                <div className="eyebrow">Run History</div>
-                <h3>Track the most recent evaluation.</h3>
-              </div>
-              <span className="badge">{runs.length} total</span>
-            </div>
-            {latestRun ? (
-              <div className="framework-note">
-                <strong>{latestRun.question}</strong>
-                <div>{latestRun.trust_summary}</div>
-              </div>
-            ) : (
-              <div className="framework-note">No evaluations have been logged yet.</div>
-            )}
+          <div className="insight-card">
+            <h3>Recommended actions</h3>
+            <ul className="bullet-list">
+              {suiteResult.recommended_actions.map((action) => (
+                <li key={action}>{action}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="insight-card">
+            <h3>Report artifacts</h3>
+            <p>
+              {reportArtifacts?.executive_summary ??
+                'Run the standard to generate report-ready category tables, case tables, and appendix content.'}
+            </p>
           </div>
         </div>
-      </div>
-    </div>
+      ) : (
+        <div className="empty-state">
+          <strong>No standard run yet.</strong>
+          <p>Use this section after ingesting evidence to create a final defensible score for analysis and reporting.</p>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -505,8 +218,6 @@ export default function App() {
   const [result, setResult] = useState<QueryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [suiteLoading, setSuiteLoading] = useState(false)
-  const [activePlanetIndex, setActivePlanetIndex] = useState(0)
-  const [missionControlOpen, setMissionControlOpen] = useState(false)
   const [sampleQuestions, setSampleQuestions] = useState<SampleQuestionItem[]>([])
   const [suiteResult, setSuiteResult] = useState<StandardTestRunResponse | null>(null)
   const [reportArtifacts, setReportArtifacts] = useState<StandardReportArtifactsResponse | null>(null)
@@ -551,7 +262,6 @@ export default function App() {
       const artifacts = await api.post<StandardReportArtifactsResponse>('/evaluation/standard-run/report-artifacts')
       setReportArtifacts(artifacts.data)
       setSuiteResult(artifacts.data.suite)
-      setActivePlanetIndex(4)
     } catch (error) {
       console.error(error)
     } finally {
@@ -562,11 +272,9 @@ export default function App() {
   const trustSignals = useMemo(() => {
     if (!result) {
       return [
-        { label: 'Safety', value: 76 },
-        { label: 'Robustness', value: 72 },
-        { label: 'Hallucination', value: 68 },
-        { label: 'Privacy', value: 80 },
-        { label: 'Monitoring', value: 74 },
+        { label: 'Grounding', value: 0 },
+        { label: 'Traceability', value: 0 },
+        { label: 'Calibration', value: 0 },
       ]
     }
 
@@ -574,48 +282,177 @@ export default function App() {
     const penalty = Math.min(result.risk_flags.length * 8, 32)
 
     return [
-      { label: 'Safety', value: Math.max(35, confidence - penalty / 2) },
-      { label: 'Robustness', value: Math.max(30, confidence - penalty) },
-      { label: 'Hallucination', value: Math.max(25, confidence - (result.insufficient_evidence ? 22 : 10)) },
-      { label: 'Privacy', value: Math.min(92, confidence + 6) },
-      { label: 'Monitoring', value: Math.min(96, confidence + 10 - penalty / 3) },
+      { label: 'Grounding', value: Math.max(25, confidence - (result.insufficient_evidence ? 18 : 8)) },
+      { label: 'Traceability', value: Math.max(30, confidence - penalty / 2) },
+      { label: 'Calibration', value: Math.max(22, confidence - penalty) },
     ]
   }, [result])
 
-  const activePanel = useMemo<ReactNode>(() => {
-    const slide = PLANET_SLIDES[activePlanetIndex]
-    return <StandardSlidePanel slide={slide} suiteResult={suiteResult} documents={documents} runs={runs} />
-  }, [activePlanetIndex, documents, runs, suiteResult])
+  const latestRun = runs[0] ?? null
 
   return (
-    <div className="app-root app-root--fixed">
-      <TrustHero
-        nodes={PLANET_SLIDES}
-        activeIndex={activePlanetIndex}
-        detailPanel={activePanel}
-        missionControlPanel={
-          <MissionControlOverlay
-            documents={documents}
-            runs={runs}
-            result={result}
-            signals={trustSignals}
-            sampleQuestions={sampleQuestions}
-            loading={loading}
+    <div className="app-shell">
+      <header className="landing-hero">
+        <div className="landing-hero__copy">
+          <div className="eyebrow">TrustStack</div>
+          <h1>A user-centered trust interface for grounded AI evaluation.</h1>
+          <p>
+            TrustStack helps people move from raw model output to defensible decisions. Upload evidence, ask grounded
+            questions, inspect support, and run a standardized evaluation without forcing users through a theatrical UI.
+          </p>
+          <div className="hero-actions">
+            <button
+              type="button"
+              className="primary primary--glow"
+              onClick={() => document.getElementById('workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              Start Evaluating
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => document.getElementById('standard')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              View Standard
+            </button>
+          </div>
+        </div>
+
+        <div className="landing-hero__summary">
+          <SummaryMetric label="Evidence store" value={`${documents.length}`} helper="Indexed source documents" />
+          <SummaryMetric label="Latest score" value={result ? `${result.confidence_score}/100` : 'Not run'} helper="Current grounded evaluation" />
+          <SummaryMetric label="Tracked runs" value={`${runs.length}`} helper="Saved evaluation history" />
+          <SummaryMetric
+            label="Standard suite"
+            value={suiteResult ? `${suiteResult.final_score}/100` : 'Pending'}
+            helper="Aggregate benchmark score"
+          />
+        </div>
+      </header>
+
+      <section className="workflow-strip">
+        <WorkflowCard
+          step="01"
+          title="Ground the model in evidence"
+          body="Users start with source documents rather than answers, which keeps TrustStack centered on verifiable support."
+        />
+        <WorkflowCard
+          step="02"
+          title="Expose why the answer should be trusted"
+          body="The interface makes citations, evidence strength, and review recommendations visible in the same place as the answer."
+        />
+        <WorkflowCard
+          step="03"
+          title="Summarize risk with a formal standard"
+          body="TrustStack converts individual runs into a repeatable score breakdown that can be compared, reported, and defended."
+        />
+      </section>
+
+      <main className="workspace" id="workspace">
+        <section className="workspace-grid workspace-grid--primary">
+          <div className="workspace-column">
+            <div className="section-copy">
+              <div className="eyebrow">Step One</div>
+              <h2>Prepare the evidence base</h2>
+              <p>
+                A user-centric evaluation flow starts by making source ingestion understandable. The interface keeps the
+                evidence store visible so users know what the model is allowed to rely on.
+              </p>
+            </div>
+            <UploadPanel
+              onUploaded={() => {
+                refreshDocuments().catch(console.error)
+                refreshSampleQuestions().catch(console.error)
+              }}
+            />
+            <DocumentList items={documents} />
+          </div>
+
+          <div className="workspace-column workspace-column--wide">
+            <div className="section-copy">
+              <div className="eyebrow">Step Two</div>
+              <h2>Run a grounded evaluation</h2>
+              <p>
+                Suggested prompts help the user start from the available evidence. The interface favors clarity over
+                novelty by keeping the query, answer, support, and explanation adjacent.
+              </p>
+            </div>
+            <QueryBox onSubmit={handleSubmit} loading={loading} sampleQuestions={sampleQuestions} />
+            <AnswerCard result={result} />
+            <InsightPanel result={result} />
+          </div>
+
+          <div className="workspace-column">
+            <div className="section-copy">
+              <div className="eyebrow">Step Three</div>
+              <h2>Review trust posture and supporting context</h2>
+              <p>
+                Users need the risk story and the evidence story together. This column keeps the confidence state, flags,
+                and retrieval context visible without sending the user to another page.
+              </p>
+            </div>
+            <RiskPanel result={result} />
+            <div className="content-card content-card--dense">
+              <div className="content-card__header">
+                <div>
+                  <div className="eyebrow">Quick Signals</div>
+                  <h2>Current evaluation posture</h2>
+                </div>
+              </div>
+              {trustSignals.map((signal) => (
+                <div className="signal-row" key={signal.label}>
+                  <span>{signal.label}</span>
+                  <div className="signal-bar">
+                    <div className="signal-bar-fill" style={{ width: `${signal.value}%` }} />
+                  </div>
+                  <strong>{signal.value}</strong>
+                </div>
+              ))}
+              <div className="framework-note">
+                {result ? result.trust_summary : 'Run a query to populate the trust posture and supporting diagnostics.'}
+              </div>
+            </div>
+            <div className="content-card content-card--dense">
+              <div className="content-card__header">
+                <div>
+                  <div className="eyebrow">Latest Run</div>
+                  <h2>Most recent evaluation summary</h2>
+                </div>
+              </div>
+              {latestRun ? (
+                <div className="insight-card">
+                  <h3>{latestRun.question}</h3>
+                  <p>{latestRun.trust_summary}</p>
+                  <small>{new Date(latestRun.created_at).toLocaleString()}</small>
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <strong>No runs yet.</strong>
+                  <p>The latest evaluation snapshot will appear here after the first grounded query is submitted.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="workspace-grid workspace-grid--secondary">
+          <div className="workspace-column workspace-column--wide">
+            <EvidencePanel result={result} />
+          </div>
+          <div className="workspace-column">
+            <RunHistoryTable items={runs} />
+          </div>
+        </section>
+
+        <section id="standard">
+          <StandardSuitePanel
             suiteLoading={suiteLoading}
             suiteResult={suiteResult}
             reportArtifacts={reportArtifacts}
-            onSubmit={handleSubmit}
-            onUploaded={() => {
-              refreshDocuments().catch(console.error)
-              refreshSampleQuestions().catch(console.error)
-            }}
             onRunSuite={handleRunSuite}
           />
-        }
-        missionControlOpen={missionControlOpen}
-        onActiveIndexChange={setActivePlanetIndex}
-        onMissionControlOpenChange={setMissionControlOpen}
-      />
+        </section>
+      </main>
     </div>
   )
 }
