@@ -1,0 +1,338 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[rounded][shadow=true]
+
+\definecolor{oublack}{HTML}{121212}
+\definecolor{ougold}{HTML}{B59A57}
+\definecolor{ougoldlight}{HTML}{E3D4A5}
+\definecolor{oustone}{HTML}{F5F1E8}
+\definecolor{ougray}{HTML}{5C5A56}
+\definecolor{ouline}{HTML}{D8CCAB}
+\definecolor{tsnavy}{HTML}{0E172A}
+\definecolor{tsblue}{HTML}{1F4E79}
+\definecolor{tsteal}{HTML}{0F766E}
+\definecolor{tssoft}{HTML}{F7F9FC}
+\definecolor{tsmuted}{HTML}{52606D}
+\definecolor{tswarn}{HTML}{A56A00}
+
+\setbeamercolor{structure}{fg=ougold}
+\setbeamercolor{title}{fg=oublack}
+\setbeamercolor{subtitle}{fg=ougray}
+\setbeamercolor{author}{fg=ougray}
+\setbeamercolor{date}{fg=ougray}
+\setbeamercolor{normal text}{fg=oublack,bg=white}
+\setbeamercolor{block title}{fg=white,bg=oublack}
+\setbeamercolor{block body}{fg=oublack,bg=tssoft}
+\setbeamercolor{frametitle}{fg=white,bg=oublack}
+\setbeamercolor{footline}{fg=white,bg=oublack}
+
+\newcommand{\oaklandwordmarkpath}{../../frontend/public/ou-oakland-logo.png}
+
+\setbeamertemplate{background canvas}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[white] (current page.south west) rectangle (current page.north east);
+    \fill[oustone] (current page.south west) rectangle ([yshift=0.38cm]current page.south east);
+    \fill[ougold,opacity=0.08] ([xshift=1.0cm,yshift=6.7cm]current page.south west) circle (2.0cm);
+    \fill[tsblue,opacity=0.06] ([xshift=12.2cm,yshift=6.8cm]current page.south west) circle (2.3cm);
+    \fill[tsteal,opacity=0.05] ([xshift=11.4cm,yshift=1.1cm]current page.south west) circle (1.5cm);
+    \draw[ouline,line width=0.35pt] ([yshift=0.38cm]current page.south west) -- ([yshift=0.38cm]current page.south east);
+    \draw[ouline!55, line width=0.2pt, opacity=0.35] ([xshift=0.65cm,yshift=0.9cm]current page.south west) grid[xstep=1.05cm,ystep=0.78cm] ([xshift=-0.65cm,yshift=-0.95cm]current page.north east);
+  \end{tikzpicture}
+}
+
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \begin{beamercolorbox}[wd=\paperwidth,ht=1.05cm,dp=0.22cm,leftskip=0.55cm,rightskip=0.3cm]{frametitle}
+    \begin{tikzpicture}[remember picture,overlay]
+      \fill[oublack] (0,0) rectangle (\paperwidth,1.28);
+      \fill[ougold] (0,0) rectangle (\paperwidth,0.09);
+      \fill[ougoldlight,opacity=0.55] (0.55,0.32) rectangle (4.85,0.36);
+    \end{tikzpicture}
+    \vspace*{0.1cm}\insertframetitle
+  \end{beamercolorbox}
+}
+
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=0.54cm,dp=0.15cm,leftskip=0.38cm,rightskip=0.3cm]{footline}
+      \begin{minipage}[c][0.54cm][c]{0.70\paperwidth}
+        \centering\raisebox{0.265cm}{\scriptsize\bfseries Oakland University\hspace{0.55em}{\scriptsize School of Engineering and Computer Science}}
+      \end{minipage}%
+      \begin{minipage}[c][0.54cm][c]{0.14\paperwidth}
+        \centering\raisebox{0.265cm}{\scriptsize\insertframenumber/\inserttotalframenumber}
+      \end{minipage}%
+      \begin{minipage}[c][0.54cm][c]{0.12\paperwidth}
+        \centering
+        \IfFileExists{\oaklandwordmarkpath}{\includegraphics[height=0.46cm]{\oaklandwordmarkpath}}{\color{white}\scriptsize\bfseries OU}
+      \end{minipage}%
+    \end{beamercolorbox}%
+  }%
+}
+
+\newcommand{\slidelead}[1]{%
+  {\color{tsmuted}\footnotesize #1\par}
+  \vspace{0.35em}
+}
+
+\newcommand{\metricpill}[2]{%
+  \tikz[baseline=-0.65ex]\node[rounded corners=8pt, fill=#1, text=white, inner xsep=8pt, inner ysep=4pt, font=\scriptsize\bfseries]{#2};%
+}
+
+\newcommand{\statcard}[2]{%
+  \begin{beamercolorbox}[wd=\linewidth,rounded=true,shadow=true,sep=0.18cm]{block body}
+    {\scriptsize\textcolor{tsmuted}{#1}}\par
+    \vspace{0.22em}
+    {\large\bfseries #2}
+  \end{beamercolorbox}
+}
+
+\title{TrustStack}
+\subtitle{A Local-First, Evidence-Grounded Evaluation Standard for Trustworthy AI}
+\author{Cordell Stonecipher}
+\institute{Oakland University}
+\date{CSI-4130/5130 Artificial Intelligence}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[oustone] (current page.south west) rectangle (current page.north east);
+    \fill[ougold] (current page.north west) rectangle ([xshift=3.0cm,yshift=-0.14cm]current page.north west);
+    \fill[ougold,opacity=0.12] ([xshift=11.0cm,yshift=5.8cm]current page.south west) circle (2.4cm);
+    \fill[tsteal,opacity=0.10] ([xshift=1.0cm,yshift=1.0cm]current page.south west) circle (1.8cm);
+    \draw[ouline,line width=0.7pt] ([xshift=0.62cm,yshift=0.78cm]current page.south west) rectangle ([xshift=-0.62cm,yshift=-0.78cm]current page.north east);
+  \end{tikzpicture}
+  \vspace*{0.8cm}
+  {\color{oublack}\fontsize{24}{28}\selectfont\bfseries \inserttitle\par}
+  \vspace{0.4em}
+  {\color{ougray}\large \insertsubtitle\par}
+  \vspace{0.8em}
+  {\color{oublack}\normalsize \insertauthor\par}
+  {\color{ougray}\small School of Engineering and Computer Science\par}
+  {\color{ougray}\small \insertdate\par}
+  \vfill
+  \begin{center}
+    \IfFileExists{\oaklandwordmarkpath}{\includegraphics[width=0.2\linewidth]{\oaklandwordmarkpath}}{\Large Oakland University}
+  \end{center}
+\end{frame}
+
+\begin{frame}[shrink=8]{1. Introduction and Problem Setting}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.58\textwidth}
+    \slidelead{TrustStack starts from a simple problem: a fluent answer is not enough when a user must decide whether an AI output is safe, supported, and auditable before using it.}
+    \begin{block}{Research question}
+      How can a user judge whether an AI answer is trustworthy when conventional chat interfaces expose fluency but hide evidence quality, contradiction risk, and review conditions?
+    \end{block}
+    \begin{block}{Project thesis}
+      TrustStack reframes trust as an evidence-grounded evaluation task. It turns trust into a structured review artifact built from evidence, scoring, risk signals, and explanation.
+    \end{block}
+    \column{0.38\textwidth}
+    \statcard{Core task}{Grounded trust review}
+    \vspace{0.45em}
+    \statcard{Primary risk}{Unsupported confidence}
+    \vspace{0.45em}
+    \statcard{Decision basis}{Evidence + diagnostics}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{2. Related Work and Contribution}
+  \slidelead{TrustStack sits between retrieval-augmented generation, hallucination analysis, and structured evaluation frameworks. The contribution is not a new base model. It is a new evidence-first evaluation layer around existing generation pipelines.}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.32\textwidth}
+    \begin{block}{RAG systems}
+      Model outputs should be conditioned on retrieved evidence rather than unconstrained recall.
+    \end{block}
+    \column{0.32\textwidth}
+    \begin{block}{Reliability research}
+      Plausible answers can still be unsupported, unsafe, or operationally misleading.
+    \end{block}
+    \column{0.32\textwidth}
+    \begin{block}{Evaluation frameworks}
+      Reproducible prompts, dimensions, judgments, and exportable artifacts matter.
+    \end{block}
+  \end{columns}
+  \vspace{0.6em}
+  \begin{block}{TrustStack contribution}
+      TrustStack integrates these threads into one local-first workflow centered on answer inspection rather than answer appearance.
+  \end{block}
+\end{frame}
+
+\begin{frame}{3. Data}
+  \slidelead{The evaluation uses two data families: live evidence uploaded by the user and benchmark-oriented corpora used to stress the system under reproducible conditions.}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.48\textwidth}
+    \begin{block}{Live evidence path}
+      \small
+      \begin{itemize}
+        \item PDF, DOCX, TXT, and Markdown uploads
+        \item Parsed, chunked, indexed, and stored in MongoDB
+        \item Used for real-time evidence-grounded question answering
+      \end{itemize}
+    \end{block}
+    \column{0.48\textwidth}
+    \begin{block}{Benchmark path}
+      \small
+      \begin{itemize}
+        \item Seven synthetic stress-test packets
+        \item Checked-in public benchmark subsets: SciFact and HotpotQA
+        \item Same evaluation protocol applied across both paths
+      \end{itemize}
+    \end{block}
+  \end{columns}
+  \vspace{0.6em}
+  \begin{center}
+    \metricpill{tsteal}{User uploads}\hspace{0.5em}
+    \metricpill{tsblue}{Synthetic stress tests}\hspace{0.5em}
+    \metricpill{tswarn}{External benchmarks}
+  \end{center}
+\end{frame}
+
+\begin{frame}{4. Methods and System Architecture}
+  \slidelead{TrustStack is implemented as a five-layer pipeline so each stage can be validated independently and each failure can be localized.}
+  \begin{block}{Pipeline}
+    \centering
+    \metricpill{tsblue}{1. Ingest}\hspace{0.4em}
+    \metricpill{tsteal}{2. Retrieve}\hspace{0.4em}
+    \metricpill{ougold}{3. Generate}\hspace{0.4em}
+    \metricpill{tsblue}{4. Evaluate}\hspace{0.4em}
+    \metricpill{tsteal}{5. Review / Export}
+  \end{block}
+  \vspace{0.6em}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.48\textwidth}
+    \begin{block}{Implementation}
+      \small
+      \begin{itemize}
+        \item MongoDB-backed documents, chunks, and run history
+        \item Retrieval via vector or lexical fallback
+        \item Grounded answer generation with deterministic fallback mode
+      \end{itemize}
+    \end{block}
+    \column{0.48\textwidth}
+    \begin{block}{Verification stack}
+      \small
+      \begin{itemize}
+        \item Backend unit tests
+        \item Real Mongo integration tests
+        \item Browser E2E tests
+        \item Served-stack smoke verification
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{5. TrustStack Evaluation Standard v2.0}
+  \slidelead{The TrustStack Evaluation Standard converts one answer into an evidence-first review packet rather than a single opaque score.}
+  \begin{block}{Ten scored dimensions}
+    Retrieval relevance, evidence sufficiency, citation traceability, claim support, contradiction risk, completeness, abstention behavior, answer discipline, safety risk, and calibration.
+  \end{block}
+  \vspace{0.5em}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.32\textwidth}
+    \statcard{Verdicts}{Pass / Review / Fail}
+    \column{0.32\textwidth}
+    \statcard{Diagnostics}{Claims + checks + flags}
+    \column{0.32\textwidth}
+    \statcard{Output}{Reproducible report artifact}
+  \end{columns}
+  \vspace{0.6em}
+    \begin{block}{Why this matters}
+      The system shows \emph{why} confidence moved, what evidence was missing, and when human review is required.
+    \end{block}
+\end{frame}
+
+\begin{frame}[shrink=8]{6. Synthetic Benchmark Findings}
+  \slidelead{The synthetic benchmark tests whether TrustStack reacts sensibly when the evidence environment changes under controlled conditions.}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.52\textwidth}
+    \begin{block}{Synthetic evaluation design}
+      Seven corpus conditions stress aligned evidence, contradiction, sparse evidence, lexical drift, unsafe procedural advice, and consensus-style multi-document overlap.
+    \end{block}
+    \begin{block}{Interpretation}
+      The benchmark does not claim absolute trustworthiness. It tests whether scores move in the expected direction when evidence quality changes.
+    \end{block}
+    \column{0.44\textwidth}
+    \statcard{Best synthetic score}{76.44 / 100}
+    \vspace{0.45em}
+    \statcard{Worst synthetic score}{59.97 / 100}
+    \vspace{0.45em}
+    \statcard{Weakest category}{Grounding + retrieval}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=6]{7. External Benchmark Findings}
+  \slidelead{To reduce the strongest threat to validity, TrustStack was also evaluated on checked-in public benchmark subsets from SciFact and HotpotQA.}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.48\textwidth}
+    \begin{block}{What improved}
+      The paper no longer relies only on internally authored synthetic corpora. External benchmark slices test the score and verdict logic beyond internal packets.
+    \end{block}
+    \begin{block}{What remains weak}
+      The current local runtime still shows a substantial calibration gap: citation alignment is relatively strong, but task-level correctness is weak.
+    \end{block}
+    \column{0.48\textwidth}
+    \statcard{Aggregate TrustStack score}{63.09 / 100}
+    \vspace{0.45em}
+    \statcard{Task metric}{0.141}
+    \vspace{0.45em}
+    \statcard{Citation alignment}{83.8\%}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=6]{8. Threats to Validity and Limitations}
+  \slidelead{A defensible AI project must separate what has been shown from what still requires stronger evidence.}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.49\textwidth}
+    \begin{block}{Current limits}
+      \small
+      \begin{itemize}
+        \item Local lexical retrieval remains a bottleneck.
+        \item Extractive fallback generation is reproducible but not state-of-the-art.
+        \item No formal human analyst study has been completed yet.
+      \end{itemize}
+    \end{block}
+    \column{0.49\textwidth}
+    \begin{block}{Why the project is still credible}
+      \small
+      \begin{itemize}
+        \item The limitations are explicit, measured, and tied to concrete next experiments.
+        \item The paper now includes real external benchmarks, not just synthetic data.
+        \item The evaluation and export stack is reproducible end to end.
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=4]{9. Conclusion}
+  \slidelead{TrustStack contributes a reusable workflow for grounded evaluation, benchmarking, and reporting.}
+  \begin{block}{Main contribution}
+    TrustStack is valuable not because it makes AI look more persuasive, but because it makes trust inspectable. It connects live evidence review, a formal evaluation standard, synthetic benchmarking, public-benchmark evaluation, and exportable IEEE-ready artifacts into one coherent system.
+  \end{block}
+  \vspace{0.6em}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \column{0.32\textwidth}
+    \statcard{System role}{Evidence-first evaluator}
+    \column{0.32\textwidth}
+    \statcard{Empirical basis}{Synthetic + external}
+    \column{0.32\textwidth}
+    \statcard{Deliverable}{Report-ready artifacts}
+  \end{columns}
+  \vspace{0.6em}
+  \begin{center}
+    {\large\bfseries Questions}
+  \end{center}
+\end{frame}
+
+\end{document}
