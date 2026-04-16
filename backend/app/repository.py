@@ -31,6 +31,7 @@ class TrustRepository(Protocol):
     def list_documents(self) -> list[dict]: ...
     def list_runs(self, limit: int = 100) -> list[dict]: ...
     def list_chunks(self) -> list[dict]: ...
+    def list_chunks_for_document(self, document_id: str) -> list[dict]: ...
     def ping(self) -> None: ...
 
 
@@ -155,6 +156,20 @@ class MongoRepository:
     def list_chunks(self) -> list[dict]:
         rows = []
         for row in self.chunks.find().sort("chunk_index", 1):
+            rows.append(
+                {
+                    "document_id": row["document_id"],
+                    "filename": row["filename"],
+                    "page_num": row.get("page_num"),
+                    "chunk_uid": row["chunk_uid"],
+                    "text": row["text"],
+                }
+            )
+        return rows
+
+    def list_chunks_for_document(self, document_id: str) -> list[dict]:
+        rows = []
+        for row in self.chunks.find({"document_id": document_id}).sort("chunk_index", 1):
             rows.append(
                 {
                     "document_id": row["document_id"],

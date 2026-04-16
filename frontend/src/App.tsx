@@ -380,7 +380,13 @@ export default function App() {
     try {
       const res = await api.post<QueryResponse>('/query', { question: normalizedQuestion, top_k: 5 })
       setResult(res.data)
-      refreshRuns().catch(console.error)
+      if (res.data.run) {
+        setRuns((current) => {
+          const next = [res.data.run as RunItem, ...current.filter((item) => item.id !== res.data.run?.id)]
+          return next.slice(0, 100)
+        })
+        setBackendIssue('runs', '')
+      }
     } catch (error) {
       console.error(error)
       if (isAxiosError<{ detail?: string }>(error)) {

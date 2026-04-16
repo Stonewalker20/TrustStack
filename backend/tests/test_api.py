@@ -102,6 +102,9 @@ class FakeRepository:
     def list_chunks(self) -> list[dict]:
         return list(self.chunks)
 
+    def list_chunks_for_document(self, document_id: str) -> list[dict]:
+        return [row for row in self.chunks if row["document_id"] == document_id]
+
     def ping(self) -> None:
         return None
 
@@ -187,6 +190,9 @@ class APITestCase(unittest.TestCase):
         self.assertIn("diagnostics", payload["evaluation"])
         self.assertIn("claims", payload["evaluation"])
         self.assertGreaterEqual(len(payload["explanation"]["teaching_points"]), 3)
+        self.assertIn("run", payload)
+        self.assertIsNotNone(payload["run"])
+        self.assertEqual(payload["run"]["question"], fake_result["question"])
         self.assertEqual(len(self.repo.runs), 1)
         self.assertEqual(self.repo.runs[0]["question"], fake_result["question"])
 
@@ -462,6 +468,7 @@ class APITestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["answer"], fake_result["answer"])
+        self.assertIsNone(response.json()["run"])
         self.assertEqual(self.repo.runs, [])
 
     def test_query_endpoint_rejects_blank_or_whitespace_questions(self):

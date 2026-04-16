@@ -19,7 +19,7 @@ def list_sample_questions(repo: TrustRepository = Depends(require_repository)):
         return []
 
     selected_document = documents[0]
-    selected_chunks = [chunk for chunk in repo.list_chunks() if chunk["document_id"] == selected_document["id"]]
+    selected_chunks = repo.list_chunks_for_document(selected_document["id"])
     if not selected_chunks:
         return []
 

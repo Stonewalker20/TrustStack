@@ -72,6 +72,7 @@ export type QueryResponse = {
       notes: string
     }>
   }
+  run?: RunItem | null
 }
 
 export type RunItem = {

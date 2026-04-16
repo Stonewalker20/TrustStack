@@ -149,6 +149,7 @@ class QueryResponse(BaseModel):
     latency_ms: int | None = None
     evaluation: EvaluationReport
     explanation: QueryExplanation
+    run: "RunItem | None" = None
 
 
 class RunItem(BaseModel):
