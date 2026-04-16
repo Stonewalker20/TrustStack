@@ -148,7 +148,7 @@ function InsightPanel({ result }: { result: QueryResponse | null }) {
                   {evaluation.verdict}
                 </span>
               </div>
-              <div className="dimension-list">
+              <div className="dimension-list dimension-list--compact">
                 {evaluation.dimensions.map((dimension) => (
                   <div className="dimension-row" key={dimension.key}>
                     <div>
