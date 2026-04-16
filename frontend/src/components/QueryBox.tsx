@@ -1,17 +1,13 @@
-import { useMemo, useState } from 'react'
-import type { SampleQuestionItem } from '../types'
+import { useState } from 'react'
 
 type QueryBoxProps = {
   onSubmit: (question: string) => Promise<void>
   loading: boolean
-  sampleQuestions?: SampleQuestionItem[]
   error?: string
 }
 
-export function QueryBox({ onSubmit, loading, sampleQuestions = [], error = '' }: QueryBoxProps) {
+export function QueryBox({ onSubmit, loading, error = '' }: QueryBoxProps) {
   const [question, setQuestion] = useState('')
-
-  const suggestedQuestions = useMemo(() => sampleQuestions.slice(0, 4), [sampleQuestions])
   const canSubmit = Boolean(question.trim()) && !loading
 
   return (
@@ -48,38 +44,11 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [], error = '' }
         >
           {loading ? 'Evaluating…' : 'Run Query'}
         </button>
-        <div className="muted">Best evaluation pattern: ask one clearly supported question first, then one weakly supported question.</div>
+        <div className="muted">Ask one specific question at a time so the evidence and score stay easy to inspect.</div>
       </div>
 
       <div className={`muted ${error ? '' : 'muted--large'}`} data-testid="query-status">
         {error || 'TrustStack will show either a scored result or a concrete error after each query run.'}
-      </div>
-
-      <div className="query-suggestions" data-testid="query-suggestions">
-        <div className="query-suggestions-label">Suggested prompts from your evidence</div>
-        <div className="pill-grid">
-          {suggestedQuestions.length > 0 ? (
-            suggestedQuestions.map((prompt) => (
-              <button
-                key={prompt.question}
-                type="button"
-                className="query-suggestion"
-                data-testid="query-suggestion"
-                onClick={() => setQuestion(prompt.question)}
-              >
-                <span className="query-suggestion-copy">{prompt.question}</span>
-                <small>
-                  {(prompt.support_level === 'weak' ? 'Weak test' : 'Supported question')}
-                  {prompt.target_score_range ? ` · target ${prompt.target_score_range}` : ''}
-                  {typeof prompt.actual_score === 'number' ? ` · scored ${prompt.actual_score.toFixed(2)}` : ''}
-                  {prompt.source ? ` - ${prompt.source}` : ''}
-                </small>
-              </button>
-            ))
-          ) : (
-            <span className="data-pill">Upload documents to generate sharper prompts.</span>
-          )}
-        </div>
       </div>
     </div>
   )

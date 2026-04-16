@@ -86,14 +86,6 @@ export type RunItem = {
   created_at: string
 }
 
-export type SampleQuestionItem = {
-  question: string
-  source?: string | null
-  support_level?: 'supported' | 'weak'
-  target_score_range?: string | null
-  actual_score?: number | null
-}
-
 export type StandardTestCategoryScore = {
   key: string
   label: string

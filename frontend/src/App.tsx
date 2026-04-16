@@ -13,7 +13,6 @@ import type {
   DocumentItem,
   QueryResponse,
   RunItem,
-  SampleQuestionItem,
   StandardReportArtifactsResponse,
   StandardTestRunResponse,
 } from './types'
@@ -278,19 +277,16 @@ export default function App() {
   const [result, setResult] = useState<QueryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [suiteLoading, setSuiteLoading] = useState(false)
-  const [sampleQuestions, setSampleQuestions] = useState<SampleQuestionItem[]>([])
   const [suiteResult, setSuiteResult] = useState<StandardTestRunResponse | null>(null)
   const [reportArtifacts, setReportArtifacts] = useState<StandardReportArtifactsResponse | null>(null)
   const [queryError, setQueryError] = useState('')
   const [suiteError, setSuiteError] = useState('')
   const [backendIssues, setBackendIssues] = useState({
     documents: '',
-    sampleQuestions: '',
     runs: '',
   })
 
-  const backendError =
-    backendIssues.documents || backendIssues.sampleQuestions || backendIssues.runs || ''
+  const backendError = backendIssues.documents || backendIssues.runs || ''
 
   const setBackendIssue = (channel: keyof typeof backendIssues, message: string) => {
     setBackendIssues((current) => {
@@ -324,25 +320,6 @@ export default function App() {
     }
   }
 
-  const refreshSampleQuestions = async () => {
-    try {
-      const res = await api.get<SampleQuestionItem[]>('/documents/sample-questions')
-      setSampleQuestions(res.data)
-      setBackendIssue('sampleQuestions', '')
-    } catch (error) {
-      console.error(error)
-      if (isAxiosError<{ detail?: string }>(error)) {
-        setBackendIssue(
-          'sampleQuestions',
-          error.response?.data?.detail ?? 'Cannot load sample prompts because the backend is unavailable.',
-        )
-      } else {
-        setBackendIssue('sampleQuestions', 'Cannot load sample prompts because the backend is unavailable.')
-      }
-      throw error
-    }
-  }
-
   const refreshRuns = async () => {
     try {
       const res = await api.get<RunItem[]>('/runs')
@@ -364,7 +341,6 @@ export default function App() {
 
   useEffect(() => {
     refreshDocuments().catch(console.error)
-    refreshSampleQuestions().catch(console.error)
     refreshRuns().catch(console.error)
   }, [])
 
@@ -525,7 +501,6 @@ export default function App() {
             <UploadPanel
               onUploaded={() => {
                 refreshDocuments().catch(console.error)
-                refreshSampleQuestions().catch(console.error)
               }}
             />
             <DocumentList items={documents} />
@@ -536,11 +511,11 @@ export default function App() {
               <div className="eyebrow">Step Two</div>
               <h2>Run a grounded evaluation</h2>
               <p>
-                Suggested prompts help the user start from the available evidence. The interface favors clarity over
-                novelty by keeping the query, answer, support, and explanation adjacent.
+                The interface favors clarity over novelty by keeping the query, answer, support, and explanation
+                adjacent.
               </p>
             </div>
-            <QueryBox onSubmit={handleSubmit} loading={loading} sampleQuestions={sampleQuestions} error={queryError} />
+            <QueryBox onSubmit={handleSubmit} loading={loading} error={queryError} />
             <AnswerCard result={result} />
             <InsightPanel result={result} />
           </div>
