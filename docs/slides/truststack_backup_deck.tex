@@ -106,7 +106,7 @@
 }
 
 \title{TrustStack}
-\subtitle{A Local-First, Evidence-Grounded Evaluation Standard for Trustworthy AI}
+\subtitle{A Local-First, Evaluation Standard for Trustworthy AI}
 \author{Cordell Stonecipher}
 \institute{Oakland University}
 \date{CSI-4130/5130 Artificial Intelligence}
@@ -121,16 +121,17 @@
     \fill[tsteal,opacity=0.10] ([xshift=1.0cm,yshift=1.0cm]current page.south west) circle (1.8cm);
     \draw[ouline,line width=0.7pt] ([xshift=0.62cm,yshift=0.78cm]current page.south west) rectangle ([xshift=-0.62cm,yshift=-0.78cm]current page.north east);
   \end{tikzpicture}
-  \vspace*{0.8cm}
-  {\color{oublack}\fontsize{24}{28}\selectfont\bfseries \inserttitle\par}
-  \vspace{0.4em}
-  {\color{ougray}\large \insertsubtitle\par}
-  \vspace{0.8em}
-  {\color{oublack}\normalsize \insertauthor\par}
-  {\color{ougray}\small School of Engineering and Computer Science\par}
-  {\color{ougray}\small \insertdate\par}
+  \vspace*{-0.35cm}
+  \hspace*{0cm}
+  \begin{minipage}{0.80\linewidth}
+    {\color{oublack}\fontsize{24}{28}\selectfont\bfseries \inserttitle\par}
+    {\color{ougray}\large \insertsubtitle\par}
+    {\color{oublack}\normalsize \insertauthor\par}
+    {\color{ougray}\small School of Engineering and Computer Science\par}
+    {\color{ougray}\small \insertdate\par}
+  \end{minipage}
   \vfill
-  \vspace*{1.5cm}
+  \vspace*{.5cm}
   \begin{center}
     \IfFileExists{\oaklandwordmarkpath}{\includegraphics[width=0.2\linewidth]{\oaklandwordmarkpath}}{\Large Oakland University}
   \end{center}
@@ -183,33 +184,36 @@
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.48\textwidth}
     \begin{block}{Live evidence path}
-      \small
+      \scriptsize
       \begin{itemize}
         \item PDF, DOCX, TXT, and Markdown uploads
+        \item Preloaded ABB, Siemens, and FANUC manuals from a Kaggle technical-manuals dataset
         \item Split into chunks and stored in MongoDB
         \item Used for grounded question answering
       \end{itemize}
     \end{block}
     \column{0.48\textwidth}
     \begin{block}{Benchmark path}
-      \small
+      \scriptsize
       \begin{itemize}
         \item Seven synthetic stress tests
-        \item Public slices from SciFact and HotpotQA
+        \item Public slices from SciFact (Wadden et al., 2020) and HotpotQA (Yang et al., 2018)
         \item Same scoring logic across all cases
       \end{itemize}
     \end{block}
   \end{columns}
-  \vspace{0.6em}
+  \vspace{0.35em}
   \begin{center}
     \metricpill{tsteal}{User uploads}\hspace{0.5em}
     \metricpill{tsblue}{Synthetic stress tests}\hspace{0.5em}
     \metricpill{tswarn}{External benchmarks}
   \end{center}
+  \vspace{0.15em}
+  {\tiny\color{tsmuted}Demo source citation: Kaggle technical manuals dataset by Singh (2025), used for the preloaded evidence dropdown.}
 \end{frame}
 
 \begin{frame}{4. Methods and System Architecture}
-  \slidelead{The system follows a simple five-step pipeline so users can see where trust is gained or lost.}
+  \slidelead{The system follows a simple five-step pipeline so users can see where trust is gained or lost, including a reproducible preloaded-source path for live demos.}
   \begin{block}{Pipeline}
     \centering
     \metricpill{tsblue}{1. Ingest}\hspace{0.4em}
@@ -218,11 +222,11 @@
     \metricpill{tsblue}{4. Evaluate}\hspace{0.4em}
     \metricpill{tsteal}{5. Review / Export}
   \end{block}
-  \vspace{0.6em}
+  \vspace{0.35em}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.48\textwidth}
     \begin{block}{Implementation}
-      \small
+      \scriptsize
       \begin{itemize}
         \item MongoDB stores documents, chunks, and run history
         \item Retrieval uses vector search or lexical fallback
@@ -231,7 +235,7 @@
     \end{block}
     \column{0.48\textwidth}
     \begin{block}{Verification stack}
-      \small
+      \scriptsize
       \begin{itemize}
         \item Backend unit tests
         \item Real Mongo integration tests
@@ -242,12 +246,12 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[shrink=4]{5. TrustStack Evaluation Standard v2.0}
+\begin{frame}{5. TrustStack Evaluation Standard v2.0}
   \slidelead{TrustStack turns one answer into a full review record instead of a single hidden score.}
   \begin{block}{Ten scored dimensions}
     Retrieval, support, citation traceability, claims, contradiction, completeness, abstention, discipline, safety, and calibration.
   \end{block}
-  \vspace{0.3em}
+  \vspace{0.2em}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.32\textwidth}
     \statcard{Verdicts}{Pass / Review / Fail}
@@ -256,39 +260,38 @@
     \column{0.32\textwidth}
     \statcard{Output}{Reproducible report artifact}
   \end{columns}
-  \vspace{0.35em}
-    \begin{block}{Why this matters}
-      The user can see why confidence changed, what support was missing, and when review is required.
-    \end{block}
+  \vspace{0.25em}
+  {\small\color{tsmuted}Why it matters: users can see why confidence changed, what support is missing, and when review is required.}
 \end{frame}
 
-\begin{frame}[shrink=4]{6. Synthetic Benchmark Findings}
+\begin{frame}{6. Synthetic Benchmark Findings}
   \slidelead{Synthetic tests answer one question: does the score move the right way when evidence quality changes?}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.52\textwidth}
     \begin{block}{What was stressed}
-      \small
+      \scriptsize
       aligned evidence, contradictions, sparse support, lexical drift, and unsafe advice.
     \end{block}
     \begin{block}{Main takeaway}
+      \scriptsize
       TrustStack responds in the correct direction: stronger evidence raises the score and weaker evidence lowers it.
     \end{block}
     \column{0.44\textwidth}
     \statcard{Best case}{76.44 / 100}
-    \vspace{0.4em}
+    \vspace{0.25em}
     \statcard{Worst case}{59.97 / 100}
-    \vspace{0.4em}
+    \vspace{0.25em}
     \statcard{Main bottleneck}{Grounding + retrieval}
   \end{columns}
-\vspace{0.2em}
+\vspace{0em}
 \begin{center}
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \fill[tsteal!28] (0,0) rectangle (2.65,0.34);
-  \fill[ougold!35] (3.0,0) rectangle (5.1,0.34);
-  \fill[tswarn!28] (5.45,0) rectangle (7.55,0.34);
-  \node[anchor=south,font=\scriptsize] at (1.325,0.38) {Strong};
-  \node[anchor=south,font=\scriptsize] at (4.05,0.38) {Mixed};
-  \node[anchor=south,font=\scriptsize] at (6.5,0.38) {Weak};
+\begin{tikzpicture}[x=1cm,y=1cm,scale=0.94,transform shape]
+  \fill[tsteal!28] (0,0) rectangle (2.45,0.24);
+  \fill[ougold!35] (2.8,0) rectangle (4.75,0.24);
+  \fill[tswarn!28] (5.1,0) rectangle (7.05,0.24);
+  \node[anchor=south,font=\tiny] at (1.225,0.27) {Strong};
+  \node[anchor=south,font=\tiny] at (3.775,0.27) {Mixed};
+  \node[anchor=south,font=\tiny] at (6.075,0.27) {Weak};
 \end{tikzpicture}
 \end{center}
 \end{frame}
@@ -298,18 +301,20 @@
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.48\textwidth}
     \begin{block}{What this demonstrates}
-      The system now runs on public tasks, not only internal tests.
+      The system now runs on 18 checked-in public examples, not only internal tests.
     \end{block}
     \begin{block}{Interpretation}
       Traceability is already strong. Retrieval and answer quality remain the next clear optimization target.
     \end{block}
     \column{0.48\textwidth}
-    \statcard{Aggregate TrustStack score}{63.09 / 100}
+    \statcard{Aggregate TrustStack score}{67.11 / 100}
     \vspace{0.45em}
-    \statcard{Task metric}{0.141}
+    \statcard{Task metric}{0.009}
     \vspace{0.45em}
-    \statcard{Citation alignment}{83.8\%}
+    \statcard{Citation alignment}{93.4\%}
   \end{columns}
+\vspace{0.25em}
+{\scriptsize\color{tsmuted}Benchmarks cited in the report: SciFact (Wadden et al., 2020) and HotpotQA (Yang et al., 2018).}
 \end{frame}
 
 \begin{frame}[shrink=2]{8. Validity and Next-Stage Readiness}
