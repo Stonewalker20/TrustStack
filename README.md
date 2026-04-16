@@ -121,7 +121,17 @@ The backend supports normalized local benchmark files in `backend/data/benchmark
 
 ---
 
-## Quick Start
+## How To Run
+
+### Prerequisites
+
+Install or have access to:
+
+- Python 3.11 or newer
+- Node.js 20 or newer
+- npm
+- Docker and Docker Compose, or a local MongoDB instance
+- Ollama, if you want the default local model path
 
 ### 1. Pull local models
 
@@ -189,6 +199,18 @@ Optional retrieval upgrade:
 pip install -r requirements-optional.txt
 ```
 
+Backend default:
+
+```text
+http://127.0.0.1:8000
+```
+
+Backend health check:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
 ### 4. Start the frontend
 
 ```bash
@@ -203,11 +225,15 @@ Frontend default:
 http://127.0.0.1:5173
 ```
 
-Backend default:
+### 5. Use the app
 
-```text
-http://127.0.0.1:8000
-```
+Once both services are running:
+
+1. Open `http://127.0.0.1:5173`
+2. Upload one or more documents in the ingestion panel
+3. Run a grounded query
+4. Review the answer, evidence, trust score, and risk flags
+5. Optionally run the standardized evaluation section for a full score breakdown
 
 ---
 
@@ -320,10 +346,11 @@ The repository also includes:
 The in-class presentation is supported by:
 
 - the interactive frontend in `frontend/`
-- the final report PDF in `docs/report/main.pdf`
+- the final report PDF in [`docs/report/main.pdf`](docs/report/main.pdf)
+- the slide deck source in `docs/slides/truststack_backup_deck.tex`
 - the planet-view presentation flow built into the frontend experience
 
-Video Presentation Link: 
+Video Presentation Link: https://youtu.be/W34Vuv7xRQ4
 
 ---
 
