@@ -11,7 +11,7 @@ from app.services.evaluation import DIMENSION_SPECS, FRAMEWORK_NAME, FRAMEWORK_V
 from app.services.embeddings import get_embedder
 from app.services.rag import _answer_from_hits, retrieve_hits
 from app.services.suggestions import build_sample_questions
-from app.services.vector_store import SimpleVectorStore
+from app.services.vector_store import SimpleVectorStore, sanitize_metadatas
 
 
 @dataclass(frozen=True)
@@ -36,7 +36,8 @@ def _build_standard_cases(chunks: list[dict]) -> list[StandardCase]:
     sample_questions = build_sample_questions(chunks, limit=4)
     prompts: list[StandardCase] = []
 
-    for index, question in enumerate(sample_questions):
+    for index, item in enumerate(sample_questions):
+        question = item["question"]
         label = "Direct evidence retrieval" if index == 0 else "Corpus-derived probe"
         prompts.append(StandardCase(id=f"grounded-{index + 1}", label=label, category="grounding", question=question))
 
@@ -152,14 +153,14 @@ def _build_benchmark_store(chunks: list[dict]):
         ids=[chunk["chunk_uid"] for chunk in chunks],
         documents=documents,
         embeddings=embeddings,
-        metadatas=[
+        metadatas=sanitize_metadatas([
             {
                 "filename": chunk.get("filename", "unknown"),
                 "page_num": chunk.get("page_num"),
                 "chunk_uid": chunk["chunk_uid"],
             }
             for chunk in chunks
-        ],
+        ]),
     )
     return temp_dir, vector_store, embedder
 

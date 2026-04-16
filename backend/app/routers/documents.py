@@ -24,6 +24,10 @@ def list_sample_questions(repo: TrustRepository = Depends(require_repository)):
         return []
 
     return [
-        SampleQuestionItem(question=question, source=selected_document["filename"])
-        for question in build_sample_questions(selected_chunks)
+        SampleQuestionItem(
+            question=item["question"],
+            source=selected_document["filename"],
+            support_level=item.get("support_level", "supported"),
+        )
+        for item in build_sample_questions(selected_chunks)
     ]

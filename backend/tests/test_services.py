@@ -134,13 +134,16 @@ class ServiceBehaviorTests(unittest.TestCase):
             [
                 {
                     "filename": "policy.txt",
-                    "text": "Operators must complete a startup inspection before energizing the system. The procedure requires documenting every hazard and warning before restart.",
+                    "text": "Operators must complete a startup inspection before energizing the system. The procedure requires documenting every hazard and warning before restart. Symbols like [draft] and • markers should not leak into prompts.",
                 }
             ]
         )
 
         self.assertGreaterEqual(len(questions), 1)
-        self.assertTrue(any("what" in question.lower() for question in questions))
+        self.assertTrue(all("what" in item["question"].lower() for item in questions))
+        self.assertTrue(all("[" not in item["question"] and "•" not in item["question"] for item in questions))
+        self.assertTrue(any(item["support_level"] == "supported" for item in questions))
+        self.assertTrue(any(item["support_level"] == "weak" for item in questions))
 
     def test_run_standard_suite_aggregates_cases_and_breakdown(self):
         fake_chunks = [
