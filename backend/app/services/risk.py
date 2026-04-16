@@ -4,7 +4,7 @@ def build_risk_flags(evidence_scores: list[float], citations: list[str], insuffi
 
     if not evidence_scores or avg_score < 0.35:
         flags.append("LOW_RETRIEVAL_SUPPORT")
-    if not citations:
+    if not citations and not insufficient_evidence:
         flags.append("NO_CITATIONS")
     if insufficient_evidence:
         flags.append("INSUFFICIENT_EVIDENCE")

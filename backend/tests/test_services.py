@@ -50,9 +50,39 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertEqual(len(flags), len(set(flags)))
         self.assertIn("LOW_RETRIEVAL_SUPPORT", flags)
-        self.assertIn("NO_CITATIONS", flags)
+        self.assertNotIn("NO_CITATIONS", flags)
         self.assertIn("INSUFFICIENT_EVIDENCE", flags)
         self.assertIn("OPERATIONAL_ADVICE_REQUIRES_HUMAN_REVIEW", flags)
+
+    def test_build_evaluation_report_does_not_penalize_abstention_for_missing_support(self):
+        report = build_evaluation_report(
+            question="What exact reset code should the operator enter?",
+            answer="The provided evidence does not contain enough information to determine a reset code.",
+            evidence_scores=[0.12],
+            citations=[],
+            evidence_ids=["doc1_chunk0"],
+            insufficient_evidence=True,
+            risk_flags=["LOW_RETRIEVAL_SUPPORT", "INSUFFICIENT_EVIDENCE"],
+            hits=[
+                {
+                    "source": "manual.txt",
+                    "page": 4,
+                    "chunk_id": "doc1_chunk0",
+                    "score": 0.12,
+                    "text": "This section describes startup warnings but does not include any reset code.",
+                }
+            ],
+        )
+
+        dimensions = {item["key"]: item for item in report["dimensions"]}
+        checks = {item["key"]: item for item in report["checks"]}
+
+        self.assertGreaterEqual(dimensions["citation_traceability"]["score"], 88.0)
+        self.assertGreaterEqual(dimensions["claim_support"]["score"], 82.0)
+        self.assertGreaterEqual(dimensions["evidence_sufficiency"]["score"], 72.0)
+        self.assertEqual(checks["citation_presence"]["status"], "pass")
+        self.assertEqual(checks["unsupported_claims"]["status"], "pass")
+        self.assertGreaterEqual(report["overall_score"], 60.0)
 
     def test_summarize_trust_matches_score_bands(self):
         self.assertIn("High confidence", summarize_trust(88, []))

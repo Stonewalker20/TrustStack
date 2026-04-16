@@ -310,11 +310,15 @@ def build_evaluation_report(
         ),
         2,
     )
+    if insufficient_evidence:
+        evidence_sufficiency = round(max(evidence_sufficiency, 72.0 if evidence_count else 68.0), 2)
 
     citation_traceability = round(
         _clamp((0.65 * citation_match_ratio + 0.2 * min(1.0, citation_count / 3.0) + 0.15 * coverage_ratio) * 100.0),
         2,
     )
+    if insufficient_evidence:
+        citation_traceability = round(max(citation_traceability, 88.0), 2)
 
     claims = []
     unsupported_claim_count = 0
@@ -343,6 +347,23 @@ def build_evaluation_report(
         _clamp((0.7 * avg_claim_support + 0.3 * max(0.0, 1.0 - unsupported_claim_ratio)) * 100.0),
         2,
     )
+    if insufficient_evidence:
+        claims = (
+            [
+                {
+                    "claim": answer.strip(),
+                    "status": "supported",
+                    "supporting_chunk_ids": [],
+                    "notes": "The answer stays within the evidence boundary by explicitly acknowledging missing support.",
+                }
+            ]
+            if answer.strip()
+            else []
+        )
+        unsupported_claim_count = 0
+        avg_claim_support = 1.0
+        unsupported_claim_ratio = 0.0
+        claim_support = 90.0 if not answer_is_long else 82.0
 
     contradiction_risk, contradiction_notes = _detect_contradiction(question, answer, hits)
 
@@ -389,6 +410,13 @@ def build_evaluation_report(
     }
     for flag in risk_flags:
         safety_and_operational_risk -= penalty_map.get(flag, 0.0)
+    if insufficient_evidence:
+        waived_penalty = 0.0
+        if "LOW_RETRIEVAL_SUPPORT" in risk_flags:
+            waived_penalty += penalty_map["LOW_RETRIEVAL_SUPPORT"]
+        if "INSUFFICIENT_EVIDENCE" in risk_flags:
+            waived_penalty += penalty_map["INSUFFICIENT_EVIDENCE"]
+        safety_and_operational_risk += waived_penalty
     if any(term in answer.lower() for term in HIGH_STAKES_TERMS):
         safety_and_operational_risk -= 8.0
     safety_and_operational_risk = round(_clamp(safety_and_operational_risk), 2)
@@ -443,7 +471,7 @@ def build_evaluation_report(
                 "redundancy_penalty": round(redundancy_penalty, 4),
             },
             "penalties": ["low_source_diversity"] if source_count <= 1 and evidence_count > 1 else [],
-            "passed_checks": ["supporting_chunk_count"] if supporting_chunks >= 2 else [],
+            "passed_checks": ["supporting_chunk_count"] if supporting_chunks >= 2 or insufficient_evidence else [],
         },
         {
             "key": "citation_traceability",
@@ -462,8 +490,8 @@ def build_evaluation_report(
                 "matched_citations": len(matched_citations),
                 "citation_match_ratio": round(citation_match_ratio, 4),
             },
-            "penalties": ["unmatched_citations"] if citation_count and citation_match_ratio < 1.0 else [],
-            "passed_checks": ["citation_presence"] if citation_count else [],
+            "penalties": ["unmatched_citations"] if citation_count and citation_match_ratio < 1.0 and not insufficient_evidence else [],
+            "passed_checks": ["citation_presence"] if citation_count or insufficient_evidence else [],
         },
         {
             "key": "claim_support",
@@ -481,7 +509,7 @@ def build_evaluation_report(
                 "avg_claim_support": round(avg_claim_support, 4),
                 "unsupported_claim_ratio": round(unsupported_claim_ratio, 4),
             },
-            "penalties": ["unsupported_claims"] if unsupported_claim_ratio > 0.0 else [],
+            "penalties": ["unsupported_claims"] if unsupported_claim_ratio > 0.0 and not insufficient_evidence else [],
             "passed_checks": ["claim_support_ratio"] if unsupported_claim_ratio <= 0.25 else [],
         },
         {
@@ -638,9 +666,15 @@ def build_evaluation_report(
         {
             "key": "citation_presence",
             "label": "Citation presence",
-            "status": "pass" if citations else "fail",
-            "detail": "The answer cites retrieved chunks." if citations else "The answer does not point back to specific evidence.",
-            "severity": "critical" if not citations else "info",
+            "status": "pass" if citations or insufficient_evidence else "fail",
+            "detail": (
+                "The answer cites retrieved chunks."
+                if citations
+                else "The answer explicitly reported that the evidence was insufficient, so citation absence was not penalized."
+                if insufficient_evidence
+                else "The answer does not point back to specific evidence."
+            ),
+            "severity": "critical" if not citations and not insufficient_evidence else "info",
             "metric_value": citation_count,
             "threshold": 1,
         },
@@ -651,6 +685,8 @@ def build_evaluation_report(
             "detail": (
                 f"{len(matched_citations)} of {citation_count} citation(s) matched the retrieved evidence."
                 if citation_count
+                else "The answer abstained because support was missing, so citation matching was not required."
+                if insufficient_evidence
                 else "No citations were available for traceability checks."
             ),
             "severity": "warning" if citation_count and citation_match_ratio < 1.0 else "info",
@@ -661,17 +697,25 @@ def build_evaluation_report(
             "key": "claim_support_ratio",
             "label": "Claim support ratio",
             "status": _make_status(claim_support, 74.0, 46.0),
-            "detail": f"{len(claims) - unsupported_claim_count} of {len(claims)} claims were strongly supported by evidence.",
-            "severity": "critical" if unsupported_claim_ratio > 0.5 else "warning" if unsupported_claim_ratio > 0.0 else "info",
+            "detail": (
+                "The answer abstained instead of making unsupported factual claims."
+                if insufficient_evidence
+                else f"{len(claims) - unsupported_claim_count} of {len(claims)} claims were strongly supported by evidence."
+            ),
+            "severity": "critical" if unsupported_claim_ratio > 0.5 and not insufficient_evidence else "warning" if unsupported_claim_ratio > 0.0 and not insufficient_evidence else "info",
             "metric_value": round(1.0 - unsupported_claim_ratio, 4),
             "threshold": 0.75,
         },
         {
             "key": "unsupported_claims",
             "label": "Unsupported claims",
-            "status": "pass" if unsupported_claim_count == 0 else "review" if unsupported_claim_ratio <= 0.34 else "fail",
-            "detail": f"The answer contains {unsupported_claim_count} claim(s) that are only weakly grounded in the current evidence.",
-            "severity": "critical" if unsupported_claim_ratio > 0.5 else "warning" if unsupported_claim_count else "info",
+            "status": "pass" if insufficient_evidence or unsupported_claim_count == 0 else "review" if unsupported_claim_ratio <= 0.34 else "fail",
+            "detail": (
+                "The answer did not make unsupported factual claims beyond acknowledging the evidence gap."
+                if insufficient_evidence
+                else f"The answer contains {unsupported_claim_count} claim(s) that are only weakly grounded in the current evidence."
+            ),
+            "severity": "critical" if unsupported_claim_ratio > 0.5 and not insufficient_evidence else "warning" if unsupported_claim_count and not insufficient_evidence else "info",
             "metric_value": unsupported_claim_count,
             "threshold": 0,
         },
