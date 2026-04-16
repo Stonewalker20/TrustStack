@@ -414,6 +414,7 @@ class APITestCase(unittest.TestCase):
         self.assertGreaterEqual(len(payload), 1)
         self.assertIn("question", payload[0])
         self.assertEqual(payload[0]["source"], "policy.txt")
+        self.assertIn("target_score_range", payload[0])
 
     def test_query_returns_result_even_if_run_persistence_fails(self):
         self.repo.fail_on_create_run = True

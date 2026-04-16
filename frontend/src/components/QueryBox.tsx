@@ -13,12 +13,6 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [], error = '' }
 
   const suggestedQuestions = useMemo(() => sampleQuestions.slice(0, 4), [sampleQuestions])
   const canSubmit = Boolean(question.trim()) && !loading
-  const handleSuggestionClick = (promptQuestion: string) => {
-    setQuestion(promptQuestion)
-    if (!loading) {
-      void onSubmit(promptQuestion)
-    }
-  }
 
   return (
     <div className="panel panel--glass stack" data-testid="query-box">
@@ -71,11 +65,12 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [], error = '' }
                 type="button"
                 className="query-suggestion"
                 data-testid="query-suggestion"
-                onClick={() => handleSuggestionClick(prompt.question)}
+                onClick={() => setQuestion(prompt.question)}
               >
                 <span className="query-suggestion-copy">{prompt.question}</span>
                 <small>
                   {(prompt.support_level === 'weak' ? 'Weak test' : 'Supported question')}
+                  {prompt.target_score_range ? ` · target ${prompt.target_score_range}` : ''}
                   {prompt.source ? ` - ${prompt.source}` : ''}
                 </small>
               </button>

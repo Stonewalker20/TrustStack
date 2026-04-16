@@ -90,6 +90,7 @@ export type SampleQuestionItem = {
   question: string
   source?: string | null
   support_level?: 'supported' | 'weak'
+  target_score_range?: string | null
 }
 
 export type StandardTestCategoryScore = {

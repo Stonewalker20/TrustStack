@@ -162,6 +162,8 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertTrue(all("[" not in item["question"] and "•" not in item["question"] for item in questions))
         self.assertTrue(any(item["support_level"] == "supported" for item in questions))
         self.assertTrue(any(item["support_level"] == "weak" for item in questions))
+        self.assertTrue(any(item.get("target_score_range") == "80-90" for item in questions))
+        self.assertTrue(any(item.get("target_score_range") == "30-45" for item in questions))
 
     def test_run_standard_suite_aggregates_cases_and_breakdown(self):
         fake_chunks = [

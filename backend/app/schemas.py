@@ -174,6 +174,7 @@ class SampleQuestionItem(BaseModel):
     question: str
     source: str | None = None
     support_level: str = "supported"
+    target_score_range: str | None = None
 
 
 class StandardTestCaseResult(BaseModel):

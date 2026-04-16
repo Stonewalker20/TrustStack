@@ -41,6 +41,12 @@ STOPWORDS = {
     "into",
     "onto",
     "page",
+    "operator",
+    "system",
+    "equipment",
+    "evidence",
+    "document",
+    "uploaded",
 }
 
 
@@ -64,6 +70,25 @@ def _clean_prompt_text(text: str) -> str:
     return cleaned
 
 
+def _topic_from_sentence(sentence: str, fallback_keywords: list[str]) -> str:
+    tokens = [token for token in _tokenize(sentence) if token not in STOPWORDS]
+    topic_tokens = tokens[:5] or fallback_keywords[:3] or ["the procedure"]
+    return " ".join(topic_tokens)
+
+
+def _clip_topic(topic: str, max_words: int = 6) -> str:
+    parts = topic.split()
+    return " ".join(parts[:max_words]).strip() or topic
+
+
+def _make_prompt(question: str, support_level: str, target_score_range: str) -> dict[str, str]:
+    return {
+        "question": _clean_prompt_text(question),
+        "support_level": support_level,
+        "target_score_range": target_score_range,
+    }
+
+
 def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str, str]]:
     if not chunks:
         return []
@@ -72,7 +97,11 @@ def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str,
     keyword_counts = Counter(token for token in _tokenize(combined_text) if token not in STOPWORDS)
     keywords = [token for token, _ in keyword_counts.most_common(12)]
 
-    suggestions: list[dict[str, str]] = []
+    requirement_topics: list[str] = []
+    process_topics: list[str] = []
+    warning_topics: list[str] = []
+    descriptive_topics: list[str] = []
+
     for chunk in chunks[:10]:
         sentences = re.split(r"(?<=[.!?])\s+", chunk.get("text", ""))
         for sentence in sentences:
@@ -81,61 +110,73 @@ def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str,
                 continue
 
             lower = cleaned.lower()
+            topic = _clip_topic(_topic_from_sentence(cleaned, keywords))
             if any(term in lower for term in ["must", "required", "require", "shall", "should"]):
-                suggestions.append(
-                    {
-                        "question": _clean_prompt_text(
-                            f"What requirements does the evidence describe about {cleaned[:72]}?"
-                        ),
-                        "support_level": "supported",
-                    }
-                )
+                requirement_topics.append(topic)
             if any(term in lower for term in ["before", "after", "during", "process", "procedure", "step"]):
-                suggestions.append(
-                    {
-                        "question": _clean_prompt_text(
-                            f"What process or sequence does the evidence describe around {cleaned[:72]}?"
-                        ),
-                        "support_level": "supported",
-                    }
-                )
+                process_topics.append(topic)
             if any(term in lower for term in ["risk", "hazard", "warning", "danger", "unsafe"]):
-                suggestions.append(
-                    {
-                        "question": "What risks or warnings are described in the uploaded evidence?",
-                        "support_level": "supported",
-                    }
-                )
+                warning_topics.append(topic)
             if any(term in lower for term in ["define", "means", "indicates", "represents"]):
-                suggestions.append(
-                    {
-                        "question": _clean_prompt_text(f"What does the evidence say about {cleaned[:68]}?"),
-                        "support_level": "supported",
-                    }
-                )
+                descriptive_topics.append(topic)
 
-            if len(suggestions) >= limit * 3:
-                break
-        if len(suggestions) >= limit * 3:
-            break
+    suggestion_candidates: list[dict[str, str]] = []
 
-    for keyword in keywords[:4]:
-        suggestions.append(
-            {
-                "question": _clean_prompt_text(f"What does the uploaded evidence clearly support about {keyword}?"),
-                "support_level": "supported",
-            }
+    primary_requirement = requirement_topics[0] if requirement_topics else _clip_topic(" ".join(keywords[:4]) or "startup inspection")
+    primary_process = process_topics[0] if process_topics else primary_requirement
+    primary_warning = warning_topics[0] if warning_topics else primary_requirement
+    primary_descriptive = descriptive_topics[0] if descriptive_topics else primary_requirement
+
+    suggestion_candidates.extend(
+        [
+            _make_prompt(
+                f"According to the evidence, what is explicitly required for {primary_requirement}?",
+                "supported",
+                "80-90",
+            ),
+            _make_prompt(
+                f"What step-by-step process does the evidence describe for {primary_process}?",
+                "supported",
+                "70-82",
+            ),
+            _make_prompt(
+                f"What risks, warnings, or constraints does the evidence state about {primary_warning}?",
+                "supported",
+                "60-75",
+            ),
+            _make_prompt(
+                f"What exact numeric threshold, timing detail, or exception is stated for {primary_requirement}?",
+                "weak",
+                "30-45",
+            ),
+            _make_prompt(
+                f"What remains unclear or only weakly supported in the evidence about {primary_descriptive}?",
+                "weak",
+                "40-55",
+            ),
+        ]
+    )
+
+    for keyword in keywords[:3]:
+        topic = _clip_topic(keyword)
+        suggestion_candidates.append(
+            _make_prompt(
+                f"What does the evidence directly support about {topic}?",
+                "supported",
+                "75-88",
+            )
         )
-        suggestions.append(
-            {
-                "question": _clean_prompt_text(f"What might be hard to answer confidently from the evidence about {keyword}?"),
-                "support_level": "weak",
-            }
+        suggestion_candidates.append(
+            _make_prompt(
+                f"What would still be difficult to answer confidently about {topic} from this evidence?",
+                "weak",
+                "35-50",
+            )
         )
 
     deduped: list[dict[str, str]] = []
     seen: set[str] = set()
-    for suggestion in suggestions:
+    for suggestion in suggestion_candidates:
         normalized = _clean_prompt_text(suggestion["question"])
         if len(normalized) < 12:
             continue
@@ -143,22 +184,30 @@ def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str,
         if key in seen:
             continue
         seen.add(key)
-        deduped.append({"question": normalized, "support_level": suggestion["support_level"]})
+        deduped.append(
+            {
+                "question": normalized,
+                "support_level": suggestion["support_level"],
+                "target_score_range": suggestion["target_score_range"],
+            }
+        )
         if len(deduped) >= limit:
             break
 
     if deduped and not any(item["support_level"] == "weak" for item in deduped):
         weak_fallback = None
         if keywords:
-            weak_fallback = {
-                "question": _clean_prompt_text(f"What might be hard to answer confidently from the evidence about {keywords[0]}?"),
-                "support_level": "weak",
-            }
+            weak_fallback = _make_prompt(
+                f"What would still be hard to answer confidently about {keywords[0]} from this evidence?",
+                "weak",
+                "35-50",
+            )
         else:
-            weak_fallback = {
-                "question": "What important detail might still be weakly supported by the uploaded evidence?",
-                "support_level": "weak",
-            }
+            weak_fallback = _make_prompt(
+                "What important detail might still be only weakly supported by the uploaded evidence?",
+                "weak",
+                "35-50",
+            )
 
         if all(item["question"].lower() != weak_fallback["question"].lower() for item in deduped):
             if len(deduped) >= limit:
@@ -170,7 +219,7 @@ def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str,
         return deduped
 
     return [
-        {"question": "What are the main requirements described in the uploaded evidence?", "support_level": "supported"},
-        {"question": "What steps or procedures are documented in the uploaded evidence?", "support_level": "supported"},
-        {"question": "What risks, warnings, or limitations appear in the uploaded evidence?", "support_level": "weak"},
+        _make_prompt("What are the main requirements described in the uploaded evidence?", "supported", "80-90"),
+        _make_prompt("What steps or procedures are documented in the uploaded evidence?", "supported", "70-82"),
+        _make_prompt("What exact detail appears least supported by the uploaded evidence?", "weak", "30-45"),
     ][:limit]

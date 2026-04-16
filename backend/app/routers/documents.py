@@ -28,6 +28,7 @@ def list_sample_questions(repo: TrustRepository = Depends(require_repository)):
             question=item["question"],
             source=selected_document["filename"],
             support_level=item.get("support_level", "supported"),
+            target_score_range=item.get("target_score_range"),
         )
         for item in build_sample_questions(selected_chunks)
     ]
