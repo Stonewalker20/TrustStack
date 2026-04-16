@@ -323,7 +323,7 @@ The in-class presentation is supported by:
 - the final report PDF in `docs/report/main.pdf`
 - the planet-view presentation flow built into the frontend experience
 
-Before final course submission, add the public link for the recorded presentation video to this README.
+Video Presentation Link: 
 
 ---
 
