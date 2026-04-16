@@ -124,6 +124,7 @@
   \vspace*{-0.35cm}
   \hspace*{0cm}
   \begin{minipage}{0.80\linewidth}
+    \vspace{.5cm}
     {\color{oublack}\fontsize{24}{28}\selectfont\bfseries \inserttitle\par}
     {\color{ougray}\large \insertsubtitle\par}
     {\color{oublack}\normalsize \insertauthor\par}
@@ -131,7 +132,7 @@
     {\color{ougray}\small \insertdate\par}
   \end{minipage}
   \vfill
-  \vspace*{.5cm}
+  \vspace*{3.0cm}
   \begin{center}
     \IfFileExists{\oaklandwordmarkpath}{\includegraphics[width=0.2\linewidth]{\oaklandwordmarkpath}}{\Large Oakland University}
   \end{center}
@@ -213,7 +214,7 @@
 \end{frame}
 
 \begin{frame}{4. Methods and System Architecture}
-  \slidelead{The system follows a simple five-step pipeline so users can see where trust is gained or lost, including a reproducible preloaded-source path for live demos.}
+  \slidelead{The system follows a simple five-step pipeline so users can see where trust is gained or lost, including a reproducible preloaded-source path and calibrated prompt ladder for live demos.}
   \begin{block}{Pipeline}
     \centering
     \metricpill{tsblue}{1. Ingest}\hspace{0.4em}
@@ -231,6 +232,7 @@
         \item MongoDB stores documents, chunks, and run history
         \item Retrieval uses vector search or lexical fallback
         \item Answers remain grounded with deterministic fallback
+        \item Sample prompts are scored before display
       \end{itemize}
     \end{block}
     \column{0.48\textwidth}
@@ -318,7 +320,7 @@
 \end{frame}
 
 \begin{frame}[shrink=2]{8. Validity and Next-Stage Readiness}
-  \slidelead{The current version is a strong baseline: measurable, reproducible, and ready for stronger next-stage validation.}
+  \slidelead{The current version is a strong baseline: measurable, reproducible, and already exposing the next evaluator bottleneck clearly.}
   \begin{columns}[T,totalwidth=\textwidth]
     \column{0.49\textwidth}
     \begin{block}{What is already strong}
@@ -327,18 +329,22 @@
         \item Reproducible local runtime
         \item Explicit scoring and risk logic
         \item Real benchmark coverage
+        \item Measured prompt calibration per document
       \end{itemize}
     \end{block}
     \column{0.49\textwidth}
     \begin{block}{What comes next}
       \small
       \begin{itemize}
+        \item stronger penalties for unsupported specificity
         \item stronger retrieval models
         \item richer human-study evaluation
         \item broader public benchmark coverage
       \end{itemize}
     \end{block}
   \end{columns}
+\vspace{0.2em}
+{\scriptsize\color{tsmuted}Current finding: strong and review-band prompts calibrate reliably, but forcing the lowest band still depends more on evaluator tuning than on prompt wording alone.}
 \vspace{0.35em}
 \begin{center}
 \begin{tikzpicture}[x=1cm,y=1cm]
