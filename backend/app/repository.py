@@ -7,7 +7,7 @@ from typing import Protocol
 from fastapi import HTTPException
 from pymongo import DESCENDING, MongoClient
 from pymongo.collection import Collection
-from pymongo.errors import PyMongoError
+from pymongo.errors import DuplicateKeyError, PyMongoError
 
 from app.config import settings
 from app.services.bootstrap import migrate_sqlite_to_repository
@@ -47,7 +47,9 @@ class MongoRepository:
             self.documents: Collection = self.db["documents"]
             self.chunks: Collection = self.db["chunks"]
             self.runs: Collection = self.db["runs"]
+            self._dedupe_documents_by_filename()
             self.documents.create_index("uploaded_at")
+            self.documents.create_index("filename", unique=True)
             self.chunks.create_index("chunk_uid", unique=True)
             self.chunks.create_index("document_id")
             self.runs.create_index("created_at")
@@ -62,7 +64,10 @@ class MongoRepository:
             "file_path": file_path,
             "uploaded_at": datetime.now(UTC),
         }
-        result = self.documents.insert_one(payload)
+        try:
+            result = self.documents.insert_one(payload)
+        except DuplicateKeyError as exc:
+            raise ValueError(f'A document named "{filename}" is already indexed. Remove or rename it before uploading again.') from exc
         return _serialize_id(result.inserted_id)
 
     def create_chunks(self, *, document_id: str, filename: str, chunks: list[dict]) -> list[dict]:
@@ -114,11 +119,16 @@ class MongoRepository:
 
     def list_documents(self) -> list[dict]:
         rows = []
+        seen_filenames: set[str] = set()
         for row in self.documents.find().sort("uploaded_at", DESCENDING):
+            filename = row["filename"]
+            if filename in seen_filenames:
+                continue
+            seen_filenames.add(filename)
             rows.append(
                 {
                     "id": _serialize_id(row["_id"]),
-                    "filename": row["filename"],
+                    "filename": filename,
                     "uploaded_at": row["uploaded_at"].isoformat(),
                 }
             )
@@ -158,6 +168,22 @@ class MongoRepository:
 
     def ping(self) -> None:
         self.client.admin.command("ping")
+
+    def _dedupe_documents_by_filename(self) -> None:
+        seen_filenames: set[str] = set()
+        duplicate_ids: list[str] = []
+
+        for row in self.documents.find().sort("uploaded_at", DESCENDING):
+            filename = row.get("filename")
+            if not filename:
+                continue
+            if filename in seen_filenames:
+                duplicate_ids.append(_serialize_id(row["_id"]))
+                continue
+            seen_filenames.add(filename)
+
+        for document_id in duplicate_ids:
+            self.delete_document_tree(document_id=document_id)
 
     @staticmethod
     def _coerce_object_id(document_id: str):

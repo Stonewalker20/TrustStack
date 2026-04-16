@@ -15,6 +15,24 @@ except Exception:  # pragma: no cover - graceful fallback
     ChromaSettings = None
 
 
+def _sanitize_metadata_value(value):
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    return None
+
+
+def sanitize_metadatas(metadatas: list[dict]) -> list[dict]:
+    sanitized: list[dict] = []
+    for metadata in metadatas:
+        clean_metadata = {}
+        for key, value in metadata.items():
+            clean_value = _sanitize_metadata_value(value)
+            if clean_value is not None:
+                clean_metadata[key] = clean_value
+        sanitized.append(clean_metadata)
+    return sanitized
+
+
 class SimpleVectorStore:
     def __init__(self, persist_path: str):
         self.persist_file = Path(persist_path) / "simple_vector_store.json"
@@ -30,6 +48,7 @@ class SimpleVectorStore:
         self.persist_file.write_text(json.dumps(self.records), encoding="utf-8")
 
     def upsert(self, ids: list[str], documents: list[str], embeddings: list[list[float]], metadatas: list[dict]):
+        metadatas = sanitize_metadatas(metadatas)
         record_map = {record["id"]: record for record in self.records}
         for rid, doc, emb, meta in zip(ids, documents, embeddings, metadatas):
             record_map[rid] = {"id": rid, "document": doc, "embedding": emb, "metadata": meta}
@@ -73,6 +92,7 @@ class ChromaVectorStore:
         self.collection = self.client.get_or_create_collection(name="truststack_chunks")
 
     def upsert(self, ids: list[str], documents: list[str], embeddings: list[list[float]], metadatas: list[dict]):
+        metadatas = sanitize_metadatas(metadatas)
         self.collection.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
 
     def query(self, query_embedding: list[float], top_k: int = 5) -> dict:

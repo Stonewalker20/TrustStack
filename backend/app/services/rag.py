@@ -7,7 +7,7 @@ from app.services.embeddings import get_embedder
 from app.services.explanations import build_query_explanation
 from app.services.llm import client as llm_client
 from app.services.risk import build_risk_flags, summarize_trust
-from app.services.vector_store import get_vector_store
+from app.services.vector_store import get_vector_store, sanitize_metadatas
 
 
 def _extract_hits(raw: dict) -> list[dict]:
@@ -48,7 +48,7 @@ def _rebuild_index_from_chunks(vector_store, embedder) -> int:
     ]
 
     embeddings = embedder.embed_texts(documents)
-    vector_store.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
+    vector_store.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=sanitize_metadatas(metadatas))
     return len(ids)
 
 

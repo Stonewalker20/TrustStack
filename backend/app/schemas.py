@@ -12,6 +12,17 @@ class IngestResponse(BaseModel):
     status: str
 
 
+class PresetSourceItem(BaseModel):
+    key: str
+    filename: str
+    label: str
+    description: str
+
+
+class PresetIngestRequest(BaseModel):
+    key: str = Field(min_length=1)
+
+
 class QueryRequest(BaseModel):
     question: str = Field(min_length=3)
     top_k: int = Field(default=5, ge=1, le=20)
@@ -161,6 +172,7 @@ class DocumentItem(BaseModel):
 class SampleQuestionItem(BaseModel):
     question: str
     source: str | None = None
+    support_level: str = "supported"
 
 
 class StandardTestCaseResult(BaseModel):

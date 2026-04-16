@@ -12,7 +12,7 @@ from app.services.embeddings import get_embedder
 from app.services.real_datasets import RealBenchmarkExample, load_real_benchmark_examples
 from app.services.rag import _answer_from_hits, retrieve_hits
 from app.services.standard_suite import _build_framework
-from app.services.vector_store import SimpleVectorStore
+from app.services.vector_store import SimpleVectorStore, sanitize_metadatas
 
 
 @dataclass(frozen=True)
@@ -85,14 +85,14 @@ def _build_store_for_example(example: RealBenchmarkExample):
         ids=[chunk["chunk_uid"] for chunk in example.chunks],
         documents=documents,
         embeddings=embeddings,
-        metadatas=[
+        metadatas=sanitize_metadatas([
             {
                 "filename": chunk.get("filename", "unknown"),
                 "page_num": chunk.get("page_num"),
                 "chunk_uid": chunk["chunk_uid"],
             }
             for chunk in example.chunks
-        ],
+        ]),
     )
     return temp_dir, vector_store, embedder
 

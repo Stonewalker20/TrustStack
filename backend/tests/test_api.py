@@ -30,6 +30,8 @@ class FakeRepository:
         self.fail_on_create_run = False
 
     def create_document(self, *, filename: str, file_path: str) -> str:
+        if any(row["filename"] == filename for row in self.documents):
+            raise ValueError(f'A document named "{filename}" is already indexed. Remove or rename it before uploading again.')
         self.document_counter += 1
         doc_id = f"doc-{self.document_counter}"
         self.documents.append(
@@ -240,10 +242,52 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(len(self.repo.documents), 1)
         self.assertEqual(len(self.repo.chunks), 1)
         fake_store.upsert.assert_called_once()
+        upsert_kwargs = fake_store.upsert.call_args.kwargs
+        self.assertEqual(upsert_kwargs["metadatas"][0]["filename"], "policy.txt")
+        self.assertEqual(upsert_kwargs["metadatas"][0]["chunk_uid"], "docdoc-1_chunk0")
+        self.assertNotIn("page_num", upsert_kwargs["metadatas"][0])
 
         documents_response = self.client.get("/documents")
         self.assertEqual(documents_response.status_code, 200)
         self.assertEqual(len(documents_response.json()), 1)
+
+    def test_ingest_rejects_duplicate_filename(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        temp_upload_dir = Path(temp_dir.name) / "uploads"
+        temp_upload_dir.mkdir(parents=True, exist_ok=True)
+
+        fake_embedder = Mock()
+        fake_embedder.embed_texts.return_value = [[0.1, 0.2, 0.3]]
+        fake_store = Mock()
+
+        with patch("app.routers.ingest.settings.upload_dir", str(temp_upload_dir)), \
+             patch("app.routers.ingest.parse_uploaded_file", return_value=[{"page_num": None, "text": "Safety inspection before startup."}]), \
+             patch("app.routers.ingest.chunk_pages", return_value=[{"filename": "policy.txt", "page_num": None, "text": "Safety inspection before startup."}]), \
+             patch("app.routers.ingest.get_embedder", return_value=fake_embedder), \
+             patch("app.routers.ingest.get_vector_store", return_value=fake_store):
+            first_response = self.client.post(
+                "/ingest",
+                files={"file": ("policy.txt", b"Safety inspection before startup.", "text/plain")},
+            )
+            duplicate_response = self.client.post(
+                "/ingest",
+                files={"file": ("policy.txt", b"Safety inspection before startup.", "text/plain")},
+            )
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(duplicate_response.status_code, 409)
+        self.assertIn("already indexed", duplicate_response.json()["detail"])
+        self.assertEqual(len(self.repo.documents), 1)
+
+    def test_preset_sources_are_not_hidden_by_upload_extension_settings(self):
+        with patch("app.routers.ingest.settings.allowed_extensions", ".pdf,.docx,.txt"):
+            response = self.client.get("/ingest/presets")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertGreaterEqual(len(payload), 1)
+        self.assertTrue(any(item["filename"].endswith(".md") for item in payload))
 
     def test_ingest_rolls_back_document_state_if_vector_indexing_fails(self):
         temp_dir = tempfile.TemporaryDirectory()
