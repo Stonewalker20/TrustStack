@@ -8,6 +8,7 @@ import { RiskPanel } from './components/RiskPanel'
 import { RunHistoryTable } from './components/RunHistoryTable'
 import { UploadPanel } from './components/UploadPanel'
 import { api } from './lib/api'
+import { formatScoreHundredth } from './lib/format'
 import type {
   DocumentItem,
   QueryResponse,
@@ -561,7 +562,7 @@ export default function App() {
                   <div className="signal-bar">
                     <div className="signal-bar-fill" style={{ width: `${signal.value}%` }} />
                   </div>
-                  <strong>{signal.value}</strong>
+                  <strong>{formatScoreHundredth(signal.value)}</strong>
                 </div>
               ))}
               <div className="framework-note">

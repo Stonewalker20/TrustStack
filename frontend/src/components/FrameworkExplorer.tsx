@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { formatScoreHundredth } from '../lib/format'
 import type { QueryResponse } from '../types'
 
 type Signal = { label: string; value: number }
@@ -113,7 +114,7 @@ export function FrameworkExplorer({ signals, latestResult }: FrameworkExplorerPr
                         transition={{ duration: 0.5, delay: 0.04 }}
                       />
                     </div>
-                    <strong>{signal.value}</strong>
+                    <strong>{formatScoreHundredth(signal.value)}</strong>
                   </div>
                 ))}
               </div>
