@@ -13,7 +13,8 @@ from app.services.vector_store import get_vector_store, sanitize_metadatas
 
 router = APIRouter(tags=["ingest"])
 
-SAMPLE_DATA_DIR = Path(__file__).resolve().parents[3] / "sample_data"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+SAMPLE_DATA_DIR = PROJECT_ROOT / "sample_data"
 PRESET_SOURCE_EXTENSIONS = {".pdf", ".docx", ".txt", ".md"}
 
 
@@ -23,19 +24,44 @@ def _sanitize_filename(filename: str) -> str:
     return safe_name or f"upload_{uuid4().hex}.txt"
 
 
+def _preset_source_dirs() -> list[Path]:
+    candidates = [
+        SAMPLE_DATA_DIR,
+        PROJECT_ROOT / "backend" / "sample_data",
+        PROJECT_ROOT / "backend" / "data" / "presets",
+    ]
+    existing: list[Path] = []
+    seen: set[Path] = set()
+    for path in candidates:
+        resolved = path.resolve()
+        if resolved in seen or not resolved.exists():
+            continue
+        seen.add(resolved)
+        existing.append(resolved)
+    return existing
+
+
+def _preset_source_paths() -> list[Path]:
+    files: dict[str, Path] = {}
+    for directory in _preset_source_dirs():
+        for path in sorted(directory.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.name.lower() == "readme.md":
+                continue
+            if path.suffix.lower() not in PRESET_SOURCE_EXTENSIONS:
+                continue
+            files.setdefault(path.name, path)
+    return [files[name] for name in sorted(files)]
+
+
 def _preset_sources() -> list[PresetSourceItem]:
-    if not SAMPLE_DATA_DIR.exists():
+    paths = _preset_source_paths()
+    if not paths:
         return []
 
     items: list[PresetSourceItem] = []
-    for path in sorted(SAMPLE_DATA_DIR.iterdir()):
-        if not path.is_file():
-            continue
-        if path.name.lower() == "readme.md":
-            continue
-        if path.suffix.lower() not in PRESET_SOURCE_EXTENSIONS:
-            continue
-
+    for path in paths:
         label = path.stem.replace("_", " ").replace("-", " ").title()
         description = f"Preloaded {path.suffix.lower().lstrip('.')} source material for demo and guided evaluation."
         items.append(
@@ -131,8 +157,8 @@ def ingest_preset(request: PresetIngestRequest, repo: TrustRepository = Depends(
     if match is None:
         raise HTTPException(status_code=404, detail="Preset source not found.")
 
-    source_path = SAMPLE_DATA_DIR / match.filename
-    if not source_path.exists():
+    source_path = next((path for path in _preset_source_paths() if path.name == match.filename), None)
+    if source_path is None or not source_path.exists():
         raise HTTPException(status_code=404, detail="Preset source file is missing.")
 
     return _ingest_from_path(source_path=source_path, original_name=match.filename, repo=repo)

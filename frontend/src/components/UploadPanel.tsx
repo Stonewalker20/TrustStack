@@ -33,7 +33,7 @@ export function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
       } catch (error) {
         console.error(error)
         if (isMounted) {
-          setPresetStatus('Preset sources are unavailable right now.')
+          setPresetStatus(apiErrorMessage(error, 'Preset sources are unavailable right now.'))
         }
       }
     }

@@ -295,6 +295,21 @@ class APITestCase(unittest.TestCase):
         self.assertGreaterEqual(len(payload), 1)
         self.assertTrue(any(item["filename"].endswith(".md") for item in payload))
 
+    def test_preset_sources_can_be_discovered_from_alternate_directories(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        alt_dir = Path(temp_dir.name) / "backend" / "data" / "presets" / "nested"
+        alt_dir.mkdir(parents=True, exist_ok=True)
+        (alt_dir / "demo_manual.md").write_text("# Demo manual\n\nSafe startup guidance.", encoding="utf-8")
+
+        with patch("app.routers.ingest.PROJECT_ROOT", Path(temp_dir.name)), \
+             patch("app.routers.ingest.SAMPLE_DATA_DIR", Path(temp_dir.name) / "sample_data"):
+            response = self.client.get("/ingest/presets")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(any(item["filename"] == "demo_manual.md" for item in payload))
+
     def test_ingest_rolls_back_document_state_if_vector_indexing_fails(self):
         temp_dir = tempfile.TemporaryDirectory()
         temp_upload_dir = Path(temp_dir.name) / "uploads"
