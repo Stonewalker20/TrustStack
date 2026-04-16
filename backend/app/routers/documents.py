@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app.repository import TrustRepository, require_repository
 from app.schemas import DocumentItem, SampleQuestionItem
-from app.services.suggestions import build_sample_questions
+from app.services.suggestions import calibrate_sample_questions
 
 router = APIRouter(tags=["documents"])
 
@@ -29,6 +29,7 @@ def list_sample_questions(repo: TrustRepository = Depends(require_repository)):
             source=selected_document["filename"],
             support_level=item.get("support_level", "supported"),
             target_score_range=item.get("target_score_range"),
+            actual_score=item.get("actual_score"),
         )
-        for item in build_sample_questions(selected_chunks)
+        for item in calibrate_sample_questions(selected_chunks)
     ]

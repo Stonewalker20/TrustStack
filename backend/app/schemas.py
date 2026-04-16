@@ -175,6 +175,7 @@ class SampleQuestionItem(BaseModel):
     source: str | None = None
     support_level: str = "supported"
     target_score_range: str | None = None
+    actual_score: float | None = None
 
 
 class StandardTestCaseResult(BaseModel):

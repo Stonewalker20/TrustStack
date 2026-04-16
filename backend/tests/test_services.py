@@ -12,7 +12,7 @@ from app.services.report_export import build_report_artifacts
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
 from app.services.standard_suite import run_standard_batch_benchmark, run_standard_suite
-from app.services.suggestions import build_sample_questions
+from app.services.suggestions import build_sample_questions, calibrate_sample_questions
 from app.services.synthetic_eval import render_synthetic_report_latex, run_synthetic_benchmark
 
 
@@ -164,6 +164,41 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertTrue(any(item["support_level"] == "weak" for item in questions))
         self.assertTrue(any(item.get("target_score_range") == "80-90" for item in questions))
         self.assertTrue(any(item.get("target_score_range") == "30-45" for item in questions))
+
+    def test_calibrate_sample_questions_returns_only_measured_band_matches(self):
+        candidates = [
+            {"question": "Prompt high", "support_level": "supported", "target_score_range": "80-90"},
+            {"question": "Prompt medium", "support_level": "supported", "target_score_range": "65-79"},
+            {"question": "Prompt review", "support_level": "supported", "target_score_range": "50-64"},
+            {"question": "Prompt weak", "support_level": "weak", "target_score_range": "30-45"},
+        ]
+
+        def fake_scorer(question: str) -> dict:
+            if question == "Prompt high":
+                return {"confidence_score": 84.2}
+            if question == "Prompt medium":
+                return {"confidence_score": 68.7}
+            if question == "Prompt review":
+                return {"confidence_score": 57.4}
+            if question == "Prompt weak":
+                return {"confidence_score": 34.6}
+            return {"confidence_score": 12.0}
+
+        with patch("app.services.suggestions.build_sample_questions", return_value=candidates):
+            questions = calibrate_sample_questions(
+                [
+                    {
+                        "filename": "policy.txt",
+                        "text": "Operators must complete a startup inspection before energizing the system. The procedure requires documenting every hazard and warning before restart.",
+                    }
+                ],
+                scorer=fake_scorer,
+            )
+
+        self.assertTrue(all(item["actual_score"] >= 30.0 for item in questions))
+        self.assertTrue(all(item["target_score_range"] in {"80-90", "65-79", "50-64", "30-45"} for item in questions))
+        self.assertTrue(any(item["target_score_range"] == "80-90" for item in questions))
+        self.assertTrue(any(item["target_score_range"] == "30-45" for item in questions))
 
     def test_run_standard_suite_aggregates_cases_and_breakdown(self):
         fake_chunks = [

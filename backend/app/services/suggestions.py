@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from typing import Any
 
 
 STOPWORDS = {
@@ -81,12 +82,86 @@ def _clip_topic(topic: str, max_words: int = 6) -> str:
     return " ".join(parts[:max_words]).strip() or topic
 
 
+CALIBRATED_SCORE_BANDS = (
+    ("80-90", 80.0, 90.0),
+    ("65-79", 65.0, 79.99),
+    ("50-64", 50.0, 64.99),
+    ("30-45", 30.0, 45.0),
+)
+
+
 def _make_prompt(question: str, support_level: str, target_score_range: str) -> dict[str, str]:
     return {
         "question": _clean_prompt_text(question),
         "support_level": support_level,
         "target_score_range": target_score_range,
     }
+
+
+def _band_for_score(score: float) -> str | None:
+    for label, low, high in CALIBRATED_SCORE_BANDS:
+        if low <= score <= high:
+            return label
+    return None
+
+
+def _default_prompt_scorer(question: str) -> dict[str, Any]:
+    from app.services.rag import answer_question
+
+    return answer_question(question)
+
+
+def calibrate_sample_questions(
+    chunks: list[dict],
+    *,
+    limit: int = 4,
+    scorer=None,
+) -> list[dict[str, Any]]:
+    scorer = scorer or _default_prompt_scorer
+    candidates = build_sample_questions(chunks, limit=max(16, limit * 4))
+    scored_candidates: list[dict[str, Any]] = []
+
+    for candidate in candidates:
+        try:
+            result = scorer(candidate["question"])
+        except Exception:
+            continue
+
+        actual_score = round(float(result.get("confidence_score", 0.0)), 2)
+        band = _band_for_score(actual_score)
+        if not band:
+            continue
+
+        scored_candidates.append(
+            {
+                "question": candidate["question"],
+                "support_level": "supported" if actual_score >= 60.0 else "weak",
+                "target_score_range": band,
+                "actual_score": actual_score,
+            }
+        )
+
+    selected: list[dict[str, Any]] = []
+    used_questions: set[str] = set()
+    for label, low, high in CALIBRATED_SCORE_BANDS:
+        band_center = (low + high) / 2.0
+        matches = [
+            item for item in scored_candidates
+            if item["target_score_range"] == label and item["question"].lower() not in used_questions
+        ]
+        if not matches:
+            continue
+
+        pick = min(
+            matches,
+            key=lambda item: (abs(item["actual_score"] - band_center), len(item["question"])),
+        )
+        used_questions.add(pick["question"].lower())
+        selected.append(pick)
+        if len(selected) >= limit:
+            break
+
+    return selected
 
 
 def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str, str]]:

@@ -71,6 +71,7 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [], error = '' }
                 <small>
                   {(prompt.support_level === 'weak' ? 'Weak test' : 'Supported question')}
                   {prompt.target_score_range ? ` · target ${prompt.target_score_range}` : ''}
+                  {typeof prompt.actual_score === 'number' ? ` · scored ${prompt.actual_score.toFixed(2)}` : ''}
                   {prompt.source ? ` - ${prompt.source}` : ''}
                 </small>
               </button>

@@ -407,7 +407,17 @@ class APITestCase(unittest.TestCase):
             ],
         )
 
-        response = self.client.get("/documents/sample-questions")
+        fake_questions = [
+            {
+                "question": "According to the evidence, what is explicitly required before startup?",
+                "support_level": "supported",
+                "target_score_range": "80-90",
+                "actual_score": 84.2,
+            }
+        ]
+
+        with patch("app.routers.documents.calibrate_sample_questions", return_value=fake_questions):
+            response = self.client.get("/documents/sample-questions")
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
@@ -415,6 +425,7 @@ class APITestCase(unittest.TestCase):
         self.assertIn("question", payload[0])
         self.assertEqual(payload[0]["source"], "policy.txt")
         self.assertIn("target_score_range", payload[0])
+        self.assertEqual(payload[0]["actual_score"], 84.2)
 
     def test_query_returns_result_even_if_run_persistence_fails(self):
         self.repo.fail_on_create_run = True

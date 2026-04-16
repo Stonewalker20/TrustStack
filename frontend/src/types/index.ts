@@ -91,6 +91,7 @@ export type SampleQuestionItem = {
   source?: string | null
   support_level?: 'supported' | 'weak'
   target_score_range?: string | null
+  actual_score?: number | null
 }
 
 export type StandardTestCategoryScore = {
