@@ -23,6 +23,57 @@ def _clean_json_text(text: str) -> str:
     return cleaned
 
 
+def _coerce_text(value) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        parts = []
+        for item in value:
+            if isinstance(item, str):
+                normalized = item.strip()
+                if normalized:
+                    parts.append(normalized)
+            elif item is not None:
+                parts.append(str(item).strip())
+        return " ".join(part for part in parts if part).strip()
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _coerce_citations(value) -> list[str]:
+    if isinstance(value, str):
+        normalized = value.strip()
+        return [normalized] if normalized else []
+    if not isinstance(value, list):
+        return []
+
+    citations: list[str] = []
+    for item in value:
+        if item is None:
+            continue
+        normalized = str(item).strip()
+        if normalized and normalized not in citations:
+            citations.append(normalized)
+    return citations
+
+
+def _normalize_llm_output(payload: dict) -> dict:
+    answer = _coerce_text(payload.get("answer"))
+    citations = _coerce_citations(payload.get("citations"))
+    insufficient_evidence = bool(payload.get("insufficient_evidence", False))
+
+    if not answer:
+        answer = "I could not produce a grounded answer from the available evidence."
+        insufficient_evidence = True
+
+    return {
+        "answer": answer,
+        "citations": citations,
+        "insufficient_evidence": insufficient_evidence,
+    }
+
+
 class LLMClient:
     def generate_answer(self, question: str, context: str, hits: list[dict] | None = None) -> dict:
         if settings.llm_provider == "ollama":
@@ -57,7 +108,7 @@ class LLMClient:
             response.raise_for_status()
             data = response.json()
         content = _clean_json_text(data["choices"][0]["message"]["content"])
-        return json.loads(content)
+        return _normalize_llm_output(json.loads(content))
 
     def _ollama_generate(self, question: str, context: str) -> dict:
         prompt = f"{SYSTEM_PROMPT}\n\nQuestion:\n{question}\n\nContext:\n{context}\n\nReturn JSON only."
@@ -72,7 +123,7 @@ class LLMClient:
             response = client.post(f"{settings.ollama_base_url}/api/generate", json=payload)
             response.raise_for_status()
             data = response.json()
-        return json.loads(_clean_json_text(data["response"]))
+        return _normalize_llm_output(json.loads(_clean_json_text(data["response"])))
 
     def _fallback_generate(self, question: str, context: str, hits: list[dict]) -> dict:
         if not hits:

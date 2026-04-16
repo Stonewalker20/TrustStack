@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from app.services.evaluation import build_evaluation_report
 from app.services.explanations import build_query_explanation
+from app.services.llm import _normalize_llm_output
 from app.services.real_benchmark import run_real_dataset_benchmark
 from app.services.real_benchmark_report import render_real_benchmark_report_latex
 from app.services.rag import _answer_from_hits, _extract_hits, _rebuild_index_from_chunks
@@ -176,6 +177,27 @@ class ServiceBehaviorTests(unittest.TestCase):
         self.assertEqual(result["citations"], ["doc-1-chunk-0"])
         self.assertNotIn("NO_CITATIONS", result["risk_flags"])
         self.assertGreaterEqual(result["confidence_score"], 60.0)
+
+    def test_normalize_llm_output_coerces_list_answer_and_citations(self):
+        normalized = _normalize_llm_output(
+            {
+                "answer": ["The evidence does not specify a reset procedure.", "No PLC reset steps were found."],
+                "citations": ["doc-1-chunk-0", None, 42, "doc-1-chunk-0"],
+                "insufficient_evidence": True,
+            }
+        )
+
+        self.assertIsInstance(normalized["answer"], str)
+        self.assertIn("reset procedure", normalized["answer"].lower())
+        self.assertEqual(normalized["citations"], ["doc-1-chunk-0", "42"])
+        self.assertTrue(normalized["insufficient_evidence"])
+
+    def test_normalize_llm_output_marks_missing_answer_as_insufficient(self):
+        normalized = _normalize_llm_output({"answer": None, "citations": [], "insufficient_evidence": False})
+
+        self.assertIsInstance(normalized["answer"], str)
+        self.assertTrue(normalized["answer"])
+        self.assertTrue(normalized["insufficient_evidence"])
 
     def test_build_sample_questions_returns_grounded_prompts(self):
         questions = build_sample_questions(
