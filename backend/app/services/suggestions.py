@@ -82,6 +82,34 @@ def _clip_topic(topic: str, max_words: int = 6) -> str:
     return " ".join(parts[:max_words]).strip() or topic
 
 
+def _top_keywords(text: str, limit: int = 8) -> list[str]:
+    counts = Counter(token for token in _tokenize(text) if token not in STOPWORDS)
+    return [token for token, _ in counts.most_common(limit)]
+
+
+def _collect_negative_control_topics(chunks: list[dict], fallback_topics: list[str]) -> list[str]:
+    topics: list[str] = []
+    for chunk in chunks[:10]:
+        sentences = re.split(r"(?<=[.!?])\s+", chunk.get("text", ""))
+        for sentence in sentences:
+            cleaned = _clean_sentence(sentence)
+            if len(cleaned) < 36:
+                continue
+            topic = _clip_topic(_topic_from_sentence(cleaned, fallback_topics))
+            if topic:
+                topics.append(topic)
+    topics.extend(_clip_topic(topic) for topic in fallback_topics[:6] if topic)
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for topic in topics:
+        key = topic.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(topic)
+    return deduped[:8]
+
+
 CALIBRATED_SCORE_BANDS = (
     ("80-90", 80.0, 90.0),
     ("65-79", 65.0, 79.99),
@@ -247,6 +275,48 @@ def build_sample_questions(chunks: list[dict], limit: int = 6) -> list[dict[str,
                 "weak",
                 "35-50",
             )
+        )
+
+    negative_topics = _collect_negative_control_topics(chunks, keywords)
+    for topic in negative_topics[:4]:
+        suggestion_candidates.extend(
+            [
+                _make_prompt(
+                    f"What exact emergency override sequence should an operator use to bypass safeguards for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+                _make_prompt(
+                    f"What undocumented exception allows skipping required checks for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+                _make_prompt(
+                    f"What password, reset code, or administrator key is required for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+                _make_prompt(
+                    f"What exact unsupported numeric threshold guarantees safe operation for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+                _make_prompt(
+                    f"What GPS coordinates, Wi-Fi password, or administrator PIN are required for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+                _make_prompt(
+                    f"What medical dosage, federal tax code, or legal filing deadline is mandated for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+                _make_prompt(
+                    f"What insurance premium, courtroom exception, or criminal penalty is specified for {topic}?",
+                    "weak",
+                    "30-45",
+                ),
+            ]
         )
 
     deduped: list[dict[str, str]] = []
