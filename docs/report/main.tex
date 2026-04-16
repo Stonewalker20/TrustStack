@@ -32,19 +32,6 @@
 
 \newcommand{\TrustSection}[1]{\section{\texorpdfstring{\textcolor{TrustStackBlue}{#1}}{#1}}}
 \newcommand{\TrustSubsection}[1]{\subsection{\texorpdfstring{\textcolor{TrustStackTeal}{#1}}{#1}}}
-\newcommand{\TrustCallout}[2]{%
-  \begin{center}
-  \setlength{\fboxsep}{8pt}%
-  \fcolorbox{TrustStackBlue!70!black}{TrustStackSoftBlue}{%
-    \begin{minipage}{0.95\linewidth}
-    \textbf{\textcolor{TrustStackBlue}{#1}}\par
-    \smallskip
-    #2
-    \end{minipage}%
-  }%
-  \end{center}
-}
-
 \title{TrustStack: A Local-First, Evidence-Grounded Evaluation Standard for Trustworthy AI}
 
 \author{
@@ -69,14 +56,6 @@ AI systems are increasingly deployed into settings where an answer is not enough
 
 TrustStack is motivated by one central question: \emph{can a user understand not only what the model said, but whether the answer is sufficiently grounded to act on?} To answer this, TrustStack combines local document ingestion, retrieval, answer generation, evaluation, and explanation into a single review surface. The system is explicitly designed for low-friction local deployment with MongoDB-backed persistence, live browser-based interaction, and deterministic fallback modes when external providers are unavailable.
 The technical design builds on established retrieval-augmented generation and hallucination literature, while extending structured evaluation ideas into a local-first operator workflow \cite{lewis2020rag,gao2023ragsurvey,ji2023survey,openai2024evals}.
-
-\TrustCallout{Paper Contributions}{
-\begin{enumerate}
-  \item It introduces the TrustStack Evaluation Standard v2.0, a weighted scoring framework for grounded-answer review.
-  \item It describes a local-first implementation that unifies ingestion, retrieval, query, scoring, risk flags, and run history.
-  \item It presents an operator-facing review workflow and export artifact path that map system behavior to report-ready outputs.
-\end{enumerate}
-}
 
 \TrustSection{Related Work}
 TrustStack is grounded in three adjacent lines of work. First, retrieval-augmented generation establishes the core architectural premise that model outputs should be conditioned on retrieved evidence rather than unconstrained parametric recall \cite{lewis2020rag,gao2023ragsurvey}. TrustStack adopts this premise, but shifts the emphasis from answer production to answer inspection. The contribution is therefore not just a retrieval pipeline, but an evidence-first scoring and reporting layer wrapped around that pipeline.
@@ -175,10 +154,6 @@ Each answer is also accompanied by:
   \item recommended follow-up actions for the user.
 \end{itemize}
 
-\TrustCallout{Evaluation Output}{
-The evaluation report is intentionally structured so that the same output can support live UI review, conference slides, and manuscript-ready artifact export. In practice, the report now behaves like a reusable evidence packet rather than a transient chat summary.
-}
-
 The score bands are defined as:
 \begin{itemize}
   \item \textbf{Pass}: score $\geq 80$
@@ -205,10 +180,6 @@ The suite aggregates per-answer evaluation reports into weighted category scores
   \item communication and explanation;
   \item corpus coverage.
 \end{itemize}
-
-\TrustCallout{Export and Report Artifact Path}{
-TrustStack now produces a structured report artifact alongside the live score. The artifact contains the overall score, weighted category breakdown, case-level results, strengths, weaknesses, recommended follow-ups, and the metadata needed to regenerate IEEE-style tables and summary figures without manual transcription.
-}
 
 The standardized suite also supports batch benchmarking across uploaded datasets by running the same probe set against each evidence source independently. Each run records reproducibility metadata including corpus label, document count, chunk count, source filenames, retrieval backend, model providers, and runtime parameters. This makes the suite output suitable not only for live review, but also for analyst comparison and manuscript appendix generation.
 

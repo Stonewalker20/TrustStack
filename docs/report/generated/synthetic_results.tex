@@ -134,14 +134,6 @@ Broad retrieval + broad context & 8 & 8 & 66.25 & Aligned packet & 76.58 & Spars
 
 Focused retrieval produced a benchmark-wide mean of 66.25/100, while the broadest configuration reached 66.25/100. The deltas were modest, which suggests that TrustStack's weakest results are not caused only by insufficient retrieval depth. Instead, the synthetic evidence indicates that corpus quality and negative-control behavior remain the dominant constraints.
 
-\TrustCallout{Observed Synthetic Findings}{
-\begin{itemize}
-  \item The strongest synthetic condition was Aligned procedural packet at 76.58/100, while Sparse memo packet fell to 61.14/100.
-  \item The most stable category across conditions was Consistency and calibration (mean 91.09/100), whereas Grounding and retrieval was the limiting factor (mean 40.96/100).
-  \item Average supported-claim ratio was 82.3\%, average citation alignment was 88.2\%, and flagged cases appeared in 83.9\% of standardized prompts.
-\end{itemize}
-}
-
 \TrustSubsection{Per-Dataset Interpretation}
 The next paragraphs summarize the benchmark condition by condition. This is useful because similar final scores can arise for different reasons: sparse evidence fails through underspecification, contradictory packets fail through unstable policy signals, and unsafe packets remain well-supported while still demanding operator review.
 
