@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import { AnswerCard } from './components/AnswerCard'
 import { DocumentList } from './components/DocumentList'
@@ -41,6 +42,61 @@ function WorkflowCard({
       <h3>{title}</h3>
       <p>{body}</p>
     </article>
+  )
+}
+
+function WorkflowStatus({
+  documents,
+  hasResult,
+  hasSuiteResult,
+}: {
+  documents: number
+  hasResult: boolean
+  hasSuiteResult: boolean
+}) {
+  const steps = [
+    {
+      label: 'Step 1',
+      title: 'Upload evidence',
+      state: documents > 0 ? 'Complete' : 'Needed',
+      helper: documents > 0 ? `${documents} source document${documents === 1 ? '' : 's'} ready` : 'Add at least one source document',
+      complete: documents > 0,
+    },
+    {
+      label: 'Step 2',
+      title: 'Run grounded query',
+      state: hasResult ? 'Complete' : documents > 0 ? 'Ready' : 'Blocked',
+      helper: hasResult ? 'Latest result is available below' : documents > 0 ? 'You can ask a grounded question now' : 'Upload evidence first',
+      complete: hasResult,
+    },
+    {
+      label: 'Step 3',
+      title: 'Review standard',
+      state: hasSuiteResult ? 'Complete' : hasResult ? 'Ready' : 'Later',
+      helper: hasSuiteResult ? 'Benchmark summary generated' : hasResult ? 'Run the standard after reviewing the answer' : 'Use this after a query run',
+      complete: hasSuiteResult,
+    },
+  ]
+
+  return (
+    <section className="workflow-status content-card content-card--dense">
+      <div className="content-card__header">
+        <div>
+          <div className="eyebrow">Workflow Status</div>
+          <h2>What the user should do next</h2>
+        </div>
+      </div>
+      <div className="workflow-status-grid">
+        {steps.map((step) => (
+          <article className={`workflow-status-card ${step.complete ? 'workflow-status-card--complete' : ''}`} key={step.title}>
+            <span className="workflow-status-card__label">{step.label}</span>
+            <h3>{step.title}</h3>
+            <strong>{step.state}</strong>
+            <p>{step.helper}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -131,11 +187,13 @@ function StandardSuitePanel({
   suiteLoading,
   suiteResult,
   reportArtifacts,
+  error,
   onRunSuite,
 }: {
   suiteLoading: boolean
   suiteResult: StandardTestRunResponse | null
   reportArtifacts: StandardReportArtifactsResponse | null
+  error: string
   onRunSuite: () => void
 }) {
   return (
@@ -154,6 +212,7 @@ function StandardSuitePanel({
         This standard consolidates grounded QA, citation traceability, contradiction resistance, calibration, and
         reporting quality into one reproducible evaluation pass.
       </p>
+      {error ? <p className="muted muted--warning">{error}</p> : null}
 
       {suiteResult ? (
         <div className="suite-grid">
@@ -221,20 +280,85 @@ export default function App() {
   const [sampleQuestions, setSampleQuestions] = useState<SampleQuestionItem[]>([])
   const [suiteResult, setSuiteResult] = useState<StandardTestRunResponse | null>(null)
   const [reportArtifacts, setReportArtifacts] = useState<StandardReportArtifactsResponse | null>(null)
+  const [queryError, setQueryError] = useState('')
+  const [suiteError, setSuiteError] = useState('')
+  const [backendIssues, setBackendIssues] = useState({
+    documents: '',
+    sampleQuestions: '',
+    runs: '',
+  })
+
+  const backendError =
+    backendIssues.documents || backendIssues.sampleQuestions || backendIssues.runs || ''
+
+  const setBackendIssue = (channel: keyof typeof backendIssues, message: string) => {
+    setBackendIssues((current) => {
+      if (current[channel] === message) {
+        return current
+      }
+
+      return {
+        ...current,
+        [channel]: message,
+      }
+    })
+  }
 
   const refreshDocuments = async () => {
-    const res = await api.get<DocumentItem[]>('/documents')
-    setDocuments(res.data)
+    try {
+      const res = await api.get<DocumentItem[]>('/documents')
+      setDocuments(res.data)
+      setBackendIssue('documents', '')
+    } catch (error) {
+      console.error(error)
+      if (isAxiosError<{ detail?: string }>(error)) {
+        setBackendIssue(
+          'documents',
+          error.response?.data?.detail ?? 'Cannot reach the TrustStack backend. Start the API and verify the configured port.',
+        )
+      } else {
+        setBackendIssue('documents', 'Cannot reach the TrustStack backend. Start the API and verify the configured port.')
+      }
+      throw error
+    }
   }
 
   const refreshSampleQuestions = async () => {
-    const res = await api.get<SampleQuestionItem[]>('/documents/sample-questions')
-    setSampleQuestions(res.data)
+    try {
+      const res = await api.get<SampleQuestionItem[]>('/documents/sample-questions')
+      setSampleQuestions(res.data)
+      setBackendIssue('sampleQuestions', '')
+    } catch (error) {
+      console.error(error)
+      if (isAxiosError<{ detail?: string }>(error)) {
+        setBackendIssue(
+          'sampleQuestions',
+          error.response?.data?.detail ?? 'Cannot load sample prompts because the backend is unavailable.',
+        )
+      } else {
+        setBackendIssue('sampleQuestions', 'Cannot load sample prompts because the backend is unavailable.')
+      }
+      throw error
+    }
   }
 
   const refreshRuns = async () => {
-    const res = await api.get<RunItem[]>('/runs')
-    setRuns(res.data)
+    try {
+      const res = await api.get<RunItem[]>('/runs')
+      setRuns(res.data)
+      setBackendIssue('runs', '')
+    } catch (error) {
+      console.error(error)
+      if (isAxiosError<{ detail?: string }>(error)) {
+        setBackendIssue(
+          'runs',
+          error.response?.data?.detail ?? 'Cannot load run history because the backend is unavailable.',
+        )
+      } else {
+        setBackendIssue('runs', 'Cannot load run history because the backend is unavailable.')
+      }
+      throw error
+    }
   }
 
   useEffect(() => {
@@ -244,13 +368,25 @@ export default function App() {
   }, [])
 
   const handleSubmit = async (question: string) => {
+    const normalizedQuestion = question.trim()
+    if (!normalizedQuestion) {
+      setQueryError('Enter a grounded question before running the query.')
+      return
+    }
+
     setLoading(true)
+    setQueryError('')
     try {
-      const res = await api.post<QueryResponse>('/query', { question, top_k: 5 })
+      const res = await api.post<QueryResponse>('/query', { question: normalizedQuestion, top_k: 5 })
       setResult(res.data)
       refreshRuns().catch(console.error)
     } catch (error) {
       console.error(error)
+      if (isAxiosError<{ detail?: string }>(error)) {
+        setQueryError(error.response?.data?.detail ?? 'Query failed')
+      } else {
+        setQueryError('Query failed')
+      }
     } finally {
       setLoading(false)
     }
@@ -258,12 +394,18 @@ export default function App() {
 
   const handleRunSuite = async () => {
     setSuiteLoading(true)
+    setSuiteError('')
     try {
       const artifacts = await api.post<StandardReportArtifactsResponse>('/evaluation/standard-run/report-artifacts')
       setReportArtifacts(artifacts.data)
       setSuiteResult(artifacts.data.suite)
     } catch (error) {
       console.error(error)
+      if (isAxiosError<{ detail?: string }>(error)) {
+        setSuiteError(error.response?.data?.detail ?? 'Standard evaluation failed')
+      } else {
+        setSuiteError('Standard evaluation failed')
+      }
     } finally {
       setSuiteLoading(false)
     }
@@ -349,6 +491,20 @@ export default function App() {
       </section>
 
       <main className="workspace" id="workspace">
+        {backendError ? (
+          <section className="content-card content-card--dense">
+            <div className="content-card__header">
+              <div>
+                <div className="eyebrow">Backend Status</div>
+                <h2>API connection problem</h2>
+              </div>
+            </div>
+            <p className="muted">{backendError}</p>
+          </section>
+        ) : null}
+
+        <WorkflowStatus documents={documents.length} hasResult={Boolean(result)} hasSuiteResult={Boolean(suiteResult)} />
+
         <section className="workspace-grid workspace-grid--primary">
           <div className="workspace-column">
             <div className="section-copy">
@@ -377,7 +533,7 @@ export default function App() {
                 novelty by keeping the query, answer, support, and explanation adjacent.
               </p>
             </div>
-            <QueryBox onSubmit={handleSubmit} loading={loading} sampleQuestions={sampleQuestions} />
+            <QueryBox onSubmit={handleSubmit} loading={loading} sampleQuestions={sampleQuestions} error={queryError} />
             <AnswerCard result={result} />
             <InsightPanel result={result} />
           </div>
@@ -449,6 +605,7 @@ export default function App() {
             suiteLoading={suiteLoading}
             suiteResult={suiteResult}
             reportArtifacts={reportArtifacts}
+            error={suiteError}
             onRunSuite={handleRunSuite}
           />
         </section>

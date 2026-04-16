@@ -2,15 +2,23 @@ import { useMemo, useState } from 'react'
 import type { SampleQuestionItem } from '../types'
 
 type QueryBoxProps = {
-  onSubmit: (question: string) => void
+  onSubmit: (question: string) => Promise<void>
   loading: boolean
   sampleQuestions?: SampleQuestionItem[]
+  error?: string
 }
 
-export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxProps) {
+export function QueryBox({ onSubmit, loading, sampleQuestions = [], error = '' }: QueryBoxProps) {
   const [question, setQuestion] = useState('')
 
   const suggestedQuestions = useMemo(() => sampleQuestions.slice(0, 4), [sampleQuestions])
+  const canSubmit = Boolean(question.trim()) && !loading
+  const handleSuggestionClick = (promptQuestion: string) => {
+    setQuestion(promptQuestion)
+    if (!loading) {
+      void onSubmit(promptQuestion)
+    }
+  }
 
   return (
     <div className="panel panel--glass stack" data-testid="query-box">
@@ -20,6 +28,10 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
           <h2>Probe the model with a grounded question</h2>
         </div>
       </div>
+      <div className="helper-callout">
+        <strong>Ask for something the evidence can actually support</strong>
+        <p>Use a specific, factual question. Avoid broad opinions or claims that go beyond the uploaded documents.</p>
+      </div>
 
       <textarea
         className="textarea"
@@ -28,17 +40,25 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
         value={question}
         onChange={(event) => setQuestion(event.target.value)}
       />
+      <div className="micro-status">
+        <span className="micro-status__label">Query readiness</span>
+        <strong>{canSubmit ? 'Ready to run' : 'Add a grounded question to continue'}</strong>
+      </div>
 
       <div className="query-actions">
         <button
           className="primary primary--glow"
           data-testid="query-submit"
-          disabled={loading || !question.trim()}
-          onClick={() => onSubmit(question)}
+          disabled={!canSubmit}
+          onClick={() => void onSubmit(question)}
         >
           {loading ? 'Evaluating…' : 'Run Query'}
         </button>
-        <div className="muted">Best demo pattern: ask one clearly supported question, then one weakly supported question.</div>
+        <div className="muted">Best evaluation pattern: ask one clearly supported question first, then one weakly supported question.</div>
+      </div>
+
+      <div className={`muted ${error ? '' : 'muted--large'}`} data-testid="query-status">
+        {error || 'TrustStack will show either a scored result or a concrete error after each query run.'}
       </div>
 
       <div className="query-suggestions" data-testid="query-suggestions">
@@ -51,10 +71,13 @@ export function QueryBox({ onSubmit, loading, sampleQuestions = [] }: QueryBoxPr
                 type="button"
                 className="query-suggestion"
                 data-testid="query-suggestion"
-                onClick={() => setQuestion(prompt.question)}
+                onClick={() => handleSuggestionClick(prompt.question)}
               >
                 <span className="query-suggestion-copy">{prompt.question}</span>
-                {prompt.source ? <small>{prompt.source}</small> : null}
+                <small>
+                  {(prompt.support_level === 'weak' ? 'Weak test' : 'Supported question')}
+                  {prompt.source ? ` - ${prompt.source}` : ''}
+                </small>
               </button>
             ))
           ) : (

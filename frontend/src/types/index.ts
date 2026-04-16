@@ -4,6 +4,13 @@ export type DocumentItem = {
   uploaded_at: string
 }
 
+export type PresetSourceItem = {
+  key: string
+  filename: string
+  label: string
+  description: string
+}
+
 export type EvidenceItem = {
   source: string
   page?: number | null
@@ -81,6 +88,7 @@ export type RunItem = {
 export type SampleQuestionItem = {
   question: string
   source?: string | null
+  support_level?: 'supported' | 'weak'
 }
 
 export type StandardTestCategoryScore = {
