@@ -7,7 +7,7 @@ from app.services.evaluation import build_evaluation_report
 from app.services.explanations import build_query_explanation
 from app.services.real_benchmark import run_real_dataset_benchmark
 from app.services.real_benchmark_report import render_real_benchmark_report_latex
-from app.services.rag import _extract_hits, _rebuild_index_from_chunks
+from app.services.rag import _answer_from_hits, _extract_hits, _rebuild_index_from_chunks
 from app.services.report_export import build_report_artifacts
 from app.services.risk import build_risk_flags, summarize_trust
 from app.services.scorer import compute_confidence
@@ -128,6 +128,24 @@ class ServiceBehaviorTests(unittest.TestCase):
 
         self.assertEqual(indexed, 1)
         fake_store.upsert.assert_called_once()
+
+    def test_answer_from_hits_derives_citations_when_model_omits_them(self):
+        hits = [
+            {
+                "source": "policy.txt",
+                "page": 1,
+                "chunk_id": "doc-1-chunk-0",
+                "score": 0.91,
+                "text": "Operators must complete a startup inspection before energizing the system.",
+            }
+        ]
+
+        with patch("app.services.rag.llm_client.generate_answer", return_value={"answer": "The evidence requires a startup inspection before energizing the system.", "citations": [], "insufficient_evidence": False}):
+            result = _answer_from_hits("What inspection is required before startup?", hits, 0.0)
+
+        self.assertEqual(result["citations"], ["doc-1-chunk-0"])
+        self.assertNotIn("NO_CITATIONS", result["risk_flags"])
+        self.assertGreaterEqual(result["confidence_score"], 60.0)
 
     def test_build_sample_questions_returns_grounded_prompts(self):
         questions = build_sample_questions(

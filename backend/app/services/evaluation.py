@@ -200,11 +200,15 @@ def _max_claim_support(claim: str, hits: list[dict]) -> tuple[float, list[str]]:
     for hit in hits:
         evidence_tokens = _content_tokens(hit.get("text", ""))
         overlap = _jaccard_similarity(claim_tokens, evidence_tokens)
-        weighted = overlap * (0.65 + 0.35 * float(hit.get("score", 0.0)))
+        recall = len(claim_tokens & evidence_tokens) / max(1, len(claim_tokens)) if claim_tokens else 0.0
+        weighted = max(
+            overlap * (0.65 + 0.35 * float(hit.get("score", 0.0))),
+            recall * (0.72 + 0.28 * float(hit.get("score", 0.0))),
+        )
         if weighted > best_score + 0.01:
             best_score = weighted
             supporting_chunk_ids = [hit["chunk_id"]]
-        elif weighted >= max(0.22, best_score - 0.02):
+        elif weighted >= max(0.18, best_score - 0.02):
             supporting_chunk_ids.append(hit["chunk_id"])
             best_score = max(best_score, weighted)
     deduped_ids = list(dict.fromkeys(supporting_chunk_ids))
@@ -292,8 +296,18 @@ def build_evaluation_report(
     if len(chunk_texts) > 1:
         duplicates = len(chunk_texts) - len(set(chunk_texts))
         redundancy_penalty = min(0.18, duplicates / max(1, len(chunk_texts)) * 0.35)
+    strength_ratio = min(1.0, (0.55 * avg_retrieval) + (0.45 * top_hit_score))
     evidence_sufficiency = round(
-        _clamp((0.45 * coverage_ratio + 0.25 * volume_ratio + 0.3 * diversity_ratio - redundancy_penalty) * 100.0),
+        _clamp(
+            (
+                0.35 * coverage_ratio
+                + 0.15 * volume_ratio
+                + 0.15 * diversity_ratio
+                + 0.35 * strength_ratio
+                - redundancy_penalty
+            )
+            * 100.0
+        ),
         2,
     )
 
@@ -308,7 +322,7 @@ def build_evaluation_report(
     for claim in _extract_claims(answer):
         support_score, supporting_chunk_ids = _max_claim_support(claim, hits)
         claim_support_scores.append(support_score)
-        status = "supported" if support_score >= 0.26 else "weak"
+        status = "supported" if support_score >= 0.18 else "weak"
         if status != "supported":
             unsupported_claim_count += 1
         claims.append(

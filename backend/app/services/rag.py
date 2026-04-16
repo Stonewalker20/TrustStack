@@ -10,6 +10,10 @@ from app.services.risk import build_risk_flags, summarize_trust
 from app.services.vector_store import get_vector_store, sanitize_metadatas
 
 
+def _average(values: list[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
 def _extract_hits(raw: dict) -> list[dict]:
     docs = raw.get("documents", [[]])[0]
     metas = raw.get("metadatas", [[]])[0]
@@ -71,6 +75,15 @@ def retrieve_hits(question: str, *, top_k: int | None = None, vector_store=None,
     return hits
 
 
+def _derive_citations_from_hits(hits: list[dict]) -> list[str]:
+    derived = [item["chunk_id"] for item in hits if float(item.get("score", 0.0)) >= settings.min_retrieval_score]
+    if derived:
+        return list(dict.fromkeys(derived[:3]))
+    if hits:
+        return [hits[0]["chunk_id"]]
+    return []
+
+
 def _answer_from_hits(question: str, hits: list[dict], start_time: float | None = None) -> dict:
     context_chunks = hits[: settings.max_context_chunks]
     context = "\n\n".join(
@@ -81,8 +94,14 @@ def _answer_from_hits(question: str, hits: list[dict], start_time: float | None 
     answer = llm_output.get("answer", "No answer returned.")
     citations = llm_output.get("citations", []) or []
     insufficient_evidence = bool(llm_output.get("insufficient_evidence", False))
-
     evidence_scores = [item["score"] for item in hits]
+
+    if not citations and not insufficient_evidence:
+        avg_retrieval = _average(evidence_scores)
+        top_hit_score = max(evidence_scores) if evidence_scores else 0.0
+        if top_hit_score >= settings.min_retrieval_score or avg_retrieval >= max(0.22, settings.min_retrieval_score - 0.05):
+            citations = _derive_citations_from_hits(context_chunks)
+
     risk_flags = build_risk_flags(evidence_scores, citations, insufficient_evidence, answer)
     evaluation = build_evaluation_report(
         question=question,
